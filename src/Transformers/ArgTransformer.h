@@ -33,6 +33,8 @@ public:
     std::string formatFloat(double value, int decimals);
     std::string toAsciiLine(uint32_t address, const std::vector<uint8_t>& line);
     std::string toAsciiLine(uint32_t startAddr, const std::vector<uint16_t>& words);
+    std::string toBinString(uint32_t value);
+    std::string toAsciiString(uint32_t value);
     bool parseMac(const std::string& s, std::array<uint8_t,6>& out);
     std::string ensureHttpScheme(std::string u);
     std::string normalizeLines(const std::string& in);
