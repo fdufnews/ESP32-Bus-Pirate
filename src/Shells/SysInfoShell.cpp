@@ -63,6 +63,7 @@ void SysInfoShell::cmdSummary() {
     terminalView.println("Build date    : " + std::string(__DATE__) + " " + std::string(__TIME__));
     terminalView.println("IDF version   : " + systemService.getIdfVersion());
     terminalView.println("Arduino core  : " + systemService.getArduinoCore());
+    terminalView.println("Infrared      : " + systemService.getInfraredBackend());
 }
 
 void SysInfoShell::cmdHardwareInfo() {

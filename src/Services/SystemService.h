@@ -56,4 +56,7 @@ public:
 
     // Boot
     void reboot(bool hard = false) const;
+
+    // Others
+    std::string getInfraredBackend() const;
 };

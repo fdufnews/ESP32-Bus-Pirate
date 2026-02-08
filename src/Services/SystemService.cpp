@@ -374,10 +374,26 @@ std::string SystemService::getNvsEntries() const {
     return out;
 }
 
+// -----------------------------
+// Boot
+// -----------------------------
+
 void SystemService::reboot(bool hard) const {
     if (hard) {
         ESP.restart();    // Arduino-style reset
     } else {
         esp_restart();    // IDF reset
     }
+}
+
+// -----------------------------
+// Others
+// -----------------------------
+
+std::string SystemService::getInfraredBackend() const {
+    #ifdef INFRARED_IREMOTE_ESP8266
+        return "IRremoteESP8266";
+    #else
+        return "Arduino-IRremote";
+    #endif
 }
