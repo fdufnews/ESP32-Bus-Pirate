@@ -1,5 +1,316 @@
-#include <IRremote.hpp> // defined here to avoid conflicts
 #include "InfraredService.h"
+
+#include <algorithm>
+#include <Vendors/MakeHex.h>
+
+#ifdef INFRARED_IREMOTE_ESP8266
+
+/*
+====================
+IRremoteESP8266
+====================
+*/
+
+#include <IRremoteESP8266.h>
+#include <IRutils.h>
+
+void InfraredService::configure(uint8_t tx, uint8_t rx) {
+    if (tx == _txPin && rx == _rxPin) return; // No change
+
+    _txPin = tx;
+    _rxPin = rx;
+
+    // TODO: delete ir obj make error message to serial with attached timers, find a workaround,
+    // It should be good for now if the user doesn't call configure with different pins a lot of times
+    // delete _sender;
+    // delete _receiver;
+
+    _sender = new IRsend(_txPin);
+    _sender->begin();
+
+    _receiver = new IRrecv(_rxPin);
+
+    _configured = true;
+}
+
+void InfraredService::startReceiver() {
+    if (_receiver) _receiver->enableIRIn();
+}
+
+void InfraredService::stopReceiver() {
+    if (_receiver) _receiver->disableIRIn();
+}
+
+void InfraredService::sendInfraredCommand(InfraredCommand command) {
+    if (!_sender) return;
+
+    std::string protoStr = InfraredProtocolMapper::toString(command.getProtocol());
+
+    uint8_t device = command.getDevice();
+    int subdevice   = command.getSubdevice();
+    uint8_t func    = command.getFunction();
+
+    uint16_t addr16 = packAddress(device, subdevice);
+
+    // Handle this subset of protocols with iremote for better reliability
+    switch (command.getProtocol()) {
+
+        case InfraredProtocolEnum::_NEC:
+        case InfraredProtocolEnum::_NEC2: {
+            uint32_t frame = _sender->encodeNEC(addr16, func);
+            _sender->sendNEC(frame);
+            return;
+        }
+
+        case InfraredProtocolEnum::_SAMSUNG:
+        case InfraredProtocolEnum::SAMSUNG20: {
+            if (subdevice != -1) break;
+
+            uint32_t frame = _sender->encodeSAMSUNG(device, func);
+            _sender->sendSAMSUNG(frame);
+            return;
+        }
+
+        case InfraredProtocolEnum::SONY20: {
+            uint32_t frame = _sender->encodeSony(20, func, addr16, 0);
+            _sender->sendSony(frame);
+            return;
+        }
+
+        case InfraredProtocolEnum::_LG: {
+            if (subdevice != -1) break;
+
+            uint32_t frame = _sender->encodeLG(addr16, func);
+            _sender->sendLG(frame);
+            return;
+        }
+
+        case InfraredProtocolEnum::_SANYO_LC7461: {
+            uint32_t frame = _sender->encodeSanyoLC7461(addr16, func);
+            _sender->sendSanyoLC7461(frame);
+            return;
+        }
+
+        case InfraredProtocolEnum::_PANASONIC:
+        case InfraredProtocolEnum::PANASONIC_:
+        case InfraredProtocolEnum::PANASONIC2: {
+            uint16_t vendor = getKaseikyoVendorIdCode(protoStr);
+            uint8_t sub = (subdevice < 0) ? 0 : (uint8_t)subdevice;
+
+            uint64_t frame = _sender->encodePanasonic(vendor, device, sub, func);
+            _sender->sendPanasonic64(frame);
+            return;
+        }
+
+        case InfraredProtocolEnum::_PIONEER: {
+            uint64_t frame = _sender->encodePioneer(addr16, func);
+            _sender->sendPioneer(frame);
+            return;
+        }
+
+        default:
+            break;
+    }
+
+    // Fallback MakeHex for all other protcols
+    int frequency = 38;
+    std::vector<float> seq = encodeRemoteCommand(command, protoStr.c_str(), frequency);
+    if (seq.empty()) return;
+
+    std::vector<uint16_t> raw;
+    raw.reserve(seq.size());
+    for (float v : seq) {
+        uint32_t us = (uint32_t)v;
+        if (us > 0xFFFF) us = 0xFFFF;
+        raw.push_back((uint16_t)us);
+    }
+
+    _sender->sendRaw(raw.data(), raw.size(), frequency);
+}
+
+void InfraredService::sendInfraredFileCommand(InfraredFileRemoteCommand command) {
+    if (!_sender) return;
+
+    if (command.protocol == InfraredProtocolEnum::_RAW) {
+        _sender->sendRaw(command.rawData, command.rawDataSize, command.frequency);
+        return;
+    }
+
+    uint8_t dev = command.address & 0xFF;
+    uint8_t sub = (command.address >> 8) & 0xFF;
+
+    InfraredCommand finalCmd(
+        command.protocol,
+        dev,
+        sub,
+        command.function
+    );
+
+    sendInfraredCommand(finalCmd);
+}
+
+void InfraredService::sendRaw(const std::vector<uint16_t>& timings, uint32_t khz) {
+    if (!_sender || timings.empty()) return;
+    _sender->sendRaw(timings.data(), timings.size(), khz);
+}
+
+InfraredCommand InfraredService::receiveInfraredCommand() {
+    InfraredCommand command;
+    if (!_receiver) return command;
+
+    if (!_receiver->decode(&_results)) {
+        return command;
+    }
+
+    _receiver->resume();
+
+    if (_results.bits == 0 || _results.decode_type == UNKNOWN) {
+        return InfraredCommand();
+    }
+
+    switch (_results.decode_type) {
+        case NEC:       command.setProtocol(InfraredProtocolEnum::_NEC); break;
+        case SONY:      command.setProtocol(InfraredProtocolEnum::SONY20); break;
+        case PANASONIC: command.setProtocol(InfraredProtocolEnum::_PANASONIC); break;
+        case JVC:       command.setProtocol(InfraredProtocolEnum::_JVC); break;
+        case SAMSUNG:   command.setProtocol(InfraredProtocolEnum::SAMSUNG20); break;
+        case DENON:     command.setProtocol(InfraredProtocolEnum::_DENON); break;
+        case RC5:       command.setProtocol(InfraredProtocolEnum::_RC5); break;
+        case RC6:       command.setProtocol(InfraredProtocolEnum::_RC6); break;
+        case RC5X:      command.setProtocol(InfraredProtocolEnum::_RC5X); break;
+        case DISH:      command.setProtocol(InfraredProtocolEnum::DISH_NETWORK); break;
+        case SHARP:     command.setProtocol(InfraredProtocolEnum::_SHARP); break;
+        case BOSE:      command.setProtocol(InfraredProtocolEnum::_BOSE); break;
+        case XMP:       command.setProtocol(InfraredProtocolEnum::_XMP); break;
+        case LG:        command.setProtocol(InfraredProtocolEnum::_LG); break;
+        case SANYO_LC7461: command.setProtocol(InfraredProtocolEnum::_SANYO_LC7461); break;
+        case LEGOPF:    command.setProtocol(InfraredProtocolEnum::LEGO); break;
+        case MITSUBISHI: command.setProtocol(InfraredProtocolEnum::_MITSUBISHI); break;
+        case PIONEER:    command.setProtocol(InfraredProtocolEnum::_PIONEER); break;
+
+        default:
+            return InfraredCommand();
+    }
+
+    uint32_t addr = _results.address;
+    uint8_t dev = addr & 0xFF;
+    uint8_t sub = (addr >> 8) & 0xFF;
+
+    command.setDevice(dev);
+    command.setSubdevice(sub == 0 ? -1 : sub);
+    command.setFunction(_results.command & 0xFF);
+
+    return command;
+}
+
+bool InfraredService::receiveRaw(std::vector<uint16_t>& timings, uint32_t& khz) {
+    if (!_receiver) return false;
+
+    if (!_receiver->decode(&_results)) return false;
+
+    struct ResumeGuard {
+        IRrecv* r;
+        ~ResumeGuard(){ r->resume(); }
+    } guard{_receiver};
+
+    if (!_results.rawbuf || _results.rawlen <= 1) return false;
+
+    khz = 38;
+    timings.clear();
+    timings.reserve(_results.rawlen - 1);
+
+    for (uint16_t i = 1; i < _results.rawlen; i++) {
+        uint32_t us = _results.rawbuf[i] * kRawTick;
+        if (us > 0xFFFF) us = 0xFFFF;
+        timings.push_back((uint16_t)us);
+    }
+
+    return true;
+}
+
+void InfraredService::sendJam(uint8_t modeIndex,
+                              uint16_t khz,
+                              uint32_t& sweepIndex,
+                              uint8_t density) {
+    if (density == 0) density = 1;
+
+    static std::vector<uint16_t> pat;
+    uint16_t halfPeriod = 500 / khz;
+    if (halfPeriod < 1) halfPeriod = 1;
+
+    if (pat.empty()) {
+        for (int i = 0; i < 40; i++) {
+            pat.push_back(halfPeriod);
+            pat.push_back(halfPeriod);
+        }
+    }
+
+    JamMode mode = (JamMode)modeIndex;
+    uint8_t sweepCount = sizeof(carrierKhz) / sizeof(carrierKhz[0]);
+    uint16_t delayUs = 100 / density + 2;
+
+    for (uint8_t i = 0; i < density; i++) {
+        uint16_t f = khz;
+
+        if (mode == JamMode::SWEEP) {
+            f = carrierKhz[sweepIndex++ % sweepCount];
+            sendRaw(pat, f);
+        } else if (mode == JamMode::CARRIER) {
+            sendRaw(pat, khz);
+        } else {
+            std::vector<uint16_t> rnd;
+            for (int j = 0; j < 30; j++) rnd.push_back(random(5, 1001));
+            if (random(10) < 3) f = carrierKhz[random(0, sweepCount)];
+            sendRaw(rnd, f);
+        }
+
+        delayMicroseconds(delayUs);
+    }
+}
+
+uint16_t InfraredService::packAddress(uint8_t device, int subdevice) {
+    const uint8_t sub = (subdevice < 0) ? 0 : (uint8_t)subdevice;
+    return (uint16_t(sub) << 8) | device;
+}
+
+uint16_t InfraredService::getKaseikyoVendorIdCode(const std::string& input) {
+    std::string s = input;
+    std::transform(s.begin(), s.end(), s.begin(), ::tolower);
+
+    // IRremote vendor id codes for Kaseikyo family
+    auto vendorToManufacturer = [](uint16_t vendor) -> uint16_t {
+        return static_cast<uint16_t>(vendor << 1);
+    };
+
+    if (s.find("panasonic") != std::string::npos)  return vendorToManufacturer(0x2002);
+    if (s.find("denon")     != std::string::npos)  return vendorToManufacturer(0x3254);
+    if (s.find("mitsubishi")!= std::string::npos)  return vendorToManufacturer(0xCB23);
+    if (s.find("sharp")     != std::string::npos)  return vendorToManufacturer(0x5AAA);
+    if (s.find("jvc")       != std::string::npos)  return vendorToManufacturer(0x0103);
+
+    // Default Panasonic 
+    return vendorToManufacturer(0x2002);
+}
+
+std::vector<std::string> InfraredService::getCarrierStrings() {
+    std::vector<std::string> out;
+    for (uint16_t f : carrierKhz) out.push_back(std::to_string(f));
+    return out;
+}
+
+std::vector<std::string> InfraredService::getJamModeStrings() {
+    return {"carrier", "sweep", "random"};
+}
+
+#else
+
+/*
+====================
+Arduino-IRemote
+====================
+*/
+
+#include <IRremote.hpp> 
 
 void InfraredService::configure(uint8_t tx, uint8_t rx) {
     IrSender.begin(tx);
@@ -71,7 +382,7 @@ void InfraredService::sendInfraredCommand(InfraredCommand command) {
 
 void InfraredService::sendInfraredFileCommand(InfraredFileRemoteCommand command) {
 
-    if (command.protocol == InfraredProtocolEnum::RAW) {
+    if (command.protocol == InfraredProtocolEnum::_RAW) {
         IrSender.sendRaw(command.rawData, command.rawDataSize, command.frequency);
         return;
     }
@@ -135,7 +446,7 @@ InfraredCommand InfraredService::receiveInfraredCommand() {
 
         case BOSEWAVE:
         case BANG_OLUFSEN:
-            command.setProtocol(BOSE);
+            command.setProtocol(_BOSE);
             break;
 
         case RC6:
@@ -330,3 +641,5 @@ std::vector<std::string> InfraredService::getCarrierStrings() {
 std::vector<std::string> InfraredService::getJamModeStrings() {
     return {"carrier", "sweep", "random"};
 }
+
+#endif

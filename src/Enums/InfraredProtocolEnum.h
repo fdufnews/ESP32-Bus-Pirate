@@ -10,7 +10,7 @@ typedef enum InfraredProtocolEnum {
     _APPLE = 4,
     BARCO = 5,
     BLAUPUNKT = 6,
-    BOSE = 7,
+    _BOSE = 7,
     CANALSAT = 8,
     _DENON = 9,
     DENON_K = 10,
@@ -37,7 +37,7 @@ typedef enum InfraredProtocolEnum {
     LOGITECH = 31,
     LUMAGEN = 32,
     MCE = 33,
-    MITSUBISHI = 34,
+    _MITSUBISHI = 34,
     _NEC = 35,
     NEC1 = 36,
     NEC1_F16 = 37,
@@ -58,7 +58,7 @@ typedef enum InfraredProtocolEnum {
     _PANASONIC = 52,
     PANASONIC2 = 53,
     PANASONIC_OLD = 54,
-    PIONEER = 55,
+    _PIONEER = 55,
     PROTON = 56,
     _RC5 = 57,
     RC5_7F = 58,
@@ -71,7 +71,7 @@ typedef enum InfraredProtocolEnum {
     RECS80 = 65,
     REPLAY = 66,
     SAMSUNG20 = 67,
-    SAMSUNG36 = 68,
+    _SAMSUNG36 = 68,
     SCATL_6 = 69,
     SEJIN_1_38 = 70,
     SEJIN_1_56 = 71,
@@ -97,7 +97,7 @@ typedef enum InfraredProtocolEnum {
     TIVO_UNIT_8 = 91,
     TIVO_UNIT_9 = 92,
     VELLEMAN = 93,
-    XMP = 94,
+    _XMP = 94,
     XMP_1 = 95,
     XMP_2 = 96,
     ZAPTOR_56 = 97,
@@ -114,10 +114,12 @@ typedef enum InfraredProtocolEnum {
     SIRC20 = 108,
     NEC42 = 109,
     NEC42ext = 110,
-    RC5X = 111,
+    _RC5X = 111,
     SAMSUNG32 = 112,
     LEGO = 113,
-    RAW = 114,
+    _LG = 114,
+    _SANYO_LC7461 = 115,
+    _RAW = 116,
 } InfraredProtocolEnum;
 
 class InfraredProtocolMapper {
@@ -131,7 +133,7 @@ public:
             case _APPLE: return "apple";
             case BARCO: return "barco";
             case BLAUPUNKT: return "blaupunkt";
-            case BOSE: return "bose";
+            case _BOSE: return "bose";
             case CANALSAT: return "canalsat";
             case _DENON: return "denon";
             case DENON_K: return "Denon-K";
@@ -159,7 +161,7 @@ public:
             case LOGITECH: return "logitech";
             case LUMAGEN: return "lumagen";
             case MCE: return "mce";
-            case MITSUBISHI: return "Mitsubishi";
+            case _MITSUBISHI: return "Mitsubishi";
             case _NEC:
             case NEC1: return "nec1";
             case NEC1_F16: return "nec1_f16";
@@ -184,11 +186,11 @@ public:
             case PANASONIC_:
             case PANASONIC2: return "panasonic";
             case PANASONIC_OLD: return "panasonic_old";
-            case PIONEER: return "pioneer";
+            case _PIONEER: return "pioneer";
             case PROTON: return "Proton";
             case _RC5: return "rc5";
             case RC5_7F: return "rc5odd";
-            case RC5X: return "rc5x";
+            case _RC5X: return "rc5x";
             case _RC6: return "rc6";
             case RC6_6_20: return "rc6-6-20";
             case RCA:
@@ -200,7 +202,7 @@ public:
             case REPLAY: return "replay";
             case SAMSUNG20: return "Samsung20";
             case SAMSUNG32: return "Samsung32";
-            case SAMSUNG36: return "Samsung36";
+            case _SAMSUNG36: return "Samsung36";
             case SCATL_6: return "scatl_6";
             case SEJIN_1_38: return "sejin_1_38";
             case SEJIN_1_56: return "sejin_1_56";
@@ -230,14 +232,16 @@ public:
             case TIVO_UNIT_9:
             case TIVO_UNIT: return "Tivo-Nec1";
             case VELLEMAN: return "velleman";
-            case XMP:
+            case _XMP:
             case XMP_1:
             case XMP_2: return "XMP";
             case ZAPTOR_56: return "zaptor_56";
             case ZENITH: return "zenith";
             case _KASEIKYO: return "Kaseikyo";
             case _SAMSUNG: return "Samsung";
-            case RAW: return "raw";
+            case _LG: return "LG";
+            case _SANYO_LC7461: return "Sanyo_LC7461";
+            case _RAW: return "raw";
 
             default: return "nec2";
         }
@@ -252,7 +256,7 @@ public:
         if (protocolStr == "apple") return _APPLE;
         if (protocolStr == "barco") return BARCO;
         if (protocolStr == "blaupunkt") return BLAUPUNKT;
-        if (protocolStr == "bose") return BOSE;
+        if (protocolStr == "bose") return _BOSE;
         if (protocolStr == "canalsat") return CANALSAT;
         if (protocolStr == "denon") return _DENON;
         if (protocolStr == "Denon-K") return DENON_K;
@@ -277,7 +281,7 @@ public:
         if (protocolStr == "logitech") return LOGITECH;
         if (protocolStr == "lumagen") return LUMAGEN;
         if (protocolStr == "mce") return MCE;
-        if (protocolStr == "Mitsubishi") return MITSUBISHI;
+        if (protocolStr == "Mitsubishi") return _MITSUBISHI;
         if (protocolStr == "nec") return _NEC;
         if (protocolStr == "NEC") return _NEC;
         if (protocolStr == "nec1_f16") return NEC1_F16;
@@ -298,12 +302,12 @@ public:
         if (protocolStr == "panasonic") return _PANASONIC;
         if (protocolStr == "panasonic2") return PANASONIC2;
         if (protocolStr == "panasonic_old") return PANASONIC_OLD;
-        if (protocolStr == "pioneer") return PIONEER;
+        if (protocolStr == "pioneer") return _PIONEER;
         if (protocolStr == "Proton") return PROTON;
         if (protocolStr == "rc5") return _RC5;
         if (protocolStr == "RC5") return _RC5;
-        if (protocolStr == "rc5x") return RC5X;
-        if (protocolStr == "RC5X") return RC5X;
+        if (protocolStr == "rc5x") return _RC5X;
+        if (protocolStr == "RC5X") return _RC5X;
         if (protocolStr == "rc5odd") return RC5_7F;
         if (protocolStr == "rc6") return _RC6;
         if (protocolStr == "RC6") return _RC6;
@@ -314,7 +318,7 @@ public:
         if (protocolStr == "Samsung") return _SAMSUNG;
         if (protocolStr == "Samsung20") return SAMSUNG20;
         if (protocolStr == "Samsung32") return SAMSUNG32;
-        if (protocolStr == "Samsung36") return SAMSUNG36;
+        if (protocolStr == "Samsung36") return _SAMSUNG36;
         if (protocolStr == "scatl_6") return SCATL_6;
         if (protocolStr == "sejin_1_38") return SEJIN_1_38;
         if (protocolStr == "sejin_1_56") return SEJIN_1_56;
@@ -330,12 +334,14 @@ public:
         if (protocolStr == "Thomson") return THOMSON;
         if (protocolStr == "Tivo-Nec1") return TIVO_UNIT;
         if (protocolStr == "velleman") return VELLEMAN;
-        if (protocolStr == "XMP") return XMP;
+        if (protocolStr == "XMP") return _XMP;
         if (protocolStr == "zaptor_56") return ZAPTOR_56;
         if (protocolStr == "zenith") return ZENITH;
         if (protocolStr == "DishPlayer_Network") return DISH_NETWO;
         if (protocolStr == "Kaseikyo") return _KASEIKYO;
-        if (protocolStr == "raw") return RAW;
+        if (protocolStr == "LG") return _LG;
+        if (protocolStr == "Sanyo_LC7461") return _SANYO_LC7461;
+        if (protocolStr == "raw") return _RAW;
         return _NEC2; // Default or fallback
     }
 

@@ -74,7 +74,7 @@ std::vector<InfraredFileRemoteCommand> InfraredRemoteTransformer::transformFromF
             command.functionName = val;
         }
         else if (key == "type" && val == "raw") {
-            command.protocol = InfraredProtocolEnum::RAW;
+            command.protocol = InfraredProtocolEnum::_RAW;
         }
         else if (key == "protocol") {
             command.protocol = InfraredProtocolMapper::toEnum(val);
@@ -124,7 +124,7 @@ std::string InfraredRemoteTransformer::transformToFileFormat(const std::string f
 
         out << "name: " << c.functionName << "\n";
 
-        if (c.protocol == InfraredProtocolEnum::RAW) {
+        if (c.protocol == InfraredProtocolEnum::_RAW) {
             out << "type: raw\n";
 
             out << "frequency: " << (static_cast<int>(c.frequency) * 1000) << "\n";

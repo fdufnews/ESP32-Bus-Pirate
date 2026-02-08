@@ -28,7 +28,7 @@ inline bool operator==(const InfraredFileRemoteCommand& lhs, const InfraredFileR
     if (lhs.dutyCycle != rhs.dutyCycle) return false;
 
     // Compare rawData only if it is used (protocol == RAW)
-    if (lhs.protocol == InfraredProtocolEnum::RAW) {
+    if (lhs.protocol == InfraredProtocolEnum::_RAW) {
         if (lhs.rawDataSize > 0 && rhs.rawDataSize > 0) {
             for (size_t i = 0; i < 20; ++i) {
                 if (lhs.rawData[i] != rhs.rawData[i]) {

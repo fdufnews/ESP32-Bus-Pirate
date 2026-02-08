@@ -106,7 +106,7 @@ void InfraredController::handleReceive() {
         if (decode) {
             // Decode signal
             InfraredCommand cmd = infraredService.receiveInfraredCommand();
-            if (cmd.getProtocol() != RAW) {
+            if (cmd.getProtocol() != _RAW) {
                 terminalView.println("");
                 terminalView.println("Infrared signal received:");
                 terminalView.println("  Protocol : " + InfraredProtocolMapper::toString(cmd.getProtocol()));
@@ -254,7 +254,7 @@ void InfraredController::handleRecord() {
         InfraredCommand decoded = infraredService.receiveInfraredCommand();
 
         // ignore RAW / invalid
-        if (decoded.getProtocol() == RAW) {
+        if (decoded.getProtocol() == _RAW) {
             continue;
         }
 
@@ -426,7 +426,7 @@ void InfraredController::handleSetProtocol() {
 
     std::vector<InfraredProtocolEnum> protocols;
 
-    for (int i = 0; i <= static_cast<int>(RAW); ++i) {
+    for (int i = 0; i <= static_cast<int>(_RAW); ++i) {
         InfraredProtocolEnum proto = static_cast<InfraredProtocolEnum>(i);
         std::string name = InfraredProtocolMapper::toString(proto);
 
@@ -475,7 +475,7 @@ void InfraredController::handleSetProtocol() {
     int index = std::stoi(inputStr);
     if (index >= 1 && index <= static_cast<int>(protocols.size())) {
         InfraredProtocolEnum selected = protocols[index - 1];
-        GlobalState::getInstance().setInfraredProtocol(selected);
+        state.setInfraredProtocol(selected);
         terminalView.println("Protocol changed to " + InfraredProtocolMapper::toString(selected));
     } else {
         terminalView.println("Invalid protocol number.");
@@ -607,7 +607,7 @@ void InfraredController::handleJam() {
     uint16_t khz = 38;
     if (modes[midx] == "carrier") {
         std::vector<std::string> khzChoices = infraredService.getCarrierStrings();
-        uint16_t kidx = userInputManager.readValidatedChoiceIndex("Select Carrier kHz", khzChoices, 3);
+        uint16_t kidx = userInputManager.readValidatedChoiceIndex("Select Carrier kHz", khzChoices, 1);
         khz = (uint16_t)std::stoi(khzChoices[kidx]);
     }
 

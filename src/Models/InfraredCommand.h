@@ -7,7 +7,7 @@
 class InfraredCommand {
 public:
     InfraredCommand()
-        : functionName(""), protocol(InfraredProtocolEnum::RAW),
+        : functionName(""), protocol(InfraredProtocolEnum::_RAW),
           device(0), subdevice(0), function(0) {}
 
     InfraredCommand(InfraredProtocolEnum proto, int device, int subdevice, int function)
