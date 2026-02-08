@@ -45,4 +45,9 @@ public:
                         size_t qty,
                         std::vector<uint8_t>& outBits);
     std::string toFixed2(float f);
+    bool parsePattern(const std::string& patternRaw,
+                                std::string& outTextPattern,
+                                std::vector<uint8_t>& outHexPattern,
+                                std::vector<uint8_t>& outHexMask,
+                                bool& outIsHex) ;
 };

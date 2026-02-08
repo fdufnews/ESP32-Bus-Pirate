@@ -506,3 +506,57 @@ std::string ArgTransformer::toFixed2(float f) {
     std::ostringstream oss; oss.setf(std::ios::fixed); oss.precision(2); oss << f;
     return oss.str();
 }
+
+bool ArgTransformer::parsePattern(const std::string& patternRaw,
+                                             std::string& outTextPattern,
+                                             std::vector<uint8_t>& outHexPattern,
+                                             std::vector<uint8_t>& outHexMask,
+                                             bool& outIsHex) 
+{
+    outTextPattern.clear();
+    outHexPattern.clear();
+    outHexMask.clear();
+    outIsHex = false;
+
+    if (patternRaw.empty()) return false;
+
+    // hex{ ... }
+    if (patternRaw.size() >= 5 && patternRaw.rfind("hex{", 0) == 0 && patternRaw.back() == '}') {
+        outIsHex = true;
+
+        std::string inner = patternRaw.substr(4, patternRaw.size() - 5);
+        auto toks = splitArgs(inner);
+        if (toks.empty()) return false;
+
+        for (auto tok : toks) {
+            tok = toLower(tok);
+
+            if (tok == "??") {
+                outHexPattern.push_back(0x00);
+                outHexMask.push_back(0);
+                continue;
+            }
+
+            if (tok.rfind("0x", 0) == 0) tok = tok.substr(2);
+            if (tok.size() != 2) return false;
+
+            auto isHexDigit = [](char c) {
+                return (c >= '0' && c <= '9') ||
+                       (c >= 'a' && c <= 'f') ||
+                       (c >= 'A' && c <= 'F');
+            };
+            if (!isHexDigit(tok[0]) || !isHexDigit(tok[1])) return false;
+
+            uint8_t b = parseHexOrDec("0x" + tok);
+            outHexPattern.push_back(b);
+            outHexMask.push_back(1);
+        }
+
+        return !outHexPattern.empty();
+    }
+
+    // text
+    outIsHex = false;
+    outTextPattern = decodeEscapes(patternRaw);
+    return !outTextPattern.empty();
+}
