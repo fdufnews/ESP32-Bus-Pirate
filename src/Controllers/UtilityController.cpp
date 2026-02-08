@@ -40,7 +40,9 @@ void UtilityController::handleCommand(const TerminalCommand& cmd) {
     else if (cmd.getRoot() == "guide")                                           handleGuide();
     else if (cmd.getRoot() == "man")                                             handleGuide();
     else if (cmd.getRoot() == "wizard")                                          handleWizard(cmd);
+    else if (cmd.getRoot() == "hex" || cmd.getRoot() == "dec")                   handleHex(cmd);
     else {
+        // just display commands for the mode without prompting
         helpShell.run(state.getCurrentMode(), false);
     }
 }
@@ -470,6 +472,48 @@ void UtilityController::handleWizard(const TerminalCommand& cmd) {
 }
 
 /*
+Hex
+*/
+/*
+Hex
+*/
+void UtilityController::handleHex(const TerminalCommand& cmd) {
+    uint32_t value = 0;
+
+    // Parse number if any
+    if (!cmd.getSubcommand().empty()) {
+        const std::string& s = cmd.getSubcommand();
+
+        if (!argTransformer.isValidNumber(s)) {
+            terminalView.println("Usage: hex <number>");
+            return;
+        }
+
+        value = argTransformer.parseHexOrDec32(s);
+    } else {
+        // No number provided, ask user for input
+        value = (uint32_t)userInputManager.readValidatedUint32("\nEnter a number or hex", 64);
+    }
+
+    // dec
+    terminalView.println("\n  Dec   : " + std::to_string(value));
+
+    // hex
+    terminalView.println("  Hex   : 0x" + argTransformer.toHex(value, 0));
+
+    // bin 
+    terminalView.println("  Bin   : " + argTransformer.toBinString(value));
+
+    // ASCII
+    std::string ascii = argTransformer.toAsciiString(value);
+    if (!ascii.empty()) {
+        terminalView.println("  ASCII : " + ascii);
+    }
+
+    terminalView.println("");
+}
+
+/*
 Help
 */
 void UtilityController::handleHelp() {
@@ -482,7 +526,7 @@ bool UtilityController::isGlobalCommand(const TerminalCommand& cmd) {
     return (root == "mode"  || root == "m" || root == "l" ||
             root == "logic" || root == "analogic" || root == "P" || root == "p") || 
             root == "system" || root == "guide" || root == "man" || root == "wizard" ||
-            root == "help" || root == "h" || root == "?";
+            root == "help" || root == "h" || root == "?" || root == "hex" || root == "dec";
 }
 
 bool UtilityController::isScreenCommand(const TerminalCommand& cmd) {
