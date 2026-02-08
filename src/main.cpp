@@ -83,8 +83,6 @@ void setup() {
         StampS3Input deviceInput;
     #elif defined(DEVICE_TEMBEDS3) || defined(DEVICE_TEMBEDS3CC1101)
         // Setup the T-embed
-        // TODO: TFT_eSPI is not compatible with latest arduino framework
-        // temporary use NoScreenDeviceView
         TembedDeviceView deviceView;
         TembedInput deviceInput;
         deviceView.initialize();
