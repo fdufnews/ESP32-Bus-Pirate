@@ -24,7 +24,7 @@ bool SubGhzService::configure(SPIClass& spi, uint8_t sck, uint8_t miso, uint8_t 
     
     #endif
 
-    SPI.end();
+    // SPI.end(); // will freeze tembed screen if called
     delay(10);
     SPI.begin(sck_, miso_, mosi_, ss_);
     ELECHOUSE_cc1101.setSPIinstance(&SPI);
