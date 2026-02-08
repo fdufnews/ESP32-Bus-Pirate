@@ -1,7 +1,7 @@
 static const char* const autoCompleteWords[] = {
 
     // --- General ---
-    "help","mode","man","system","logic","analogic","wizard",
+    "help","mode","man","system","logic","analogic","wizard", "hex"
 
     // --- 1WIRE ---
     "scan","ping","sniff","read","write","temp","ibutton","eeprom","config",
