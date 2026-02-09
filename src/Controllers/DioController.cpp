@@ -217,13 +217,14 @@ void DioController::handlePwm(const TerminalCommand& cmd) {
     bool ok = pinService.setupPwm(pin, freq, duty);
     if (!ok) {
         terminalView.println("DIO PWM: Cannot generate " + std::to_string(freq) +
-                             " Hz. Try a higher frequency or use toggle command.");
+                             " Hz. Try a lower frequency.");
         return;
     }
 
-    terminalView.println("DIO PWM: Pin " + std::to_string(pin) +
+    terminalView.println("\nDIO PWM: Pin " + std::to_string(pin) +
                          " (" + std::to_string(freq) + "Hz, " +
-                         std::to_string(duty) + "% duty).");
+                         std::to_string(duty) + "% duty)... Use 'reset " + 
+                         std::to_string(pin) + "' to stop.\n");
 }
 
 

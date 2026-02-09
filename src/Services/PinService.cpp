@@ -62,25 +62,29 @@ int PinService::readAnalog(uint8_t pin) {
 bool PinService::setupPwm(uint8_t pin, uint32_t freq, uint8_t dutyPercent) {
     if (dutyPercent > 100) dutyPercent = 100;
 
-    int channel = pin % 8;
+    uint8_t channel = pin % 8;
 
-    // Find the highest compatible resolution
-    int resolution = -1;
-    for (int bits = 14; bits >= 1; --bits) {
-        if (isPwmFeasible(freq, bits)) {
-            resolution = bits;
-            break;
-        }
+    uint8_t resolutionBits;
+    if (freq > 300000) {
+        resolutionBits = 6;
+    } else if (freq > 150000) {
+        resolutionBits = 7;
+    } else if (freq > 60000) {
+        resolutionBits = 8;
+    } else if (freq > 20000) {
+        resolutionBits = 9;
+    } else {
+        resolutionBits = 10;
     }
-    if (resolution < 0) return false;
 
-    if (!ledcAttachChannel(pin, freq, resolution, channel)) {
+    if (!ledcAttachChannel(pin, freq, resolutionBits, channel)) {
         return false;
     }
 
-    uint32_t dutyMax = (1UL << resolution) - 1;
-    uint32_t dutyVal = ((uint32_t)dutyPercent * dutyMax) / 100U;
+    uint32_t dutyMax = (1UL << resolutionBits) - 1;
+    uint32_t dutyVal = (uint32_t(dutyPercent) * dutyMax) / 100U;
     ledcWrite(channel, dutyVal);
+
     return true;
 }
 
@@ -101,21 +105,6 @@ void PinService::setServoAngle(uint8_t pin, uint8_t angle) {
   uint32_t dutyVal = (pulseUs * dutyMax) / periodUs;
 
   ledcWrite(channel, dutyVal);
-}
-
-bool PinService::isPwmFeasible(uint32_t freq, uint8_t resolutionBits) {
-    if (resolutionBits < 1 || resolutionBits > 14) return false;
-
-    const uint32_t baseClkHz     = 80000000UL;   // 80 MHz
-    const uint32_t maxDivParam   = 0x3FFFF;      // limite
-    if (freq == 0) return false;
-
-    // div_param = baseClk / (freq * 2^resolution)
-    uint64_t denom = (uint64_t)freq * (1ULL << resolutionBits);
-    if (denom == 0) return false;
-
-    uint32_t divParam = (uint32_t)(baseClkHz / denom);
-    return (divParam >= 1 && divParam <= maxDivParam);
 }
 
 PinService::pullType PinService::getPullType(uint8_t pin){
