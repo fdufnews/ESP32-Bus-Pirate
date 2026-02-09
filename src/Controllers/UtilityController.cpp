@@ -13,7 +13,8 @@ UtilityController::UtilityController(
     ArgTransformer& argTransformer,
     SysInfoShell& sysInfoShell,
     GuideShell& guideShell,
-    HelpShell& helpShell
+    HelpShell& helpShell,
+    ProfileShell& profileShell
 )
     : terminalView(terminalView),
       deviceView(deviceView),
@@ -24,7 +25,8 @@ UtilityController::UtilityController(
       argTransformer(argTransformer),
       sysInfoShell(sysInfoShell),
       guideShell(guideShell),
-      helpShell(helpShell)
+      helpShell(helpShell),
+      profileShell(profileShell)
 {}
 
 /*
@@ -41,6 +43,7 @@ void UtilityController::handleCommand(const TerminalCommand& cmd) {
     else if (cmd.getRoot() == "man")                                             handleGuide();
     else if (cmd.getRoot() == "wizard")                                          handleWizard(cmd);
     else if (cmd.getRoot() == "hex" || cmd.getRoot() == "dec")                   handleHex(cmd);
+    else if (cmd.getRoot() == "profile")                                         handleProfile();
     else {
         // just display commands for the mode without prompting
         helpShell.run(state.getCurrentMode(), false);
@@ -474,9 +477,6 @@ void UtilityController::handleWizard(const TerminalCommand& cmd) {
 /*
 Hex
 */
-/*
-Hex
-*/
 void UtilityController::handleHex(const TerminalCommand& cmd) {
     uint32_t value = 0;
 
@@ -520,13 +520,23 @@ void UtilityController::handleHelp() {
     helpShell.run(state.getCurrentMode());
 }
 
+/*
+Profile
+*/
+void UtilityController::handleProfile() {
+    profileShell.run();
+}
+
+/* Helpers */
+
 bool UtilityController::isGlobalCommand(const TerminalCommand& cmd) {
     std::string root = cmd.getRoot();
 
     return (root == "mode"  || root == "m" || root == "l" ||
             root == "logic" || root == "analogic" || root == "P" || root == "p") || 
             root == "system" || root == "guide" || root == "man" || root == "wizard" ||
-            root == "help" || root == "h" || root == "?" || root == "hex" || root == "dec";
+            root == "help" || root == "h" || root == "?" || root == "hex" || root == "dec" ||
+            root == "profile";
 }
 
 bool UtilityController::isScreenCommand(const TerminalCommand& cmd) {
