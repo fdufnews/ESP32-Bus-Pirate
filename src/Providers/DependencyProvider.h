@@ -66,6 +66,7 @@ and injecting shared instances of core components
 #include "Transformers/JsonTransformer.h"
 #include "Transformers/WebRequestTransformer.h"
 #include "Transformers/SubGhzTransformer.h"
+#include "Transformers/ProfileTransformer.h"
 #include "Managers/CommandHistoryManager.h"
 #include "Managers/BinaryAnalyzeManager.h"
 #include "Managers/UserInputManager.h"
@@ -86,6 +87,7 @@ and injecting shared instances of core components
 #include "Shells/GuideShell.h"
 #include "Shells/HelpShell.h"
 #include "Shells/UartEmulationShell.h"
+#include "Shells/ProfileShell.h"
 #include "Config/TerminalTypeConfigurator.h"
 
 class DependencyProvider
@@ -167,6 +169,7 @@ public:
     JsonTransformer &getJsonTransformer();
     InfraredRemoteTransformer &getInfraredTransformer();
     SubGhzTransformer &getSubGhzTransformer();
+    ProfileTransformer &getProfileTransformer();
 
     // Managers
     CommandHistoryManager &getCommandHistoryManager();
@@ -191,6 +194,7 @@ public:
     GuideShell &getGuideShell();
     HelpShell &getHelpShell();
     UartEmulationShell &getUartEmulationShell();
+    ProfileShell &getProfileShell();
 
     // Selectors
     HorizontalSelector &getHorizontalSelector();
@@ -273,6 +277,7 @@ private:
     JsonTransformer jsonTransformer;
     InfraredRemoteTransformer infraredTransformer;
     SubGhzTransformer subGhzTransformer;
+    ProfileTransformer profileTransformer;
 
     // Managers
     CommandHistoryManager commandHistoryManager;
@@ -297,6 +302,7 @@ private:
     GuideShell guideShell;
     HelpShell helpShell;
     UartEmulationShell uartEmulationShell;
+    ProfileShell profileShell;
 
     // Selectors
     HorizontalSelector horizontalSelector;

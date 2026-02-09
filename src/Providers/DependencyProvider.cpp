@@ -46,6 +46,7 @@ DependencyProvider::DependencyProvider(ITerminalView &terminalView, IDeviceView 
       jsonTransformer(),
       infraredTransformer(),
       subGhzTransformer(),
+      profileTransformer(),
 
       // Managers
       commandHistoryManager(),
@@ -70,6 +71,7 @@ DependencyProvider::DependencyProvider(ITerminalView &terminalView, IDeviceView 
       guideShell(terminalView, terminalInput, userInputManager),
       helpShell(terminalView, terminalInput, userInputManager),
       uartEmulationShell(terminalView, terminalInput, uartService, argTransformer, userInputManager),
+      profileShell(terminalView, terminalInput, userInputManager, littleFsService, profileTransformer),
 
       // Selectors
       horizontalSelector(deviceView, deviceInput),
