@@ -23,6 +23,13 @@ void TembedDeviceView::initialize() {
   pinMode(PIN_POWER_ON, OUTPUT);
   digitalWrite(PIN_POWER_ON, HIGH);
 
+  // Power some peripherals on the T-Embed CC1101 version
+  // IR, CC1101, audio, LEDS
+  #ifdef DEVICE_TEMBEDS3CC1101
+      pinMode(PIN_CC1101_POWER, OUTPUT);
+      digitalWrite(PIN_CC1101_POWER, HIGH);
+  #endif
+
   screenSpi.begin(PIN_LCD_SCLK, PIN_LCD_MISO, PIN_LCD_MOSI, PIN_LCD_CS);
 
   tft.init();

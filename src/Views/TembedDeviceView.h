@@ -17,6 +17,7 @@
   #define PIN_LCD_CS    41
   #define PIN_LCD_DC    16
   #define PIN_LCD_RST   -1
+  #define PIN_CC1101_POWER 15
 #else
   // ===== User_Setup 210 (Normal S3) =====
   #define PIN_LCD_BL    15
