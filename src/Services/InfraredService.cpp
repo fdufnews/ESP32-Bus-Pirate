@@ -275,21 +275,18 @@ uint16_t InfraredService::packAddress(uint8_t device, int subdevice) {
 
 uint16_t InfraredService::getKaseikyoVendorIdCode(const std::string& input) {
     std::string s = input;
-    std::transform(s.begin(), s.end(), s.begin(), ::tolower);
+    std::transform(s.begin(), s.end(), s.begin(),
+                   [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
 
-    // IRremote vendor id codes for Kaseikyo family
-    auto vendorToManufacturer = [](uint16_t vendor) -> uint16_t {
-        return static_cast<uint16_t>(vendor << 1);
-    };
+    // IRremoteESP8266 manufacturer codes
+    if (s.find("panasonic")   != std::string::npos) return 0x4004;
+    if (s.find("denon")       != std::string::npos) return 0x2A4C;
+    if (s.find("mitsubishi")  != std::string::npos) return 0xC4D3;
+    if (s.find("sharp")       != std::string::npos) return 0x555A;
+    if (s.find("jvc")         != std::string::npos) return 0xC080;
 
-    if (s.find("panasonic") != std::string::npos)  return vendorToManufacturer(0x2002);
-    if (s.find("denon")     != std::string::npos)  return vendorToManufacturer(0x3254);
-    if (s.find("mitsubishi")!= std::string::npos)  return vendorToManufacturer(0xCB23);
-    if (s.find("sharp")     != std::string::npos)  return vendorToManufacturer(0x5AAA);
-    if (s.find("jvc")       != std::string::npos)  return vendorToManufacturer(0x0103);
-
-    // Default Panasonic 
-    return vendorToManufacturer(0x2002);
+    // Default Panasonic
+    return 0x4004;
 }
 
 std::vector<std::string> InfraredService::getCarrierStrings() {
