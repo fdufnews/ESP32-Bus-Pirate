@@ -20,6 +20,12 @@ void InfraredService::configure(uint8_t tx, uint8_t rx) {
     _txPin = tx;
     _rxPin = rx;
 
+    #ifdef DEVICE_TEMBEDS3CC1101
+        const uint8_t tembedCc1101PowerPin = 15;
+        pinMode(tembedCc1101PowerPin, OUTPUT);
+        digitalWrite(tembedCc1101PowerPin, HIGH);
+    #endif
+
     // TODO: delete ir obj make error message to serial with attached timers, find a workaround,
     // It should be good for now if the user doesn't call configure with different pins a lot of times
     // delete _sender;
@@ -34,7 +40,7 @@ void InfraredService::configure(uint8_t tx, uint8_t rx) {
 }
 
 void InfraredService::startReceiver() {
-    if (_receiver) _receiver->enableIRIn();
+    if (_receiver) _receiver->enableIRIn(true);
 }
 
 void InfraredService::stopReceiver() {
