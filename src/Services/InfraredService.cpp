@@ -40,7 +40,7 @@ void InfraredService::configure(uint8_t tx, uint8_t rx) {
 }
 
 void InfraredService::startReceiver() {
-    if (_receiver) _receiver->enableIRIn(true);
+    if (_receiver) _receiver->enableIRIn();
 }
 
 void InfraredService::stopReceiver() {
