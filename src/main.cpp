@@ -88,6 +88,7 @@ void setup() {
         deviceView.initialize();
         deviceView.logo();
         deviceInput.waitPress(3000);
+        deviceView.clear();
     #else
         // Fallback to S3 dev kit
         NoScreenDeviceView deviceView;

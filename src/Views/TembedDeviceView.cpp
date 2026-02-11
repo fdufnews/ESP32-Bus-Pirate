@@ -177,21 +177,6 @@ void TembedDeviceView::horizontalSelection(
   const std::string& description2
 ) {
   const int originY = 30;
-  const int h = tft.height() - originY;
-
-  // avoid topbar overlap
-  tft.fillRect(0, originY, tft.width(), h, TFT_BLACK);
-
-  // Description 1
-  tft.setTextColor(TFT_WHITE, TFT_BLACK);
-  tft.setTextFont(2);
-  tft.setTextSize(1);
-  tft.setTextDatum(MC_DATUM);
-  tft.drawString(description1.c_str(), tft.width() / 2, originY + 26);
-
-  // Description 2 hardcoded
-  tft.setTextColor(DARK_GREY_RECT, TFT_BLACK);
-  tft.drawString("Long press button to shut down", tft.width() / 2, tft.height() - 20);
 
   // Box option
   const std::string& option = options[selectedIndex];
@@ -201,8 +186,31 @@ void TembedDeviceView::horizontalSelection(
   int boxH = 50;
   int corner = 8;
 
+  // Description 1
+  tft.setTextColor(TFT_WHITE, TFT_BLACK);
+  tft.setTextFont(2);
+  tft.setTextSize(1);
+  tft.setTextDatum(MC_DATUM);
+  tft.drawString(description1.c_str(), tft.width() / 2, originY + 26);
+
+  // Description 2 
+  tft.setTextColor(DARK_GREY_RECT, TFT_BLACK);
+  tft.drawString("Long press button to shut down", tft.width() / 2, tft.height() - 20);
+
+  // Box background + border
   tft.fillRoundRect(boxX, boxY, boxW, boxH, corner, DARK_GREY_RECT);
   tft.drawRoundRect(boxX, boxY, boxW, boxH, corner, TFT_GREEN);
+
+  const int pad = 4;  
+  int innerX = boxX + pad;
+  int innerY = boxY + pad;
+  int innerW = boxW - (pad * 2);
+  int innerH = boxH - (pad * 2);
+  int innerCorner = corner - pad;
+  if (innerCorner < 0) innerCorner = 0;
+
+  // erase old text
+  tft.fillRoundRect(innerX, innerY, innerW, innerH, innerCorner, DARK_GREY_RECT);
 
   // Option name
   tft.setTextColor(TFT_WHITE, DARK_GREY_RECT);
