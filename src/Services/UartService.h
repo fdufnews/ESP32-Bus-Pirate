@@ -68,7 +68,7 @@ private:
     inline static volatile uint32_t lastEdgeTimeUs = 0;
     inline static volatile uint32_t edgeIntervals[64] = {0};
     inline static volatile uint8_t intervalCount = 0;
-
+    inline static volatile bool isrInstalled = false;
     inline static constexpr uint32_t kBaudRates[] = {
         // Legacy 
         110, 300, 600, 1200, 1800, 2000, 2400, 3600, 4800, 7200,

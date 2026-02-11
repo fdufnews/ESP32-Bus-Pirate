@@ -310,6 +310,14 @@ UartService::PinActivity UartService::measureUartActivity(uint8_t pin, uint32_t 
     edgeCounts[pin] = 0;
     lastEdgeTimeUs = 0;
     intervalCount = 0;
+    
+    // already installed by the kb for the adv
+    #ifndef DEVICE_CARDPUTER_ADV
+        if (!isrInstalled) {
+            gpio_install_isr_service(0);
+            isrInstalled = true;
+        }
+    #endif
 
     // Configure GPIO
     gpio_config_t io = {};
