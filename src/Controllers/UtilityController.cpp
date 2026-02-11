@@ -38,7 +38,7 @@ void UtilityController::handleCommand(const TerminalCommand& cmd) {
     else if (cmd.getRoot() == "p")                                               handleDisablePullups();
     else if (cmd.getRoot() == "logic")                                           handleLogicAnalyzer(cmd);
     else if (cmd.getRoot() == "analogic")                                        handleAnalogic(cmd);
-    else if (cmd.getRoot() == "system")                                          handleSystem();
+    else if (cmd.getRoot() == "system" || cmd.getRoot() == "sys")                handleSystem();
     else if (cmd.getRoot() == "guide")                                           handleGuide();
     else if (cmd.getRoot() == "man")                                             handleGuide();
     else if (cmd.getRoot() == "wizard")                                          handleWizard(cmd);
@@ -492,7 +492,7 @@ void UtilityController::handleHex(const TerminalCommand& cmd) {
         value = argTransformer.parseHexOrDec32(s);
     } else {
         // No number provided, ask user for input
-        value = (uint32_t)userInputManager.readValidatedUint32("\nEnter a number or hex", 64);
+        value = (uint32_t)userInputManager.readValidatedUint32("\nEnter a number or hex", 65);
     }
 
     // dec
@@ -532,9 +532,9 @@ void UtilityController::handleProfile() {
 bool UtilityController::isGlobalCommand(const TerminalCommand& cmd) {
     std::string root = cmd.getRoot();
 
-    return (root == "mode"  || root == "m" || root == "l" ||
-            root == "logic" || root == "analogic" || root == "P" || root == "p") || 
-            root == "system" || root == "guide" || root == "man" || root == "wizard" ||
+    return  root == "mode"  || root == "m" || root == "l" ||
+            root == "logic" || root == "analogic" || root == "P" || root == "p" || 
+            root == "system" || root == "sys" || root == "guide" || root == "man" || root == "wizard" ||
             root == "help" || root == "h" || root == "?" || root == "hex" || root == "dec" ||
             root == "profile";
 }
