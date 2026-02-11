@@ -8,7 +8,6 @@
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 #include <unordered_set>
-#include <ESP32Ping.h>
 
 extern "C" {
 #include <getopt.h>   // provides getopt_long

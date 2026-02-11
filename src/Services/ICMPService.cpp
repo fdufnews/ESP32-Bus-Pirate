@@ -4,7 +4,6 @@
 #include <freertos/task.h>
 #include <vector>
 #include <algorithm>
-#include <ESP32Ping.h>
 
 #include "lwip/inet.h"
 #include "lwip/netdb.h"
