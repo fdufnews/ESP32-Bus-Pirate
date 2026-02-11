@@ -462,7 +462,7 @@ void InfraredController::handleSetProtocol() {
             }
             terminalView.print(std::string(1, c));
         } else {
-            terminalView.println("\nInvalid input: only digits allowed.");
+            terminalView.println("\r\nInvalid input: only digits allowed.\n");
             return;
         }
     }
