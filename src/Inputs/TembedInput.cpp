@@ -65,8 +65,8 @@ void TembedInput::checkShutdownRequest() {
     if (!digitalRead(TEMBED_PIN_ENCODE_BTN) || !digitalRead(TEMBED_PIN_SIDE_BTN)) {
         unsigned long start = millis();
 
-        // Wait 3sec press
-        for (int i = 3; i > 0; --i) {
+        // Wait 2sec press
+        for (int i = 2; i > 0; --i) {
             // Verify if it's still pressed
             for (int j = 0; j < 10; ++j) {
                 // Released
@@ -75,14 +75,13 @@ void TembedInput::checkShutdownRequest() {
             }
         }
 
-        // If we are here, then the button was pressed 3sec
+        // If we are here, then the button was pressed 2sec
         shutdownToDeepSleep();
     }
 }
 
 void TembedInput::shutdownToDeepSleep() {
-    // view.shutDown();
-    delay(3000);
+    delay(2000);
     esp_sleep_enable_ext0_wakeup((gpio_num_t)TEMBED_PIN_SIDE_BTN, 0);
     esp_deep_sleep_start();
 }
