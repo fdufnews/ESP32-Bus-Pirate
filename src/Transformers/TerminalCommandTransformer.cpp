@@ -40,6 +40,11 @@ std::string TerminalCommandTransformer::normalizeRaw(const std::string& raw) con
     std::string root;
     iss >> root;
 
+    // Pullup aliases
+    if (root == "P" || root == "p") {
+        return root; // do nothing
+    }
+
     // lowercase root
     for (char& c : root) {
         c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
