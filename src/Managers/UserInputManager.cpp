@@ -148,7 +148,7 @@ uint32_t UserInputManager::readValidatedUint32(const std::string& label, uint32_
         if (input.empty()) return def;
 
         if (argTransformer.isValidNumber(input)) {
-            return argTransformer.toUint32(input);
+            return argTransformer.parseHexOrDec32(input);
         }
 
         terminalView.println("Invalid number.");
