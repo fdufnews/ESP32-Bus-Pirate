@@ -266,9 +266,13 @@ void UsbS3Controller::handleConfig() {
         return;
     };
 
-    terminalView.println("\n[WARNING] If you're using USB Serial terminal mode,");
-    terminalView.println("          using USB commands may interrupt the session.");
-    terminalView.println("          Use Web UI or restart if connection is lost.\n");
+    if (state.getTerminalMode() == TerminalTypeEnum::SerialPort) {
+        terminalView.println("\n[WARNING] You are using USB Serial terminal mode,");
+        terminalView.println("          using USB commands WILL INTERRUPT the session.");
+        terminalView.println("          Use Web UI or restart if connection is lost.\n");
+    } else {
+        terminalView.println(""); // align
+    }
 }
 
 /*

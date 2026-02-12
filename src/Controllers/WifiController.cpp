@@ -660,13 +660,13 @@ Config
 */
 void WifiController::handleConfig()
 {
-    if (state.getTerminalMode() == TerminalTypeEnum::Standalone) return;
-
-    terminalView.println("[WARNING] If you're connected via Web CLI,");
-    terminalView.println("          executing Wi-Fi commands may cause ");
-    terminalView.println("          the terminal session to disconnect.");
-    terminalView.println("          Don't use: sniff, probe, connect, scan, spoof...");
-    terminalView.println("          Use USB serial or restart if connection is lost.\n");
+    if (state.getTerminalMode() == TerminalTypeEnum::WiFiClient) {
+        terminalView.println("[WARNING] You are connected via the Web CLI,");
+        terminalView.println("          executing some Wi-Fi commands will cause ");
+        terminalView.println("          the terminal session to disconnect.");
+        terminalView.println("          Don't use: sniff, probe, connect, scan, spoof...");
+        terminalView.println("          Use USB serial or restart if connection is lost.\n");
+    }
 }
 
 /*
