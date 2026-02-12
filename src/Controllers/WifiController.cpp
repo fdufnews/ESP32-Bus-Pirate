@@ -258,14 +258,13 @@ void WifiController::handleAp(const TerminalCommand &cmd)
 
     if (wifiService.startAccessPoint(ssid, password))
     {
-        terminalView.println("\nWiFi: Access Point is started, no internet forwarding...\n");
+        terminalView.println("\nWiFi: Access Point is started, no forwarding...\n");
         terminalView.println("  SSID            : " + ssid);
         std::string apPassMasked = password.empty() ? "" : std::string(password.length(), '*');
         std::string first2 = password.substr(0, password.size() >= 2 ? 2 : 1);
         apPassMasked = first2 + "********" + std::string(1, password.back()); 
         terminalView.println("  Password        : " + (apPassMasked.empty() ? "(open)" : apPassMasked));
         terminalView.println("  Access point IP : " + wifiService.getApIp());
-        terminalView.println("\n  Use 'ap stop' to stop the access point");
 
         auto nvsSsidField = state.getNvsSsidField();
         auto nvsPasswordField = state.getNvsPasswordField();
@@ -283,6 +282,8 @@ void WifiController::handleAp(const TerminalCommand &cmd)
             terminalView.println("  Station IP      : " + wifiService.getLocalIp());
         }
         terminalView.println("");
+
+        terminalView.println("  Use 'ap stop' to stop the access point\n");
     }
     else
     {
