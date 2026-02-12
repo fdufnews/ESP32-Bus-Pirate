@@ -267,13 +267,15 @@ bool setupTembedWifi(IDeviceView& view) {
   auto& tft = *g_tft;
   tft.setRotation(3);
 
-  String ssid, password;
+  String selectedSsid, ssid, password;
 
   while (true) {
-    if (!loadWifiCredentials(ssid, password)) {
-      ssid = selectWifiNetwork();
-      password = enterText("Enter password");
-      setWifiCredentials(ssid, password);
+    selectedSsid = selectWifiNetwork();
+    bool hasSavedCredentials = loadWifiCredentials(ssid, password);
+    
+    if (!hasSavedCredentials || ssid != selectedSsid) {
+        ssid = selectedSsid;
+        password = enterText("Enter password for:\n" + selectedSsid);
     }
 
     drawWifiBox(TFT_GREEN, "Connecting", ssid);
@@ -285,6 +287,7 @@ bool setupTembedWifi(IDeviceView& view) {
 
     for (int i = 0; i < 30; ++i) {
       if (WiFi.status() == WL_CONNECTED) {
+        setWifiCredentials(ssid, password);
         drawWifiBox(TFT_GREEN, "Connected", "");
         delay(2000);
         return true;
