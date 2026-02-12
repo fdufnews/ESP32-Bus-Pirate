@@ -31,6 +31,7 @@ void JtagController::handleScan(const TerminalCommand& cmd) {
 
     if (type[0] == 's') handleScanSwd();
     else if (type[0] == 'j') handleScanJtag();
+    else terminalView.println("Usage: 'scan swd' or 'scan jtag'.");
 }
 
 /*
