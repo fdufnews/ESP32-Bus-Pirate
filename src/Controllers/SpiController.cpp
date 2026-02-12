@@ -240,7 +240,8 @@ void SpiController::handleConfig() {
     uint8_t cs = userInputManager.readValidatedPinNumber("CS pin", state.getSpiCSPin(), forbidden);
     state.setSpiCSPin(cs);
 
-    uint32_t freq = userInputManager.readValidatedUint32("Frequency", state.getSpiFrequency());
+    uint32_t freqMhz = state.getSpiFrequency() / 1000000;
+    uint32_t freq = userInputManager.readValidatedUint8("Frequency (MHz)", freqMhz, 1, 80) * 1000000;
     state.setSpiFrequency(freq);
 
     spiService.configure(mosi, miso, sclk, cs, freq);
