@@ -81,7 +81,10 @@ void EthernetController::handleConfig() {
     }
 
     // Frequency SPI
-    uint32_t hz = userInputManager.readValidatedUint32("SPI frequency (Hz)", defHz);
+    uint32_t defMhz = defHz / 1000000;
+    uint32_t hz = userInputManager
+        .readValidatedUint8("SPI frequency (MHz)", defMhz, 1, 80)
+        * 1000000;
 
     // MAC addr (optional)
     std::string macStr;
