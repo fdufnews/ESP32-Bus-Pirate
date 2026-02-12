@@ -91,7 +91,7 @@ void UartController::handleBridge() {
         // Read from device input and stop bridge if any
         c = deviceInput.readChar();
         if (c != KEY_NONE) {  
-            terminalView.println("\nUart Bridge: Stopped by user.");
+            terminalView.println("\r\nUart Bridge: Stopped by user.\n");
             break;
         }
     }
