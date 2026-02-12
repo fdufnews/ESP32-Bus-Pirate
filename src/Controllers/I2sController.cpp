@@ -10,28 +10,26 @@ I2sController::I2sController(ITerminalView& terminalView, IInput& terminalInput,
       i2sService(i2sService), argTransformer(argTransformer),
       userInputManager(userInputManager), helpShell(helpShell) {}
 
-void I2sController::handleCommand(const TerminalCommand& cmd) {
-    if (cmd.getRoot() == "config") {
-        handleConfig();
-    } else if (cmd.getRoot() == "play") {
-        handlePlay(cmd);
-    } else if (cmd.getRoot() == "record") {
-        handleRecord(cmd);
-    } else if (cmd.getRoot() == "test") {
-        handleTest(cmd);
-    } else if (cmd.getRoot() == "reset") {
-        handleReset();
-    } else {
-        handleHelp();
-    }
-}
 
+/*
+Entry point for I2S command
+*/
+void I2sController::handleCommand(const TerminalCommand& cmd) {
+    if      (cmd.getRoot() == "config")   handleConfig();
+    else if (cmd.getRoot() == "play")     handlePlay(cmd);
+    else if (cmd.getRoot() == "record")   handleRecord(cmd);
+    else if (cmd.getRoot() == "test")     handleTest(cmd);
+    else if (cmd.getRoot() == "reset")    handleReset();
+    else handleHelp();
+}
 
 /*
 Play
 */
 void I2sController::handlePlay(const TerminalCommand& cmd) {
+    switchOutputInput(true);
     auto args = argTransformer.splitArgs(cmd.getArgs());
+
 
     if (!argTransformer.isValidNumber(cmd.getSubcommand())) {
         terminalView.println("Usage: play <frequency> [durationMs]");
@@ -72,16 +70,8 @@ void I2sController::handlePlay(const TerminalCommand& cmd) {
 Record
 */
 void I2sController::handleRecord(const TerminalCommand& cmd) {
+    switchOutputInput(false);
     terminalView.println("I2S Record: In progress... Press [Enter] to stop.\n");
-
-    // Configure input
-    i2sService.configureInput(
-        state.getI2sBclkPin(),
-        state.getI2sLrckPin(),
-        state.getI2sDataPin(),
-        state.getI2sSampleRate(),
-        state.getI2sBitsPerSample()
-    );
 
     constexpr size_t batchSize = 2048;
     constexpr size_t groupCount = 16;
@@ -128,15 +118,6 @@ void I2sController::handleRecord(const TerminalCommand& cmd) {
         if (ch == '\n' || ch == '\r') break;
     }
 
-    // Reconfigure output
-    i2sService.configureOutput(
-        state.getI2sBclkPin(),
-        state.getI2sLrckPin(),
-        state.getI2sDataPin(),
-        state.getI2sSampleRate(),
-        state.getI2sBitsPerSample()
-    );
-
     terminalView.println("\nI2S Record: Stopped by user.\n");
 }
 
@@ -166,6 +147,7 @@ void I2sController::handleTest(const TerminalCommand& cmd) {
 Test Speaker
 */
 void I2sController::handleTestSpeaker() {
+    switchOutputInput(true);
     terminalView.println("I2S Speaker Test: Running full tests...\n");
 
     // Show pin config
@@ -261,15 +243,8 @@ void I2sController::handleTestSpeaker() {
 Test Mic
 */
 void I2sController::handleTestMic() {
+    switchOutputInput(false);
     terminalView.println("\nI2S Micro: Analyzing input signal...\n");
-
-    i2sService.configureInput(
-        state.getI2sBclkPin(),
-        state.getI2sLrckPin(),
-        state.getI2sDataPin(),
-        state.getI2sSampleRate(),
-        state.getI2sBitsPerSample()
-    );
 
     // Show pin config
     terminalView.println("Using pins:");
@@ -319,15 +294,6 @@ void I2sController::handleTestMic() {
     terminalView.println("  Peak-to-peak  : " + std::to_string(peakToPeak));
     terminalView.println("  Verdict       : " + verdict);
 
-    // Reconfig output
-    i2sService.configureOutput(
-        state.getI2sBclkPin(),
-        state.getI2sLrckPin(),
-        state.getI2sDataPin(),
-        state.getI2sSampleRate(),
-        state.getI2sBitsPerSample()
-    );
-
     terminalView.println("\nI2S Micro: Done.");
 }
 
@@ -354,17 +320,9 @@ void I2sController::handleConfig() {
     uint8_t bits = userInputManager.readValidatedUint8("Bits per sample (e.g. 16)", state.getI2sBitsPerSample());
     state.setI2sBitsPerSample(bits);
 
-    #if defined(DEVICE_TEMBEDS3) || defined(DEVICE_TEMBEDS3CC1101)
-        terminalView.println("\n[WARNING] I2S may not work properly on T-Embed devices due to internal pin conflicts.");
-        terminalView.println("          This includes shared SPI pins used for the display. Use with caution.");
-        terminalView.println("          Freeze can happen on your device just after this message.\n");
-    #endif
-
-    i2sService.configureOutput(bclk, lrck, data, freq, bits);
-
+    // Config will be applied at next play/record/test action
     terminalView.println("I2S configured.\n");
 }
-
 
 /*
 Help
@@ -374,23 +332,13 @@ void I2sController::handleHelp() {
     helpShell.run(state.getCurrentMode(), false);
 }
 
-
 /*
 Reset
 */
 void I2sController::handleReset() {
-    i2sService.end();
-
-    // Config output
-    i2sService.configureOutput(state.getI2sBclkPin(),
-                         state.getI2sLrckPin(),
-                         state.getI2sDataPin(),
-                         state.getI2sSampleRate(),
-                         state.getI2sBitsPerSample());
-
+    switchOutputInput(true);
     terminalView.println("I2S Reset: TX (output) mode.");
 }
-
 
 /*
 Ensure configuration
@@ -401,9 +349,21 @@ void I2sController::ensureConfigured() {
         configured = true;
     } else {
         // Reapply
-        i2sService.end();
+        switchOutputInput(true);
+    }
+}
+
+/*
+Switch Output/Input
+*/ 
+void I2sController::switchOutputInput(bool output) {
+    if (output) {
         i2sService.configureOutput(state.getI2sBclkPin(), state.getI2sLrckPin(),
                              state.getI2sDataPin(), state.getI2sSampleRate(),
                              state.getI2sBitsPerSample());
+    } else {
+        i2sService.configureInput(state.getI2sBclkPin(), state.getI2sLrckPin(),
+                            state.getI2sDataPin(), state.getI2sSampleRate(),
+                            state.getI2sBitsPerSample());
     }
 }

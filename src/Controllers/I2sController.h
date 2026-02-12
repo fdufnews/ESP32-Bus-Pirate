@@ -48,6 +48,9 @@ private:
     // Show available I2S commands
     void handleHelp();
 
+    // Switch between output (speaker) and input (mic) mode
+    void switchOutputInput(bool output);
+
     ITerminalView& terminalView;
     IInput& terminalInput;
     I2sService& i2sService;
