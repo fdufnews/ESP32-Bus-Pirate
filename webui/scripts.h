@@ -140,6 +140,23 @@ HIZ> `;
   const filesBtn = document.getElementById("files-btn");
   if (filesBtn) filesBtn.addEventListener("click", openFilePanel);
 
+  // Mobile keyboard: keep input visible
+  if (window.visualViewport) {
+    const main = document.querySelector("main");
+    function onViewportResize() {
+      // Use visual viewport height so the layout shrinks above the keyboard
+      main.style.height = window.visualViewport.height + "px";
+      // Prevent the page from scrolling behind the keyboard
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+    }
+    window.visualViewport.addEventListener("resize", onViewportResize);
+    window.visualViewport.addEventListener("scroll", function () {
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+    });
+  }
+
   connectSocket();
 });
 

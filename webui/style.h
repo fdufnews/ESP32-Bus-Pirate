@@ -8,6 +8,7 @@ html, body {
   height: 100%; width: 100%; max-width: 100vw; max-height: 100dvh;
   font-family: Menlo, 'Courier New', Courier, 'Liberation Mono', monospace;
   background-color: #121212; color: #e0e0e0; overflow: hidden; touch-action: manipulation;
+  position: fixed; top: 0; left: 0;
 }
 main {
   display: flex; flex-direction: column; flex-grow: 1; height: 100dvh;
