@@ -95,7 +95,7 @@ public:
   TembedDeviceView();
 
   void initialize() override;
-  SPIClass& getScreenSpiInstance() override;
+  SPIClass& getSharedSpiInstance() override;
   void* getScreen() override;
   void logo() override;
   void welcome(TerminalTypeEnum& terminalType, std::string& terminalInfos) override;
@@ -123,6 +123,10 @@ private:
   //   lgfx::LGFX_Sprite canvas; // Not used currently, memory consumption is too high
   uint8_t brightnessPct = 100;
   SPIClass screenSpi{HSPI}; // or FSPI
+
+  #ifdef DEVICE_TEMBEDS3
+  SPIClass sharedSpi{HSPI};
+  #endif
 
   void drawCenterText(const std::string& text, int y, int fontSize);
   void welcomeWeb(const std::string& ip);

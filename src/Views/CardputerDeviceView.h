@@ -8,7 +8,7 @@ class CardputerDeviceView : public M5DeviceView {
 public:
     // All disabled except drawLogicTrace
     void initialize() override {}
-    SPIClass& getScreenSpiInstance() override { return *(SPIClass*)(nullptr); }
+    SPIClass& getSharedSpiInstance() override { return *(SPIClass*)(nullptr); }
     void welcome(TerminalTypeEnum& /*terminalType*/, std::string& /*terminalInfos*/) override {}
     void logo() override {}
     void show(PinoutConfig& /*config*/) override {}

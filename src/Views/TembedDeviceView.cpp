@@ -11,8 +11,11 @@ TembedDeviceView::TembedDeviceView() {
   digitalWrite(PIN_LCD_BL, HIGH);
 }
 
-SPIClass& TembedDeviceView::getScreenSpiInstance() {
-  return screenSpi;
+SPIClass& TembedDeviceView::getSharedSpiInstance() {
+  #ifdef DEVICE_TEMBEDS3
+    return sharedSpi;
+  #endif
+  return SPI;
 }
 
 void* TembedDeviceView::getScreen() {

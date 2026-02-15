@@ -15,7 +15,7 @@ public:
     virtual void initialize() = 0;
 
     // Get the SPI instance
-    virtual SPIClass& getScreenSpiInstance() = 0;
+    virtual SPIClass& getSharedSpiInstance() = 0;
 
     // Get the screen instance
     virtual void* getScreen() = 0;

@@ -2,8 +2,8 @@
 
 void NoScreenDeviceView::initialize() {}
 
-SPIClass& NoScreenDeviceView::getScreenSpiInstance() {
-    return *(SPIClass*)(nullptr);
+SPIClass& NoScreenDeviceView::getSharedSpiInstance() {
+    return SPI;
 }
 
 void* NoScreenDeviceView::getScreen() {

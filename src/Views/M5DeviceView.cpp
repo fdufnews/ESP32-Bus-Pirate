@@ -7,8 +7,8 @@ void M5DeviceView::initialize() {
     M5.Lcd.fillScreen(BACKGROUND_COLOR);
 }
 
-SPIClass& M5DeviceView::getScreenSpiInstance() {
-    return *(SPIClass*)(nullptr);
+SPIClass& M5DeviceView::getSharedSpiInstance() {
+    return SPI;
 }
 
 void* M5DeviceView::getScreen() {
