@@ -682,7 +682,7 @@ void SubGhzController::handleConfig() {
 
     // Configure
     auto isConfigured = subGhzService.configure(
-        deviceView.getScreenSpiInstance(),
+        deviceView.getSharedSpiInstance(),
         sck, miso, mosi, ss,
         gdo0, freq
     );
@@ -818,7 +818,7 @@ void SubGhzController::ensureConfigured() {
     uint8_t mosi = state.getSubGhzMosiPin();
     float freq = state.getSubGhzFrequency();
 
-    subGhzService.configure(deviceView.getScreenSpiInstance(), sck, miso, mosi, cs, gdo0, freq);
+    subGhzService.configure(deviceView.getSharedSpiInstance(), sck, miso, mosi, cs, gdo0, freq);
 }
 
 /*
