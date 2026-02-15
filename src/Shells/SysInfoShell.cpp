@@ -186,6 +186,7 @@ void SysInfoShell::cmdFS() {
         const size_t used  = systemService.littlefsUsedBytes();
         const size_t freeB = (total >= used) ? (total - used) : 0;
 
+        terminalView.println("LittleFS mounted successfully.");
         terminalView.println("Total  : " + std::to_string(total / 1024) + " KB");
         terminalView.println("Used   : " + std::to_string(used  / 1024) + " KB");
         terminalView.println("Free   : " + std::to_string(freeB / 1024) + " KB");
