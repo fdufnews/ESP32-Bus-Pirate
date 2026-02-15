@@ -139,7 +139,7 @@ void WifiController::handleConnect(const TerminalCommand &cmd)
         terminalView.println("     • Green = Connected, open the WebUI in a browser");
         terminalView.println("     • Red   = Connection failed, try connect again with serial");
         terminalView.println("");
-        terminalView.println("WiFi Web UI: http://" + wifiService.getLocalIP());
+        terminalView.println("WiFi Web UI: http://" + wifiService.getLocalIP() + " (reset and select WiFi terminal)");
 
         // Save creds
         nvsService.open();
@@ -647,7 +647,7 @@ void WifiController::handleWebUi(const TerminalCommand &)
         terminalView.println("     • Green = Connected, open the WebUI in your browser.");
         terminalView.println("     • Red   = Connection failed, try connect again with serial");
         terminalView.println("");
-        terminalView.println("WiFi Web UI: http://" + ip);
+        terminalView.println("WiFi Web UI: http://" + ip + " (reset and select WiFi terminal)");
     }
     else
     {
