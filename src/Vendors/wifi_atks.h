@@ -4,6 +4,6 @@
 #include <WiFi.h>
 
 // Random SSID if no ssid provided
-void beaconCreate(const char* ssid = "");
+void beaconCreate(const char* ssid = "", uint8_t channel = 0);
 
 #endif

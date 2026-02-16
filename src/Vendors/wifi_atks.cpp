@@ -83,7 +83,12 @@ void nextChannel() {
         }
     }
 }
-void beaconCreate(const char* ssid) {
+
+void setChannel(uint8_t ch) {
+    esp_wifi_set_channel(ch, WIFI_SECOND_CHAN_NONE);
+}
+
+void beaconCreate(const char* ssid, uint8_t channel) {
 
     // beacon frame definition
     uint8_t beaconPacket[109] = {/*  0 - 3  */ 0x80,
@@ -228,9 +233,14 @@ void beaconCreate(const char* ssid) {
     }
     auto finalSsidLen = strlen(finalSsid);
 
-    // go to next channel
-    nextChannel();
-
+    // go to next channel or set specific channel
+    if (channel == 0) {
+        nextChannel();
+    } else {
+        setChannel(channel);
+        wifi_channel = channel;
+    }
+    
     // set MAC address
     generateRandomWiFiMac(macAddr);
 
