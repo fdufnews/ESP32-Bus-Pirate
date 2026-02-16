@@ -542,5 +542,6 @@ bool UtilityController::isGlobalCommand(const TerminalCommand& cmd) {
 bool UtilityController::isScreenCommand(const TerminalCommand& cmd) {
    return cmd.getRoot() == "config" || cmd.getRoot() == "setprotocol" || cmd.getRoot() == "trace"
        || cmd.getRoot() == "pullup" || cmd.getRoot() == "pulldown" || cmd.getRoot() == "reset"
-       || cmd.getRoot() == "swap" || cmd.getRoot() == "logic" || cmd.getRoot() == "analogic";
+       || cmd.getRoot() == "swap" || cmd.getRoot() == "logic" || cmd.getRoot() == "analogic"
+       || cmd.getRoot() == "waterfall";
 }
