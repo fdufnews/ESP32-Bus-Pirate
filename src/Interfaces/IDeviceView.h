@@ -41,6 +41,17 @@ public:
     // Analogic plotter
     virtual void drawAnalogicTrace(uint8_t pin, const std::vector<uint8_t>& buffer, uint8_t step) = 0;
 
+    // Waterfall spectrum
+    virtual void drawWaterfall(
+        const std::string& title,
+        float startValue,
+        float endValue,
+        const char* unit,
+        int rowIndex,
+        int rowCount,
+        int level
+    ) = 0;
+
     // Set screen rotation
     virtual void setRotation(uint8_t rotation) = 0;
 
