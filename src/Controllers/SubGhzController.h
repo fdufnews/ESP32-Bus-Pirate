@@ -80,6 +80,9 @@ private:
     // Show signal trace
     void handleTrace();
 
+    // Show frequency peak waterfall
+    void handleWaterfall();
+
     // Sweep and analyze signals
     void handleSweep();
 

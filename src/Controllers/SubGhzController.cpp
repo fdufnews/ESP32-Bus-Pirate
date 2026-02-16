@@ -16,6 +16,7 @@ void SubGhzController::handleCommand(const TerminalCommand& cmd) {
     else if (root == "bruteforce")   handleBruteforce();
     else if (root == "decode")       handleDecode(cmd);
     else if (root == "trace")        handleTrace();
+    else if (root == "waterfall")    handleWaterfall();
     else if (root == "listen")       handleListen();
     else if (root == "load")         handleLoad();
     else if (root == "config")       handleConfig();
@@ -455,6 +456,96 @@ void SubGhzController::handleTrace() {
 
         delayMicroseconds(sampleUs);
     }
+}
+
+/*
+Waterfall
+*/
+void SubGhzController::handleWaterfall()
+{
+    // Band selection
+    auto bands = subGhzService.getSupportedBand();
+    int bandIndex = userInputManager.readValidatedChoiceIndex("Select frequency band", bands, 0);
+    subGhzService.setScanBand(bands[bandIndex]);
+    std::vector<float> freqs = subGhzService.getSupportedFreq(bands[bandIndex]);
+
+    // Window ms per frequency
+    uint8_t defaultWindow = bandIndex ? 100 : 30; // bandIndex 0 is all ranges
+    int windowMs = userInputManager.readValidatedInt("Hold time per frequency (ms)", defaultWindow, 2, 2000);
+
+    // Profile
+    if (!subGhzService.applyScanProfile(4.8f, 200.0f, 2 /* OOK */, true)) {
+        terminalView.println("SUBGHZ: Not configured. Run 'config' first.");
+        return;
+    }
+
+    terminalView.println("\nSUBGHZ Waterfall: Displaying on the ESP32 screen... Press [ENTER] to stop.\n");
+
+    float fStart = freqs.front();
+    float fEnd   = freqs.back();
+    const int8_t dbmThr= -70; // minimum dBm, not noise
+    const int8_t dbmMin = -80; // under noise floor
+    const int8_t dbmMax = -30; // strong signal
+    int bestDbm = -127;
+    float bestFreq = 0.0f;
+    std::string title;
+    size_t i = 0;
+
+    while (true) {
+        // Stop on ENTER
+        char c = terminalInput.readChar();
+        if (c == '\n' || c == '\r') break;
+
+        // Display peak
+        if (i == 0) {
+            if (bestFreq > 0.0f && bestDbm > dbmThr) {
+                title = "PEAK: " + argTransformer.toFixed2(bestFreq) + "MHz " + std::to_string(bestDbm) + "dBm";
+            } else {
+                title = "PEAK: --";
+            }
+
+            bestDbm = -127;
+            bestFreq = 0.0f;
+        }
+
+        // tune
+        float f = freqs[i];
+        subGhzService.tune(f);
+
+        // measure
+        int peak = subGhzService.measurePeakRssi(windowMs);
+        if (peak > bestDbm) {
+            bestDbm = peak;
+            bestFreq = f;
+        }
+
+        // Clamp RSSI
+        int v = peak;
+        if (v < dbmMin) v = dbmMin;
+        if (v > dbmMax) v = dbmMax;
+        
+        // Map to level %
+        int level = (int)((int64_t)(v - dbmMin) * 100 / (dbmMax - dbmMin));
+        if (level < 1) level = 1; // show progress even for weak signals
+
+        // Draw the line for this freq
+        deviceView.drawWaterfall(
+            title,
+            fStart,
+            fEnd,
+            "MHz",
+            (int)i,
+            (int)freqs.size(),
+            level
+        );
+
+        // Next freq
+        i++;
+        if (i >= freqs.size()) i = 0;
+    }
+
+    subGhzService.tune(state.getSubGhzFrequency());
+    terminalView.println("SUBGHZ Waterfall: Stopped by user.\n");
 }
 
 /*
