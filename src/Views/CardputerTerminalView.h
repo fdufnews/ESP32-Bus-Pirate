@@ -23,6 +23,8 @@
 #define DEFAULT_MARGIN 5
 #define DEFAULT_ROUND_RECT 5
 
+// Used for standalone mode only, share the screen with the device view
+
 class CardputerTerminalView : public ITerminalView {
 public:
     ~CardputerTerminalView() override = default;
