@@ -352,5 +352,93 @@ void M5DeviceView::drawAnalogicTrace(uint8_t pin, const std::vector<uint8_t>& bu
     canvas.deleteSprite();
 }
 
+void M5DeviceView::drawWaterfall(
+    const std::string& title,
+    float startValue,
+    float endValue,
+    const char* unit,
+    int rowIndex,
+    int rowCount,
+    int level
+)
+{
+    const int W = M5.Lcd.width();
+    const int H = M5.Lcd.height();
+
+    const int headerH = 12;
+    const int footerH = 12;
+    const int graphY  = headerH;
+    const int graphH  = H - headerH - footerH;
+
+    const int midX = W / 2;
+    const int barMaxPixels = midX - 2;
+
+    // level to pixels
+    if (level < 0) level = 0;
+    if (level > 100) level = 100;
+    int barPixels = (level * barMaxPixels) / 100;
+
+    // First row, clear, title, labels 
+    if (rowIndex == 0) {
+        M5.Lcd.fillScreen(BACKGROUND_COLOR);
+
+        M5.Lcd.setTextSize(1);
+        M5.Lcd.setTextColor(TEXT_COLOR, BACKGROUND_COLOR);
+
+        // Title
+        M5.Lcd.setCursor(2, 2);
+        M5.Lcd.printf("%s", title.c_str());
+
+        // Format labels
+        char bufStart[24];
+        char bufEnd[24];
+
+        if (unit && unit[0]) {
+            snprintf(bufStart, sizeof(bufStart), "%.2f%s", startValue, unit);
+            snprintf(bufEnd,   sizeof(bufEnd),   "%.2f%s", endValue,   unit);
+        } else {
+            snprintf(bufStart, sizeof(bufStart), "%.2f", startValue);
+            snprintf(bufEnd,   sizeof(bufEnd),   "%.2f", endValue);
+        }
+
+        // Start (top right)
+        M5.Lcd.setCursor(W - M5.Lcd.textWidth(bufStart) - 2, 2);
+        M5.Lcd.printf("%s", bufStart);
+
+        // End (bottom right)
+        M5.Lcd.setCursor(W - M5.Lcd.textWidth(bufEnd) - 2, H - footerH + 2);
+        M5.Lcd.printf("%s", bufEnd);
+
+        // Graph area 
+        M5.Lcd.fillRect(0, graphY, W, graphH, BACKGROUND_COLOR);
+        M5.Lcd.drawFastVLine(midX, graphY, graphH, RECT_COLOR_DARK);
+    }
+
+    if (rowCount <= 1) return;
+    if (rowIndex < 0) rowIndex = 0;
+    if (rowIndex > rowCount - 1) rowIndex = rowCount - 1;
+
+    // Map rowIndex to Y
+    int y = graphY + (int)((int64_t)rowIndex * (graphH - 1) / (rowCount - 1));
+
+    // Clear only this scan line
+    M5.Lcd.drawFastHLine(0, y, W, BACKGROUND_COLOR);
+
+    // Restore center pixel
+    M5.Lcd.drawPixel(midX, y, RECT_COLOR_DARK);
+
+    // Draw energy bar
+    if (barPixels > 0) {
+        int x0 = midX - barPixels;
+        int w  = barPixels * 2;
+
+        if (x0 < 0) { w += x0; x0 = 0; }
+        if (x0 + w > W) w = W - x0;
+
+        if (w > 0) {
+            M5.Lcd.drawFastHLine(x0, y, w, PRIMARY_COLOR);
+        }
+    }
+}
 
 #endif
