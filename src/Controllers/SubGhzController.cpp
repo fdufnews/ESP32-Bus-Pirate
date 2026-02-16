@@ -470,7 +470,7 @@ void SubGhzController::handleWaterfall()
     std::vector<float> freqs = subGhzService.getSupportedFreq(bands[bandIndex]);
 
     // Window ms per frequency
-    uint8_t defaultWindow = bandIndex ? 100 : 30; // bandIndex 0 is all ranges
+    uint8_t defaultWindow = bandIndex ? 100 : 32; // bandIndex 0 is all ranges
     int windowMs = userInputManager.readValidatedInt("Hold time per frequency (ms)", defaultWindow, 2, 2000);
 
     // Profile
@@ -770,7 +770,7 @@ void SubGhzController::handleConfig() {
     state.setSubGhzGdoPin(gdo0);
 
     float freq = state.getSubGhzFrequency(); 
-
+    
     // Configure
     auto isConfigured = subGhzService.configure(
         deviceView.getSharedSpiInstance(),

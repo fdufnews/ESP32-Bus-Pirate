@@ -51,8 +51,6 @@ void SubGhzService::tune(float mhz)
     selectRfPathFor(mhz_);
 
     #endif
- 
-    delay(2);
 }
 
 int SubGhzService::measurePeakRssi(uint32_t holdMs)
