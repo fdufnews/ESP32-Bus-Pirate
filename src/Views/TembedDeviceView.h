@@ -104,6 +104,7 @@ public:
   void clear() override;
   void drawLogicTrace(uint8_t pin, const std::vector<uint8_t>& buffer, uint8_t step) override;
   void drawAnalogicTrace(uint8_t pin, const std::vector<uint8_t>& buffer, uint8_t step) override;
+  void drawWaterfall(const std::string& title, float startValue, float endValue, const char* unit, int rowIndex, int rowCount, int level) override;
   void setRotation(uint8_t rotation) override;
   void setBrightness(uint8_t brightness) override;
   uint8_t getBrightness() override;

@@ -142,6 +142,97 @@ void TembedDeviceView::drawAnalogicTrace(uint8_t pin, const std::vector<uint8_t>
   }
 }
 
+void TembedDeviceView::drawWaterfall(
+    const std::string& title,
+    float startValue,
+    float endValue,
+    const char* unit,
+    int rowIndex,
+    int rowCount,
+    int level
+) {
+  const int W = tft.width();
+  const int H = tft.height();
+  const int midX = W / 2;
+
+  const int headerH = 12;
+  const int footerH = 12;
+  const int graphY  = headerH;
+  const int graphH  = H - headerH - footerH;
+
+  const int barMaxPixels = midX - 2;
+
+  // Clamp level
+  if (level < 0) level = 0;
+  if (level > 100) level = 100;
+  int barPixels = (level * barMaxPixels) / 100;
+
+  // First row: titles, labels
+  if (rowIndex == 0) {
+    // Full clear
+    tft.fillScreen(TFT_BLACK);
+
+    // Title
+    tft.setTextSize(1);
+    tft.setTextFont(1);
+    tft.setTextColor(TFT_WHITE, TFT_BLACK);
+    tft.setCursor(2, 2);
+    tft.print(title.c_str());
+
+    // Format labels
+    char bufStart[24];
+    char bufEnd[24];
+
+    if (unit && unit[0]) {
+      snprintf(bufStart, sizeof(bufStart), "%.2f%s", startValue, unit);
+      snprintf(bufEnd,   sizeof(bufEnd),   "%.2f%s", endValue,   unit);
+    } else {
+      snprintf(bufStart, sizeof(bufStart), "%.2f", startValue);
+      snprintf(bufEnd,   sizeof(bufEnd),   "%.2f", endValue);
+    }
+
+    // Start label (top right)
+    int wStart = tft.textWidth(bufStart);
+    tft.setCursor(W - wStart - 2, 2);
+    tft.print(bufStart);
+
+    // End label (bottom right)
+    int wEnd = tft.textWidth(bufEnd);
+    tft.setCursor(W - wEnd - 2, H - footerH + 2);
+    tft.print(bufEnd);
+
+    // Graph area
+    tft.fillRect(0, graphY, W, graphH, TFT_BLACK);
+    tft.drawFastVLine(midX, graphY, graphH, TFT_DARKGREY);
+  }
+
+  if (rowCount <= 1) return;
+  if (rowIndex < 0) rowIndex = 0;
+  if (rowIndex > rowCount - 1) rowIndex = rowCount - 1;
+
+  // Map row to Y
+  int y = graphY + (int)((int64_t)rowIndex * (graphH - 1) / (rowCount - 1));
+
+  // Clear this row only
+  tft.drawFastHLine(0, y, W, TFT_BLACK);
+
+  // Restore center pixel
+  tft.drawPixel(midX, y, TFT_DARKGREY);
+
+  // Draw energy bar
+  if (barPixels > 0) {
+    int x0 = midX - barPixels;
+    int w  = barPixels * 2;
+
+    if (x0 < 0) { w += x0; x0 = 0; }
+    if (x0 + w > W) w = W - x0;
+
+    if (w > 0) {
+      tft.drawFastHLine(x0, y, w, TFT_GREEN);
+    }
+  }
+}
+
 void TembedDeviceView::setRotation(uint8_t rotation) {
   tft.setRotation(rotation);
 }
