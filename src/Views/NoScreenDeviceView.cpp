@@ -24,6 +24,16 @@ void NoScreenDeviceView::drawLogicTrace(uint8_t pin, const std::vector<uint8_t>&
 
 void NoScreenDeviceView::drawAnalogicTrace(uint8_t pin, const std::vector<uint8_t>& buffer, uint8_t step) {}
 
+void NoScreenDeviceView::drawWaterfall(
+    const std::string& title,
+    float startValue,
+    float endValue,
+    const char* unit,
+    int rowIndex,
+    int rowCount,
+    int level
+) {}
+
 void NoScreenDeviceView::setRotation(uint8_t rotation) {}
 
 void NoScreenDeviceView::setBrightness(uint8_t brightness) {}
