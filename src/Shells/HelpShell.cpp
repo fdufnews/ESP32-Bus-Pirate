@@ -411,6 +411,7 @@ void HelpShell::cmdSubGhz() {
         "jam                  - Jam selected frequencies",
         "bruteforce           - Bruteforce 12 bit keys",
         "trace                - Observe RX signal trace",
+        "waterfall            - Show frequency peaks",
         "load                 - Load .sub files from FS",
         "listen               - RSSI to audio mapping",
         "setfrequency         - Set operating frequency",
@@ -438,6 +439,7 @@ void HelpShell::cmdRf24() {
         "sniff                - Sniff raw frames",
         "sweep                - Analyze channels activity",
         "jam                  - Jam selected channels group",
+        "waterfall            - Show channel peaks",
         "setchannel           - Set operating channel",
         "config               - Configure NRF24 settings"
     };
