@@ -11,6 +11,7 @@ void Rf24Controller::handleCommand(const TerminalCommand& cmd) {
     else if (root == "sniff")      handleSniff();
     else if (root == "scan")       handleScan();
     else if (root == "sweep")      handleSweep();
+    else if (root == "waterfall")  handleWaterfall();
     else if (root == "jam")        handleJam();
     else if (root == "setchannel") handleSetChannel();
     else                           handleHelp();
@@ -263,6 +264,82 @@ void Rf24Controller::handleSweep() {
 
     rf24Service.flushRx();
     terminalView.println("\nRF24 Sweep: Stopped by user.\n");
+}
+
+/*
+Waterfall
+*/
+void Rf24Controller::handleWaterfall()
+{
+    // Window ms per channel
+    int dwellMs = userInputManager.readValidatedInt("Hold time per channel (ms)", 10, 2, 2000);
+
+    terminalView.println("\nRF24 Waterfall: Displaying on the ESP32 screen... Press [ENTER] to stop.\n");
+    
+    // sampling period 160µs so RPD has time to latch
+    const uint8_t SAMPLE_PERIOD_US = 160;
+    int samples = (dwellMs * 1000) / SAMPLE_PERIOD_US;
+    uint8_t ch = 0;
+    int bestChannel = -1;
+    int bestLevel   = 0;
+    std::string title;
+
+    rf24Service.initRx();
+
+    while (true) {
+        // Cancel on ENTER
+        char c = terminalInput.readChar();
+        if (c == '\n' || c == '\r') break;
+
+        rf24Service.setChannel((uint8_t)ch);
+
+        // Same logic as sweep
+        int hits = 0;
+        for (int s = 0; s < samples; ++s) {
+            rf24Service.startListening();
+            delayMicroseconds((dwellMs * 1000) / samples);
+            rf24Service.stopListening();
+
+            if (rf24Service.testRpd())   hits += 2;
+            if (rf24Service.testCarrier()) hits += 1;
+        }
+
+        // normalization
+        int level = (hits * 100) / samples;
+        if (level < 1) level = 1; // see the waterfall progress
+        if (level > 100) level = 100;
+
+        if (level > bestLevel) {
+            bestLevel = level;
+            bestChannel = ch;
+        }
+
+        // Update title with best channel
+        if (bestChannel >= 0 && bestLevel > 1) {
+            title = "Peak: CH" + std::to_string(bestChannel) +
+                    " (" + std::to_string(2400 + bestChannel) + "MHz)";
+        } else {
+            title = "Peak: --";
+        }
+
+        // Draw the line for this channel
+        deviceView.drawWaterfall(
+            title,
+            0.0f,
+            125.0f,
+            "ch",
+            ch,
+            126,
+            level
+        );
+
+        ch++;
+        if (ch > 125) ch = 0;
+    }
+
+    rf24Service.stopListening();
+    rf24Service.flushRx();
+    terminalView.println("RF24 Waterfall: Stopped by user.\n");
 }
 
 /*

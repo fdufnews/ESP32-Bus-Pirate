@@ -47,6 +47,7 @@ private:
     void handleScan();
     void handleJam();
     void handleSweep();
+    void handleWaterfall();
     void handleSetChannel();
     void handleHelp();
 
