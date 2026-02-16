@@ -331,6 +331,7 @@ void HelpShell::cmdWifi() {
         "disconnect           - Disconnect from Wi-Fi",
         "ap <ssid> <password> - Set access point",
         "ap spam              - Spam random beacons",
+        "flood [channel]      - Flood channel with packets",
         "ssh <h> <u> <p> [p]  - Open SSH session",
         "telnet <host> [port] - Open telnet session",
         "nc <host> <port>     - Open netcat session",

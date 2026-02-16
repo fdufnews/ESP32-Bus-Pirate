@@ -36,12 +36,12 @@ static const char* const autoCompleteWords[] = {
     "pair","spoof","status","server",
 
     // --- WIFI ---
-    "connect","probe","deauth","disconnect","ap",
-    "ssh","telnet","nc","nmap","modbus",
-    "http","lookup","webui",
+    "connect","probe","deauth","disconnect","ap", "ap spam",
+    "ssh","telnet","nc","nmap","modbus", "repeater",
+    "http","lookup","webui", "flood",
 
     // --- JTAG ---
-    "swd","jtag",
+    "scan swd","scan jtag",
 
     // --- I2S ---
     "play","test",

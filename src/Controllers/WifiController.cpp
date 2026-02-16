@@ -26,6 +26,7 @@ void WifiController::handleCommand(const TerminalCommand &cmd)
     else if (root == "http") handleHttp(cmd);
     else if (root == "lookup") handleLookup(cmd);
     else if (root == "discovery") handleDiscovery(cmd);
+    else if (root == "flood") handleFlood(cmd);
     else if (root == "repeater") handleRepeater(cmd);  
     else if (root == "reset") handleReset();
     else if (root == "deauth") handleDeauth(cmd);
@@ -299,7 +300,7 @@ void WifiController::handleApSpam()
     terminalView.println("WiFi: Starting beacon spam... Press [ENTER] to stop.");
     while (true)
     {
-        beaconCreate(""); // func from Vendors/wifi_atks.h
+        beaconCreate("", 0); // func from Vendors/wifi_atks.h
 
         // Enter press to stop
         char key = terminalInput.readChar();
@@ -614,6 +615,41 @@ void WifiController::handleRepeater(const TerminalCommand& cmd)
     terminalView.println("  Max connections  : " + std::to_string(maxConn));
     terminalView.println("\n  Use 'repeater stop' to stop.");
     terminalView.println("");
+}
+
+/*
+Flood
+*/
+void WifiController::handleFlood(const TerminalCommand& cmd)
+{   
+    // Channel
+    uint8_t channel = 0;
+    if (cmd.getSubcommand().empty()) {
+        // prompt for channel
+        channel = userInputManager.readValidatedUint8("Enter channel to flood (1-14)", 1, 1, 14);
+    } else {
+        // parse channel from subcommand
+        if (argTransformer.isValidNumber(cmd.getSubcommand())) {
+            channel = argTransformer.toUint8(cmd.getSubcommand());
+            if (channel < 1 || channel > 14) {
+                terminalView.println("Invalid channel. Must be between 1 and 14.");
+                return;
+            }
+        } else {
+            terminalView.println("Usage: flood [channel]");
+            return;
+        }
+    }
+     
+    terminalView.println("\nWiFi Flood: Starting on channel " + std::to_string(channel) + "... Press [ENTER] to stop.");
+
+    while (true) {
+        char c = terminalInput.readChar();
+        if (c == '\r' || c == '\n') break;
+        beaconCreate("", channel); // func from Vendors/wifi_atks.h
+     }
+
+    terminalView.println("WiFi Flood: Stopped by user.\n");
 }
 
 /*

@@ -70,6 +70,9 @@ private:
     // Routing traffic between STA and AP
     void handleRepeater(const TerminalCommand& cmd);
 
+    // Flood a WiFi channel
+    void handleFlood(const TerminalCommand& cmd);
+
     // Reset Wi-Fi configuration
     void handleReset();
 
