@@ -22,9 +22,13 @@ bool SubGhzService::configure(SPIClass& spi, uint8_t sck, uint8_t miso, uint8_t 
     
     #endif
 
-    ELECHOUSE_cc1101.setSPIinstance(&spi);
-
+    // SPI
+    spi.end();
+    delay(10);
+    spi.begin(sck_, miso_, mosi_, ss_);
+    
     // Initialize CC1101
+    ELECHOUSE_cc1101.setSPIinstance(&spi);
     ELECHOUSE_cc1101.setSpiPin(sck_, miso_, mosi_, ss_);
     ELECHOUSE_cc1101.setGDO0(gdo0_);
     ELECHOUSE_cc1101.Init();
