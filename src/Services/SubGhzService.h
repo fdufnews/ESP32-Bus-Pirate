@@ -35,6 +35,7 @@ public:
     std::vector<std::string> getSupportedBand() const;
     std::vector<float> getSupportedFreq(const std::string& band) const;
     void setScanBand(const std::string& bandName);
+    uint32_t getRxTickPerUs() const;
 
     // RMT raw sniffer
     bool startRawSniffer(int pin);
@@ -85,7 +86,9 @@ private:
     std::vector<rmt_symbol_word_t> rx_buf_;
     volatile size_t last_symbols_ = 0;
     volatile bool rx_done_ = false;
-    
+    uint32_t rx_resolution_hz_ = 0;
+    uint32_t rx_tick_per_us_   = 0;
+
     // Tembed S3 CC1101 specific
     void initTembed();
     void selectRfPathFor(float mhz);
