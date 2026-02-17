@@ -32,7 +32,7 @@ void Rf24Controller::ensureConfigured() {
     uint8_t sck = state.getRf24SckPin();
     uint8_t miso = state.getRf24MisoPin();
     uint8_t mosi = state.getRf24MosiPin();
-    rf24Service.configure(csn, ce, sck, miso, mosi);
+    rf24Service.configure(csn, ce, sck, miso, mosi, deviceView.getSharedSpiInstance());
 }
 
 /*
@@ -366,7 +366,7 @@ void Rf24Controller::handleConfig() {
     state.setRf24MosiPin(mosi);
     state.setRf24CePin(ce);
 
-    bool ok = rf24Service.configure(csn, ce, sck, miso, mosi);
+    bool ok = rf24Service.configure(csn, ce, sck, miso, mosi, deviceView.getSharedSpiInstance());
 
     configured = true; // consider configured even if not detected to avoid re-asking
     terminalView.println(ok ? "\n ✅ NRF24 detected and configured.\n" : "\n ❌ NRF24 not detected. Check wiring.\n");

@@ -14,6 +14,7 @@ public:
         uint8_t sckPin,
         uint8_t misoPin,
         uint8_t mosiPin,
+        SPIClass& spi,
         uint32_t spiSpeed = 10000000
     );
 
