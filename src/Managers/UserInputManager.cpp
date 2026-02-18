@@ -597,3 +597,38 @@ float UserInputManager::readValidatedFloat(const std::string& label,
     }
 }
 
+std::string UserInputManager::readValidatedNumericCode(const std::string& label,
+                                                       const std::string& def,
+                                                       size_t minLen,
+                                                       size_t maxLen)
+{
+    if (minLen > maxLen) std::swap(minLen, maxLen);
+
+    while (true) {
+        std::string val = readString(label, def);
+
+        // User pressed ENTER, keep default value
+        if (val.empty()) {
+            return def;
+        }
+
+        // Length check
+        if (val.size() < minLen || val.size() > maxLen) {
+            terminalView.println("Invalid length. Expected " +
+                                 std::to_string(minLen) + " to " +
+                                 std::to_string(maxLen) + " digits.");
+            continue;
+        }
+
+        // Digit-only check (inline, no helper)
+        bool ok = std::all_of(val.begin(), val.end(),
+                              [](char c){ return c >= '0' && c <= '9'; });
+
+        if (!ok) {
+            terminalView.println("Invalid format. Digits only (0-9).");
+            continue;
+        }
+
+        return val;
+    }
+}

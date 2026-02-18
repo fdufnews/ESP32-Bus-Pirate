@@ -28,17 +28,9 @@ public:
     uint8_t readModeNumber();
     uint8_t readValidatedPinNumber(const std::string& label, uint8_t def, uint8_t min, uint8_t max,  const std::vector<uint8_t>& forbiddenPins);
     uint8_t readValidatedPinNumber(const std::string& label, uint8_t def,  const std::vector<uint8_t>& forbiddenPins);
-    std::vector<uint8_t> readValidatedPinGroup(
-        const std::string& label,
-        const std::vector<uint8_t>& defaultPins,
-        const std::vector<uint8_t>& protectedPins
-    );
-    float readValidatedFloat(const std::string& label,
-                         float def,
-                         float min = -1e9f,
-                         float max =  1e9f
-    );
-
+    std::vector<uint8_t> readValidatedPinGroup(const std::string& label,const std::vector<uint8_t>& defaultPins,const std::vector<uint8_t>& protectedPins);
+    float readValidatedFloat(const std::string& label,float def,float min = -1e9f,float max =  1e9f);
+    std::string readValidatedNumericCode(const std::string& label,const std::string& def,size_t minLen,size_t maxLen);
     std::string readValidatedHexString(const std::string& label, size_t numBytes, bool ignoreLen = false, size_t digitsPerItem = 2);
     uint16_t readValidatedCanId(const std::string& label, uint16_t defaultValue);
     int readValidatedChoiceIndex(const std::string& label, const std::vector<std::string>& choices, int defaultIndex = 0);
