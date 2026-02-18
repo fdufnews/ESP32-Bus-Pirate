@@ -38,6 +38,8 @@ and injecting shared instances of core components
 #include "Services/Rf24Service.h"
 #include "Services/LittleFsService.h"
 #include "Services/UsbS3Service.h"
+#include "Services/CellService.h"
+#include "Services/FmService.h"
 #include "Controllers/UartController.h"
 #include "Controllers/I2cController.h"
 #include "Controllers/OneWireController.h"
@@ -60,6 +62,8 @@ and injecting shared instances of core components
 #include "Controllers/RfidController.h"
 #include "Controllers/Rf24Controller.h"
 #include "Controllers/UsbS3Controller.h"
+#include "Controllers/CellController.h"
+#include "Controllers/FmController.h"
 #include "Transformers/TerminalCommandTransformer.h"
 #include "Transformers/InstructionTransformer.h"
 #include "Transformers/ArgTransformer.h"
@@ -67,6 +71,7 @@ and injecting shared instances of core components
 #include "Transformers/WebRequestTransformer.h"
 #include "Transformers/SubGhzTransformer.h"
 #include "Transformers/ProfileTransformer.h"
+#include "Transformers/AtTransformer.h"
 #include "Managers/CommandHistoryManager.h"
 #include "Managers/BinaryAnalyzeManager.h"
 #include "Managers/UserInputManager.h"
@@ -88,6 +93,9 @@ and injecting shared instances of core components
 #include "Shells/HelpShell.h"
 #include "Shells/UartEmulationShell.h"
 #include "Shells/ProfileShell.h"
+#include "Shells/CellCallShell.h"
+#include "Shells/CellSmsShell.h"
+#include "Shells/FmBroadcastShell.h"
 #include "Config/TerminalTypeConfigurator.h"
 
 class DependencyProvider
@@ -137,6 +145,8 @@ public:
     RfidService &getRfidService();
     Rf24Service &getRf24Service();
     LittleFsService &getLittleFsService();
+    CellService &getCellService();
+    FmService &getFmService();
 
     // Controllers
     UartController &getUartController();
@@ -160,6 +170,8 @@ public:
     SubGhzController &getSubGhzController();
     RfidController &getRfidController();
     Rf24Controller &getRf24Controller();
+    CellController &getCellController();
+    FmController &getFmController();
 
     // Transformers
     TerminalCommandTransformer &getCommandTransformer();
@@ -170,6 +182,7 @@ public:
     InfraredRemoteTransformer &getInfraredTransformer();
     SubGhzTransformer &getSubGhzTransformer();
     ProfileTransformer &getProfileTransformer();
+    AtTransformer &getAtTransformer();
 
     // Managers
     CommandHistoryManager &getCommandHistoryManager();
@@ -195,6 +208,9 @@ public:
     HelpShell &getHelpShell();
     UartEmulationShell &getUartEmulationShell();
     ProfileShell &getProfileShell();
+    CellCallShell &getCellCallShell();
+    CellSmsShell &getCellSmsShell();
+    FmBroadcastShell &getFmBroadcastShell();
 
     // Selectors
     HorizontalSelector &getHorizontalSelector();
@@ -244,7 +260,9 @@ private:
     SubGhzService subGhzService;
     RfidService rfidService;
     Rf24Service rf24Service;
+    CellService cellService;
     UsbS3Service usbService;
+    FmService fmService;
 
     // Controllers
     UartController uartController;
@@ -268,6 +286,8 @@ private:
     RfidController rfidController;
     Rf24Controller rf24Controller;
     UsbS3Controller usbController;
+    CellController cellController;
+    FmController fmController;
 
     // Transformers
     TerminalCommandTransformer commandTransformer;
@@ -278,6 +298,7 @@ private:
     InfraredRemoteTransformer infraredTransformer;
     SubGhzTransformer subGhzTransformer;
     ProfileTransformer profileTransformer;
+    AtTransformer atTransformer;
 
     // Managers
     CommandHistoryManager commandHistoryManager;
@@ -303,6 +324,9 @@ private:
     HelpShell helpShell;
     UartEmulationShell uartEmulationShell;
     ProfileShell profileShell;
+    CellCallShell cellCallShell;
+    CellSmsShell cellSmsShell;
+    FmBroadcastShell fmBroadcastShell;
 
     // Selectors
     HorizontalSelector horizontalSelector;
