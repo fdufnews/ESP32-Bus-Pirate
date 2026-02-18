@@ -39,6 +39,8 @@ private:
     void cmdSubGhz();
     void cmdRfid();
     void cmdRf24();
+    void cmdFm();
+    void cmdCell();
     void cmdAll();
 
     // helpers

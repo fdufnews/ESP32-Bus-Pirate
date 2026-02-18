@@ -64,6 +64,8 @@ void HelpShell::run(ModeEnum currentMode, bool select) {
         case 18: cmdSubGhz();    break;
         case 19: cmdRfid();      break;
         case 20: cmdRf24();      break;
+        case 21: cmdFm();        break;
+        case 22: cmdCell();      break;
 
         default:
             break;
@@ -448,6 +450,34 @@ void HelpShell::cmdRf24() {
     printLines(lines, (int)(sizeof(lines) / sizeof(lines[0])));
 }
 
+void HelpShell::cmdFm() {
+    printHeader("FM");
+    static const char* const lines[] = {
+        "sweep                - Analyze frequencies",
+        "trace [freq]         - Observe frequency signal",
+        "waterfall            - Show frequency peaks",
+        "broadcast            - Create FM station",
+        "config               - Configure Si4713 settings"
+    };
+    printLines(lines, (int)(sizeof(lines) / sizeof(lines[0])));
+}
+
+void HelpShell::cmdCell() {
+    printHeader("CELL");
+    static const char* const lines[] = {
+        "modem                - Show modem info",
+        "sim                  - Show SIM card info",
+        "network              - Show network info",
+        "unlock               - Unlock SIM with PIN",
+        "sms                  - SMS operations",
+        "call                 - Call operations",
+        "ussd [code]          - Send USSD code",
+        "setmode              - Set modem mode",
+        "config               - Configure modem settings"
+    };
+    printLines(lines, (int)(sizeof(lines) / sizeof(lines[0])));
+}
+
 void HelpShell::cmdAll() {
     cmdOneWire();
     cmdUart();
@@ -469,4 +499,6 @@ void HelpShell::cmdAll() {
     cmdSubGhz();
     cmdRfid();
     cmdRf24();
+    cmdFm();
+    cmdCell();
 }
