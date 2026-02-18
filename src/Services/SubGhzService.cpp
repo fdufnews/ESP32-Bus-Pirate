@@ -51,8 +51,6 @@ void SubGhzService::tune(float mhz)
     selectRfPathFor(mhz_);
 
     #endif
- 
-    delay(2);
 }
 
 int SubGhzService::measurePeakRssi(uint32_t holdMs)
@@ -115,6 +113,10 @@ void SubGhzService::setScanBand(const std::string& s) {
     }
 }
 
+uint32_t SubGhzService::getRxTickPerUs() const {
+    return rx_tick_per_us_;
+}
+
 // Raw sniffer
 
 bool IRAM_ATTR SubGhzService::on_rx_done(rmt_channel_handle_t,
@@ -137,6 +139,10 @@ bool SubGhzService::startRawSniffer(int pin) {
     cfg.flags.invert_in = false;
     cfg.flags.with_dma  = true;
     cfg.mem_block_symbols = 256;            // simple & safe (pair)
+
+    rx_resolution_hz_ = cfg.resolution_hz;
+    rx_tick_per_us_   = (rx_resolution_hz_ / 1000000U);
+    if (rx_tick_per_us_ == 0) rx_tick_per_us_ = 1;
 
     esp_err_t err = rmt_new_rx_channel(&cfg, &rx_chan_);
     if (err != ESP_OK || !rx_chan_) {

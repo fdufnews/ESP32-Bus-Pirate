@@ -92,6 +92,9 @@ private:
     // Load .sub files
     void handleLoad();
 
+    // Record raw signals to .sub files
+    void handleRecord();
+
     // Convert RSSI to audio
     void handleListen();
 

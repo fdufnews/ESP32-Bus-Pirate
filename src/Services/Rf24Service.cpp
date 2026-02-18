@@ -6,6 +6,7 @@ bool Rf24Service::configure(
         uint8_t sckPin,
         uint8_t misoPin,
         uint8_t mosiPin,
+        SPIClass& spi,
         uint32_t spiSpeed
     ) {
     cePin_ = cePin;
@@ -16,12 +17,12 @@ bool Rf24Service::configure(
     spiSpeed_ = spiSpeed;
 
     if (radio_) delete radio_;
-    SPI.end();
+    spi.end();
     delay(10);
-    SPI.begin(sckPin_, misoPin_, mosiPin_, csnPin);
+    spi.begin(sckPin_, misoPin_, mosiPin_, csnPin_);
     
     radio_ = new RF24(cePin_, csnPin_);
-    if (!radio_ || !radio_->begin(&SPI)) return false;
+    if (!radio_ || !radio_->begin(&spi)) return false;
     isInitialized = true;
     return true;
 }

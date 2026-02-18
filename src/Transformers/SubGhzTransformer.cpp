@@ -2,6 +2,7 @@
 #include <sstream>
 #include <algorithm>
 #include <cctype>
+#include <iomanip>
 
 bool SubGhzTransformer::isValidSubGhzFile(const std::string& content) {
     if (content.empty()) return false;
@@ -113,6 +114,78 @@ std::vector<SubGhzFileCommand> SubGhzTransformer::transformFromFileFormat(const 
                      out, sourcePath);
 
     return out;
+}
+
+std::string SubGhzTransformer::transformToFileFormat(const SubGhzFileCommand& cmd) {
+    std::ostringstream os;
+
+    const std::string protoStr = SubGhzProtocolEnumMapper::toString(cmd.protocol);
+    const bool isRaw = (cmd.protocol == SubGhzProtocolEnum::RAW);
+
+    // Header
+    os << "Filetype: " << (isRaw ? "Flipper SubGhz RAW File" : "Flipper SubGhz Key File") << "\n";
+    os << "Version: 1\n";
+    if (cmd.frequency_hz)      os << "Frequency: " << cmd.frequency_hz << "\n";
+    if (!cmd.preset.empty())   os << "Preset: " << cmd.preset << "\n";
+    os << "Protocol: " << protoStr << "\n";
+    if (cmd.te_us)             os << "TE: " << cmd.te_us << "\n";
+
+    // RAW
+    if (cmd.protocol == SubGhzProtocolEnum::RAW) {
+        // Split every N timings to avoid gigantic lines 
+        constexpr size_t perLine = 200;
+        size_t n = 0;
+
+        os << "RAW_Data: ";
+        for (size_t i = 0; i < cmd.raw_timings.size(); ++i) {
+            int32_t v = cmd.raw_timings[i];
+
+            if (n && (n % perLine) == 0) os << "\nRAW_Data: ";
+            if (n && (n % perLine) != 0) os << " ";
+            os << (int)v;
+            ++n;
+        }
+        os << "\n";
+        return os.str();
+    }
+
+    // BinRAW
+    if (cmd.protocol == SubGhzProtocolEnum::BinRAW) {
+        if (cmd.bits) os << "Bit: " << cmd.bits << "\n";
+
+        // Data_RAW hex bytes, split every 32 bytes
+        constexpr size_t bytesPerLine = 32;
+        os << "Data_RAW: ";
+        for (size_t i = 0; i < cmd.bitstream_bytes.size(); ++i) {
+            if (i && (i % bytesPerLine) == 0) os << "\nData_RAW: ";
+            else if (i) os << " ";
+
+            os << std::uppercase << std::hex << std::setw(2) << std::setfill('0')
+               << (int)cmd.bitstream_bytes[i]
+               << std::dec;
+        }
+        os << "\n";
+        return os.str();
+    }
+
+    // RcSwitch / Princeton / Unknown (Key File style)
+    if (cmd.bits) os << "Bit: " << cmd.bits << "\n";
+
+    if (cmd.key) {
+        // Key as 8 bytes big endian: "AA BB CC ..."
+        uint64_t k = cmd.key;
+        uint8_t b[8];
+        for (int i = 7; i >= 0; --i) { b[i] = (uint8_t)(k & 0xFFu); k >>= 8; }
+
+        os << "Key: ";
+        for (int i = 0; i < 8; ++i) {
+            if (i) os << " ";
+            os << std::uppercase << std::hex << std::setw(2) << std::setfill('0') << (int)b[i] << std::dec;
+        }
+        os << "\n";
+    }
+
+    return os.str();
 }
 
 void SubGhzTransformer::flushAccumulated(

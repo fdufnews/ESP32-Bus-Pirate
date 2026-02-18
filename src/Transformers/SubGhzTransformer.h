@@ -34,6 +34,9 @@ public:
     // Transform from .sub file content to commands
     std::vector<SubGhzFileCommand> transformFromFileFormat(const std::string& fileContent, const std::string& sourcePath = {});
 
+    // Transform from commands to .sub file content
+    std::string transformToFileFormat(const SubGhzFileCommand& cmd);
+
     // Extract readable summaries of commands
     std::vector<std::string> extractSummaries(const std::vector<SubGhzFileCommand>& cmds);
 

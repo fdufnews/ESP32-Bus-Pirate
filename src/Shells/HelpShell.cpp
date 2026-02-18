@@ -413,6 +413,7 @@ void HelpShell::cmdSubGhz() {
         "bruteforce           - Bruteforce 12 bit keys",
         "trace                - Observe RX signal trace",
         "waterfall            - Show frequency peaks",
+        "record               - Record frame to .sub file",
         "load                 - Load .sub files from FS",
         "listen               - RSSI to audio mapping",
         "setfrequency         - Set operating frequency",
