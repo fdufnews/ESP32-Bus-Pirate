@@ -160,6 +160,12 @@ void ActionDispatcher::dispatchCommand(const TerminalCommand& cmd) {
         case ModeEnum::RF24_:
             provider.getRf24Controller().handleCommand(cmd);
             break;
+        case ModeEnum::FM:
+            provider.getFmController().handleCommand(cmd);
+            break;
+        case ModeEnum::CELL:
+            provider.getCellController().handleCommand(cmd);
+            break;
     }
 
    // Handled in specific mode, we need to rerender the pinout view
@@ -572,6 +578,23 @@ void ActionDispatcher::setCurrentMode(ModeEnum newMode) {
                 "CSN GPIO " + std::to_string(state.getRf24CsnPin()),
                 "SCK GPIO " + std::to_string(state.getRf24SckPin()),
                 "MOSI GPIO " + std::to_string(state.getRf24MosiPin())
+            });
+            break;
+        case ModeEnum::FM:
+            provider.getFmController().ensureConfigured();
+            config.setMappings({
+                "SDA GPIO " + std::to_string(state.getTwoWireIoPin()),
+                "SCL GPIO " + std::to_string(state.getTwoWireClkPin()),
+                "RST GPIO " + std::to_string(state.getTwoWireRstPin()),
+                "Module Si4713"
+            });
+            break;
+        case ModeEnum::CELL:
+            provider.getCellController().ensureConfigured();
+            config.setMappings({
+                "RX GPIO " + std::to_string(state.getUartRxPin()),
+                "TX GPIO " + std::to_string(state.getUartTxPin()),
+                "BAUD " + std::to_string(state.getUartBaudRate()),
             });
             break;
     }
