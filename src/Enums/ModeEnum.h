@@ -28,6 +28,8 @@ enum class ModeEnum {
     SUBGHZ,
     RFID,
     RF24_,
+    FM,
+    CELL,
     COUNT
 };
 
@@ -55,7 +57,9 @@ public:
         {ModeEnum::ETHERNET,   "ETHERNET"},
         {ModeEnum::SUBGHZ,     "SUBGHZ"},
         {ModeEnum::RFID,       "RFID"},
-        {ModeEnum::RF24_,       "RF24"}
+        {ModeEnum::RF24_,      "RF24"},
+        {ModeEnum::FM,         "FM"},
+        {ModeEnum::CELL,       "CELL"}
     };
 
     static std::string toString(ModeEnum proto) {
