@@ -55,7 +55,15 @@ void GuideShell::cmdQuickStart() {
     terminalView.println("    read 0x3C 0x00");
     terminalView.println("");
     terminalView.println("    dump <addr> [len]");
-    terminalView.println("    dump 0x50 256");
+    terminalView.println("    dump 0x50");
+    terminalView.println("");
+
+    terminalView.println("Pipeline commands:");
+    terminalView.println("  Chain multiple commands with '||'.");
+    terminalView.println("");
+    terminalView.println("  Example: (delay us)");
+    terminalView.println("    set 1 H || delay 1000 || set 1 L");
+    terminalView.println("    mode i2c || ping 0x63 || health 0x63");
     terminalView.println("");
 
     terminalView.println("Shell menus:");
