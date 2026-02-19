@@ -156,6 +156,17 @@ std::vector<ByteCode> InstructionTransformer::transformByteCodes(const std::vect
     return allByteCodes;
 }
 
+bool InstructionTransformer::isInstructionCommand(const std::string& raw) const {
+    if (raw.empty()) return false;
+
+    // Trim
+    size_t start = raw.find_first_not_of(" \t\r\n");
+    if (start == std::string::npos) return false;
+
+    char first = raw[start];
+    return (first == '[' || first == '>' || first == '{');
+}
+
 bool InstructionTransformer::isHex(const std::string& token) const {
     return token.size() > 2 &&
            token[0] == '0' &&
