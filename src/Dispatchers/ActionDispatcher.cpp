@@ -44,25 +44,32 @@ void ActionDispatcher::run() {
 /*
 Dispatch
 */
-void ActionDispatcher::dispatch(const std::string& raw) {    
+void ActionDispatcher::dispatch(const std::string& raw) {
     if (raw.empty()) return;
-    
-    char first = raw[0];
 
     // Instructions
-    if (first == '[' || first == '>' || first == '{') {
-        std::vector<Instruction> instructions = provider.getInstructionTransformer().transform(raw);
+    if (provider.getInstructionTransformer().isInstructionCommand(raw)) {
+        auto instructions = provider.getInstructionTransformer().transform(raw);
         dispatchInstructions(instructions);
         return;
     }
 
     // Macros
-    if (first == '(') {
+    if (provider.getCommandTransformer().isMacroCommand(raw)) {
         provider.getTerminalView().println("Macros Not Yet Implemented.");
         return;
     }
 
-    // Terminal Command
+    // Pipeline terminal commands
+    if (provider.getCommandTransformer().isPipelineCommand(raw)) {
+        auto cmds = provider.getCommandTransformer().transformMany(raw);
+        for (auto& cmd : cmds) {
+            dispatchCommand(cmd);
+        }
+        return;
+    }
+
+    // Single terminal command
     TerminalCommand cmd = provider.getCommandTransformer().transform(raw);
     dispatchCommand(cmd);
 }
