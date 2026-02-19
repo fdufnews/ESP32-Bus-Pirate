@@ -88,9 +88,9 @@ void ActionDispatcher::dispatchCommand(const TerminalCommand& cmd) {
     }
 
     // Global command (help, logic, mode, P, p...)
-    if (provider.getUtilityController().isGlobalCommand(cmd)) {
+    if (provider.getCommandTransformer().isGlobalCommand(cmd)) {
         provider.getUtilityController().handleCommand(cmd);
-        if (provider.getUtilityController().isScreenCommand(cmd)) {
+        if (provider.getCommandTransformer().isScreenCommand(cmd)) {
             // hack to rerender the pinout view after logic/analogic cmd
             setCurrentMode(state.getCurrentMode());
         } 
@@ -176,7 +176,7 @@ void ActionDispatcher::dispatchCommand(const TerminalCommand& cmd) {
     }
 
    // Handled in specific mode, we need to rerender the pinout view
-   if (provider.getUtilityController().isScreenCommand(cmd)) {
+   if (provider.getCommandTransformer().isScreenCommand(cmd)) {
        setCurrentMode(state.getCurrentMode());
    }
 }

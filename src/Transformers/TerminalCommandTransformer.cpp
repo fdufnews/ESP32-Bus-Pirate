@@ -98,6 +98,23 @@ bool TerminalCommandTransformer::isMacroCommand(const std::string& raw) const {
     return raw[start] == '(';
 }
 
+bool TerminalCommandTransformer::isGlobalCommand(const TerminalCommand& cmd) const {
+    std::string root = cmd.getRoot();
+
+    return  root == "mode"  || root == "m" || root == "l" ||
+            root == "logic" || root == "analogic" || root == "P" || root == "p" || 
+            root == "system" || root == "sys" || root == "guide" || root == "man" || root == "wizard" ||
+            root == "help" || root == "h" || root == "?" || root == "hex" || root == "dec" ||
+            root == "profile" || root == "delay" || root == "d";
+}
+
+bool TerminalCommandTransformer::isScreenCommand(const TerminalCommand& cmd) const {
+   return cmd.getRoot() == "config" || cmd.getRoot() == "setprotocol" || cmd.getRoot() == "trace"
+       || cmd.getRoot() == "pullup" || cmd.getRoot() == "pulldown" || cmd.getRoot() == "reset"
+       || cmd.getRoot() == "swap" || cmd.getRoot() == "logic" || cmd.getRoot() == "analogic"
+       || cmd.getRoot() == "waterfall";
+}
+
 std::string TerminalCommandTransformer::normalizeRaw(const std::string& raw) const {
     // trim global
     size_t start = raw.find_first_not_of(" \t\r\n");

@@ -52,12 +52,6 @@ public:
     // Load and save pin profiles
     void handleProfile();
 
-    // Check if a command is a global utility command
-    bool isGlobalCommand(const TerminalCommand& cmd);
-
-    // Check if a command is related to screen operations
-    bool isScreenCommand(const TerminalCommand& cmd);
-
 private:
     // Display help for utility commands
     void handleHelp();
