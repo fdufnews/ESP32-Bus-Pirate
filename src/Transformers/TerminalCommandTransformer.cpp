@@ -27,6 +27,77 @@ TerminalCommand TerminalCommandTransformer::transform(const std::string& raw) co
     return cmd;
 }
 
+std::vector<TerminalCommand> TerminalCommandTransformer::transformMany(const std::string& raw) const {
+    std::vector<TerminalCommand> result;
+
+    // Trim 
+    size_t start = raw.find_first_not_of(" \t\r\n");
+    if (start == std::string::npos) return result;
+    size_t end = raw.find_last_not_of(" \t\r\n");
+    std::string line = raw.substr(start, end - start + 1);
+
+    // Just one command
+    if (line.find("||") == std::string::npos) {
+        TerminalCommand cmd = transform(line);
+        if (!cmd.getRoot().empty()) {
+            result.push_back(cmd);
+        }
+        return result;
+    }
+
+    // many, split ||
+    size_t pos = 0;
+    while (pos < line.size()) {
+        size_t next = line.find("||", pos);
+
+        std::string segment;
+        if (next == std::string::npos) {
+            segment = line.substr(pos);
+            pos = line.size();
+        } else {
+            segment = line.substr(pos, next - pos);
+            pos = next + 2;
+        }
+
+        // Trim segment
+        size_t s = segment.find_first_not_of(" \t\r\n");
+        if (s == std::string::npos) continue;
+
+        size_t e = segment.find_last_not_of(" \t\r\n");
+        segment = segment.substr(s, e - s + 1);
+
+        if (segment.empty()) continue;
+
+        TerminalCommand cmd = transform(segment);
+        if (!cmd.getRoot().empty()) {
+            result.push_back(cmd);
+        }
+    }
+
+    return result;
+}
+
+bool TerminalCommandTransformer::isPipelineCommand(const std::string& raw) const {
+    if (raw.empty()) return false;
+
+    char first = raw[0];
+    if (first == '[' || first == '>' || first == '{' || first == '(') {
+        return false;
+    }
+
+    return raw.find("||") != std::string::npos;
+}
+
+bool TerminalCommandTransformer::isMacroCommand(const std::string& raw) const {
+    if (raw.empty()) return false;
+
+    // Trim
+    size_t start = raw.find_first_not_of(" \t\r\n");
+    if (start == std::string::npos) return false;
+
+    return raw[start] == '(';
+}
+
 std::string TerminalCommandTransformer::normalizeRaw(const std::string& raw) const {
     // trim global
     size_t start = raw.find_first_not_of(" \t\r\n");
