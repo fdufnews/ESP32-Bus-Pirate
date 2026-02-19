@@ -82,6 +82,9 @@ private:
 
     // Hexadecimal converter
     void handleHex(const TerminalCommand& cmd);
+    
+    // Delay command (used for cmd pipeline)
+    void handleDelay(const TerminalCommand& cmd);
 
     ITerminalView& terminalView;
     IDeviceView& deviceView;
