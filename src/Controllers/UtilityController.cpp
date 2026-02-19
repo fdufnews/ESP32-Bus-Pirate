@@ -44,7 +44,7 @@ void UtilityController::handleCommand(const TerminalCommand& cmd) {
     else if (cmd.getRoot() == "wizard")                                          handleWizard(cmd);
     else if (cmd.getRoot() == "hex" || cmd.getRoot() == "dec")                   handleHex(cmd);
     else if (cmd.getRoot() == "profile")                                         handleProfile();
-    else if (cmd.getRoot() == "delay" || cmd.getRoot() == "d")                   handleDelay(cmd);
+    else if (cmd.getRoot() == "delay")                                           handleDelay(cmd);
     else {
         // just display commands for the mode without prompting
         helpShell.run(state.getCurrentMode(), false);
