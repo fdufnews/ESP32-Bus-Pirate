@@ -58,6 +58,9 @@ public:
     void usbHostEnd();
     static void hostClientEventCb(const usb_host_client_event_msg_t *event_msg, void *arg);
 
+
+    // Config
+    void configure(const std::string& productStr, const std::string& manufacturerStr, const std::string& serialStr, uint16_t vid, uint16_t pid);
     void reset();
 
 private:
