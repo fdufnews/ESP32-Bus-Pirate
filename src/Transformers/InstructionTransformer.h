@@ -14,6 +14,7 @@ public:
     std::vector<Instruction> transform(const std::string& raw);
     std::vector<ByteCode> transformByteCode(const Instruction& instruction);
     std::vector<ByteCode> transformByteCodes(const std::vector<Instruction>& instructions);
+    bool isInstructionCommand(const std::string& raw) const;
 
 private:
     bool isHex(const std::string& token) const;

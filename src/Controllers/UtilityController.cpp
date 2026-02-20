@@ -44,6 +44,7 @@ void UtilityController::handleCommand(const TerminalCommand& cmd) {
     else if (cmd.getRoot() == "wizard")                                          handleWizard(cmd);
     else if (cmd.getRoot() == "hex" || cmd.getRoot() == "dec")                   handleHex(cmd);
     else if (cmd.getRoot() == "profile")                                         handleProfile();
+    else if (cmd.getRoot() == "delay")                                           handleDelay(cmd);
     else {
         // just display commands for the mode without prompting
         helpShell.run(state.getCurrentMode(), false);
@@ -514,6 +515,35 @@ void UtilityController::handleHex(const TerminalCommand& cmd) {
 }
 
 /*
+Delay (cmd pipeline)
+*/
+void UtilityController::handleDelay(const TerminalCommand& cmd) {
+    std::string s = cmd.getSubcommand();
+
+    if (s.empty() || !argTransformer.isValidNumber(s)) {
+        return;
+    }
+
+    uint32_t us = argTransformer.parseHexOrDec32(s);
+
+    // small
+    if (us == 0) return;
+    if (us < 20000) {
+        delayMicroseconds((uint16_t)us);
+        return;
+    }
+
+    // long
+    uint32_t remaining = us;
+    while (remaining > 0) {
+        uint32_t chunk = (remaining > 10000) ? 10000 : remaining;
+        delayMicroseconds((uint16_t)chunk);
+        remaining -= chunk;
+        delay(0); // yield to allow other tasks to run
+    }
+}
+
+/*
 Help
 */
 void UtilityController::handleHelp() {
@@ -525,23 +555,4 @@ Profile
 */
 void UtilityController::handleProfile() {
     profileShell.run();
-}
-
-/* Helpers */
-
-bool UtilityController::isGlobalCommand(const TerminalCommand& cmd) {
-    std::string root = cmd.getRoot();
-
-    return  root == "mode"  || root == "m" || root == "l" ||
-            root == "logic" || root == "analogic" || root == "P" || root == "p" || 
-            root == "system" || root == "sys" || root == "guide" || root == "man" || root == "wizard" ||
-            root == "help" || root == "h" || root == "?" || root == "hex" || root == "dec" ||
-            root == "profile";
-}
-
-bool UtilityController::isScreenCommand(const TerminalCommand& cmd) {
-   return cmd.getRoot() == "config" || cmd.getRoot() == "setprotocol" || cmd.getRoot() == "trace"
-       || cmd.getRoot() == "pullup" || cmd.getRoot() == "pulldown" || cmd.getRoot() == "reset"
-       || cmd.getRoot() == "swap" || cmd.getRoot() == "logic" || cmd.getRoot() == "analogic"
-       || cmd.getRoot() == "waterfall";
 }

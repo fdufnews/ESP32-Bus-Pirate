@@ -44,25 +44,32 @@ void ActionDispatcher::run() {
 /*
 Dispatch
 */
-void ActionDispatcher::dispatch(const std::string& raw) {    
+void ActionDispatcher::dispatch(const std::string& raw) {
     if (raw.empty()) return;
-    
-    char first = raw[0];
 
     // Instructions
-    if (first == '[' || first == '>' || first == '{') {
-        std::vector<Instruction> instructions = provider.getInstructionTransformer().transform(raw);
+    if (provider.getInstructionTransformer().isInstructionCommand(raw)) {
+        auto instructions = provider.getInstructionTransformer().transform(raw);
         dispatchInstructions(instructions);
         return;
     }
 
     // Macros
-    if (first == '(') {
+    if (provider.getCommandTransformer().isMacroCommand(raw)) {
         provider.getTerminalView().println("Macros Not Yet Implemented.");
         return;
     }
 
-    // Terminal Command
+    // Pipeline terminal commands
+    if (provider.getCommandTransformer().isPipelineCommand(raw)) {
+        auto cmds = provider.getCommandTransformer().transformMany(raw);
+        for (auto& cmd : cmds) {
+            dispatchCommand(cmd);
+        }
+        return;
+    }
+
+    // Single terminal command
     TerminalCommand cmd = provider.getCommandTransformer().transform(raw);
     dispatchCommand(cmd);
 }
@@ -81,9 +88,9 @@ void ActionDispatcher::dispatchCommand(const TerminalCommand& cmd) {
     }
 
     // Global command (help, logic, mode, P, p...)
-    if (provider.getUtilityController().isGlobalCommand(cmd)) {
+    if (provider.getCommandTransformer().isGlobalCommand(cmd)) {
         provider.getUtilityController().handleCommand(cmd);
-        if (provider.getUtilityController().isScreenCommand(cmd)) {
+        if (provider.getCommandTransformer().isScreenCommand(cmd)) {
             // hack to rerender the pinout view after logic/analogic cmd
             setCurrentMode(state.getCurrentMode());
         } 
@@ -160,10 +167,16 @@ void ActionDispatcher::dispatchCommand(const TerminalCommand& cmd) {
         case ModeEnum::RF24_:
             provider.getRf24Controller().handleCommand(cmd);
             break;
+        case ModeEnum::FM:
+            provider.getFmController().handleCommand(cmd);
+            break;
+        case ModeEnum::CELL:
+            provider.getCellController().handleCommand(cmd);
+            break;
     }
 
    // Handled in specific mode, we need to rerender the pinout view
-   if (provider.getUtilityController().isScreenCommand(cmd)) {
+   if (provider.getCommandTransformer().isScreenCommand(cmd)) {
        setCurrentMode(state.getCurrentMode());
    }
 }
@@ -572,6 +585,23 @@ void ActionDispatcher::setCurrentMode(ModeEnum newMode) {
                 "CSN GPIO " + std::to_string(state.getRf24CsnPin()),
                 "SCK GPIO " + std::to_string(state.getRf24SckPin()),
                 "MOSI GPIO " + std::to_string(state.getRf24MosiPin())
+            });
+            break;
+        case ModeEnum::FM:
+            provider.getFmController().ensureConfigured();
+            config.setMappings({
+                "SDA GPIO " + std::to_string(state.getTwoWireIoPin()),
+                "SCL GPIO " + std::to_string(state.getTwoWireClkPin()),
+                "RST GPIO " + std::to_string(state.getTwoWireRstPin()),
+                "Module Si4713"
+            });
+            break;
+        case ModeEnum::CELL:
+            provider.getCellController().ensureConfigured();
+            config.setMappings({
+                "RX GPIO " + std::to_string(state.getUartRxPin()),
+                "TX GPIO " + std::to_string(state.getUartTxPin()),
+                "BAUD " + std::to_string(state.getUartBaudRate()),
             });
             break;
     }

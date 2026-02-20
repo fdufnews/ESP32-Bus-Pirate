@@ -37,6 +37,8 @@ DependencyProvider::DependencyProvider(ITerminalView &terminalView, IDeviceView 
       rfidService(),
       rf24Service(),
       usbService(),
+      cellService(),
+      fmService(),
 
       // Transformers
       commandTransformer(),
@@ -47,6 +49,7 @@ DependencyProvider::DependencyProvider(ITerminalView &terminalView, IDeviceView 
       infraredTransformer(),
       subGhzTransformer(),
       profileTransformer(),
+      atTransformer(),
 
       // Managers
       commandHistoryManager(),
@@ -72,6 +75,9 @@ DependencyProvider::DependencyProvider(ITerminalView &terminalView, IDeviceView 
       helpShell(terminalView, terminalInput, userInputManager),
       uartEmulationShell(terminalView, terminalInput, uartService, argTransformer, userInputManager),
       profileShell(terminalView, terminalInput, userInputManager, littleFsService, profileTransformer),
+      cellCallShell(terminalView, terminalInput, userInputManager, argTransformer, atTransformer, cellService),
+      cellSmsShell(terminalView, terminalInput, userInputManager, argTransformer, atTransformer, cellService),
+      fmBroadcastShell(terminalView, terminalInput, userInputManager, argTransformer, fmService),
 
       // Selectors
       horizontalSelector(deviceView, deviceInput),
@@ -100,7 +106,9 @@ DependencyProvider::DependencyProvider(ITerminalView &terminalView, IDeviceView 
       rfidController(terminalView, terminalInput, rfidService, userInputManager, argTransformer, helpShell),
       rf24Controller(terminalView, terminalInput, deviceView, rf24Service, pinService, argTransformer, userInputManager, helpShell),
       ethernetController(terminalView, terminalInput, deviceInput, wifiService, wifiScannerService, ethernetService, sshService, netcatService, nmapService, icmpService, nvsService, httpService, telnetService, argTransformer, jsonTransformer, userInputManager, modbusShell, helpShell),
-      usbController(terminalView, terminalInput, deviceInput, usbService, argTransformer, userInputManager, helpShell)
+      usbController(terminalView, terminalInput, deviceInput, usbService, argTransformer, userInputManager, helpShell),
+      cellController(terminalView, terminalInput, cellService, argTransformer, atTransformer, userInputManager, helpShell, cellCallShell, cellSmsShell),
+      fmController(terminalView, terminalInput, deviceView, fmService, argTransformer, userInputManager, helpShell, fmBroadcastShell)
 {
 }
 
@@ -140,6 +148,8 @@ SubGhzService &DependencyProvider::getSubGhzService() { return subGhzService; }
 RfidService &DependencyProvider::getRfidService() { return rfidService; }
 Rf24Service &DependencyProvider::getRf24Service() { return rf24Service; }
 LittleFsService &DependencyProvider::getLittleFsService() { return littleFsService; }
+CellService &DependencyProvider::getCellService() { return cellService; }
+FmService &DependencyProvider::getFmService() { return fmService; }
 
 // Controllers
 UartController &DependencyProvider::getUartController() { return uartController; }
@@ -163,6 +173,8 @@ EthernetController &DependencyProvider::getEthernetController() { return etherne
 SubGhzController &DependencyProvider::getSubGhzController() { return subGhzController; }
 RfidController &DependencyProvider::getRfidController() { return rfidController; }
 Rf24Controller &DependencyProvider::getRf24Controller() { return rf24Controller; }
+CellController &DependencyProvider::getCellController() { return cellController; }
+FmController &DependencyProvider::getFmController() { return fmController; }
 
 // Transformers
 TerminalCommandTransformer &DependencyProvider::getCommandTransformer() { return commandTransformer; }
@@ -170,6 +182,7 @@ InstructionTransformer &DependencyProvider::getInstructionTransformer() { return
 ArgTransformer &DependencyProvider::getArgTransformer() { return argTransformer; }
 WebRequestTransformer &DependencyProvider::getWebRequestTransformer() { return webRequestTransformer; }
 JsonTransformer &DependencyProvider::getJsonTransformer() { return jsonTransformer; }
+AtTransformer &DependencyProvider::getAtTransformer() { return atTransformer; }
 
 // Managers
 CommandHistoryManager &DependencyProvider::getCommandHistoryManager() { return commandHistoryManager; }
@@ -189,6 +202,15 @@ ThreeWireEepromShell &DependencyProvider::getThreeWireEepromShell() { return thr
 IbuttonShell &DependencyProvider::getIbuttonShell() { return ibuttonShell; }
 UartAtShell &DependencyProvider::getUartAtShell() { return uartAtShell; }
 SysInfoShell &DependencyProvider::getSysInfoShell() { return sysInfoShell; }
+ModbusShell &DependencyProvider::getModbusShell() { return modbusShell; }
+OneWireEepromShell &DependencyProvider::getOneWireEepromShell() { return oneWireEepromShell; }
+GuideShell &DependencyProvider::getGuideShell() { return guideShell; }
+HelpShell &DependencyProvider::getHelpShell() { return helpShell; }
+UartEmulationShell &DependencyProvider::getUartEmulationShell() { return uartEmulationShell; }
+ProfileShell &DependencyProvider::getProfileShell() { return profileShell; }
+CellCallShell &DependencyProvider::getCellCallShell() { return cellCallShell; }
+CellSmsShell &DependencyProvider::getCellSmsShell() { return cellSmsShell; }
+FmBroadcastShell &DependencyProvider::getFmBroadcastShell() { return fmBroadcastShell; }
 
 // Selectors
 HorizontalSelector &DependencyProvider::getHorizontalSelector() { return horizontalSelector; }

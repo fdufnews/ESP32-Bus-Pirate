@@ -184,6 +184,13 @@ bool ArgTransformer::isValidNumber(const std::string& input) {
     return true;
 }
 
+bool ArgTransformer::isValidFloat(const std::string& input) {
+    std::istringstream iss(input);
+    float f;
+    iss >> std::noskipws >> f;
+    return iss.eof() && !iss.fail();
+}
+
 bool ArgTransformer::isValidSignedNumber(const std::string& input) {
     if (input.empty()) return false;
 

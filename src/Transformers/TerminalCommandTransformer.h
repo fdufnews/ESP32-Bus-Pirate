@@ -1,10 +1,16 @@
 #pragma once
 #include <string>
+#include <vector>
 #include <Models/TerminalCommand.h>
 
 class TerminalCommandTransformer {
 public:
     TerminalCommand transform(const std::string& raw) const;
+    std::vector<TerminalCommand> transformMany(const std::string& raw) const;
+    bool isPipelineCommand(const std::string& raw) const;
+    bool isMacroCommand(const std::string& raw) const;
+    bool isGlobalCommand(const TerminalCommand& cmd) const; 
+    bool isScreenCommand(const TerminalCommand& cmd) const;   
 private:
     std::string normalizeRaw(const std::string& raw) const;
     void autoCorrectRoot(TerminalCommand& cmd) const;

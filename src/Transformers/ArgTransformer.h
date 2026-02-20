@@ -22,6 +22,7 @@ public:
     bool parseInt(const std::string& input, int& output);
     std::vector<std::string> splitArgs(const std::string& input);
     bool isValidNumber(const std::string& input);
+    bool isValidFloat(const std::string& input);
     uint8_t toUint8(const std::string& input);
     uint32_t toUint32(const std::string& input);
     std::string toLower(const std::string& input);
