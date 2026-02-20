@@ -162,6 +162,13 @@ private:
     size_t fileCountLimit = 512;
     size_t fileCacheLimit = 64;
 
+    // USB Default Configuration
+    std::string usbProductString = "ESP32-Bus-Pirate";
+    std::string usbManufacturerString = "Free Open Source";
+    std::string usbSerialString = "ESP32-BP-"; // TODO add MAC suffix in runtime for uniqueness
+    uint16_t usbVid = 0x303A;   // VID for USB device descriptor
+    uint16_t usbPid = 0x1001;   // PID for USB device descriptor
+
 public:
     GlobalState(const GlobalState&) = delete;
     GlobalState& operator=(const GlobalState&) = delete;
@@ -409,6 +416,19 @@ public:
     void setSdCardMosiPin(uint8_t pin) { sdCardMosiPin = pin; }
     void setSdCardFrequency(uint32_t freq) { sdCardFrequency = freq; }
 
+    // USB
+    const std::string& getUSBProductString() const { return usbProductString; }
+    const std::string& getUSBManufacturerString() const { return usbManufacturerString; }
+    const std::string& getUSBSerialString() const { return usbSerialString; }
+    uint16_t getUSBVid() const { return usbVid; }
+    uint16_t getUSBPid() const { return usbPid; }
+
+    void setUSBProductString(const std::string& productStr) { usbProductString = productStr; }
+    void setUSBManufacturerString(const std::string& manufacturerStr) { usbManufacturerString = manufacturerStr; }
+    void setUSBSerialString(const std::string& serialStr) { usbSerialString = serialStr; }
+    void setUSBVid(uint16_t vid) { usbVid = vid; }
+    void setUSBPid(uint16_t pid) { usbPid = pid; }
+    
     // SD File Limits
     size_t getFileCountLimit() const { return fileCountLimit; }
     size_t getFileCacheLimit() const { return fileCacheLimit; }
