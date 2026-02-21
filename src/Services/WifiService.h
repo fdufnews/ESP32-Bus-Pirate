@@ -84,6 +84,10 @@ public:
     std::vector<WiFiNetwork> getVulnerableNetworks(const std::vector<WiFiNetwork>& networks);
     bool isVulnerable(wifi_auth_mode_t encryption) const;
     std::string encryptionTypeToString(wifi_auth_mode_t encryption);
+    int8_t scanRssiOnChannel(uint8_t channel);
+    uint32_t countPacketsOnChannel(uint8_t channel, uint16_t dwellMs);
+    static void pktCountCb(void* buf, wifi_promiscuous_pkt_type_t);
+    inline static volatile uint32_t g_pktCount = 0; // rx callback
 
     // Sniffing passif
     void startPassiveSniffing();
@@ -101,13 +105,13 @@ public:
 
     // Client sniffer
     static void snifferCallback(void* buf, wifi_promiscuous_pkt_type_t type);
-    static std::vector<std::string> sniffLog;
-    static portMUX_TYPE sniffMux;
-    static portMUX_TYPE staMux;
-    static std::vector<std::array<uint8_t, 6>> staList;
-    static uint8_t apBSSID[6];
     static void clientSnifferCallback(void* buf, wifi_promiscuous_pkt_type_t type);
-
+    inline static std::vector<std::string> sniffLog = {};
+    inline static portMUX_TYPE sniffMux = portMUX_INITIALIZER_UNLOCKED;
+    inline static portMUX_TYPE staMux = portMUX_INITIALIZER_UNLOCKED;
+    inline static std::vector<std::array<uint8_t, 6>> staList = {};
+    inline static uint8_t apBSSID[6] = {};
+    
     // Repeater
     bool startRepeater(const std::string& staSsid,
                     const std::string& staPass,
