@@ -4,6 +4,7 @@
 #include <string>
 #include "Interfaces/ITerminalView.h"
 #include "Interfaces/IInput.h"
+#include "Interfaces/IDeviceView.h"
 #include "Services/WifiService.h"
 #include "Services/WifiOpenScannerService.h"
 #include "Services/EthernetService.h"
@@ -27,7 +28,8 @@ class ANetworkController {
 public:
 
     ANetworkController(
-        ITerminalView& terminalView, 
+        ITerminalView& terminalView,
+        IDeviceView& deviceView,
         IInput& terminalInput, 
         IInput& deviceInput,
         WifiService& wifiService, 
@@ -69,6 +71,7 @@ protected:
 
 protected:
     ITerminalView&     terminalView;
+    IDeviceView&       deviceView;
     IInput&            terminalInput;
     IInput&            deviceInput;
 

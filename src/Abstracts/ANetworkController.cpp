@@ -5,6 +5,7 @@ Constructor
 */
 ANetworkController::ANetworkController(
     ITerminalView& terminalView, 
+    IDeviceView& deviceView,
     IInput& terminalInput, 
     IInput& deviceInput,
     WifiService& wifiService, 
@@ -24,6 +25,7 @@ ANetworkController::ANetworkController(
     HelpShell& helpShell
 )
 : terminalView(terminalView),
+  deviceView(deviceView),
   terminalInput(terminalInput),
   deviceInput(deviceInput),
   wifiService(wifiService),

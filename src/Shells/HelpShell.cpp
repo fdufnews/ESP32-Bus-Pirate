@@ -324,6 +324,7 @@ void HelpShell::cmdWifi() {
         "ping <host>          - Ping a remote host",
         "discovery            - Discover network devices",
         "sniff                - Monitor Wi-Fi packets",
+        "waterfall            - Show channel activity",
         "probe                - Search for net access",
         "repeater             - Forward Wi-Fi traffic",
         "spoof ap <mac>       - Spoof AP MAC",

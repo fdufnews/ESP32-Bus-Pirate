@@ -76,6 +76,9 @@ private:
     // Reset Wi-Fi configuration
     void handleReset();
 
+    // Waterfall scan
+    void handleWaterfall();
+
     // Ask config for Wi-Fi
     void handleConfig();
 
