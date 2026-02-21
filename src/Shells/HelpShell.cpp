@@ -466,9 +466,11 @@ void HelpShell::cmdCell() {
     printHeader("CELL");
     static const char* const lines[] = {
         "modem                - Show modem info",
-        "sim                  - Show SIM card info",
         "network              - Show network info",
+        "operator             - Show available operators",
+        "sim                  - Show SIM card info",
         "unlock               - Unlock SIM with PIN",
+        "phonebook            - Show SIM phonebook",
         "sms                  - SMS operations",
         "call                 - Call operations",
         "ussd [code]          - Send USSD code",
