@@ -62,7 +62,6 @@ int PinService::readAnalog(uint8_t pin) {
 bool PinService::setupPwm(uint8_t pin, uint32_t freq, uint8_t dutyPercent) {
     if (dutyPercent > 100) dutyPercent = 100;
 
-    uint8_t channel = pin % 8;
 
     uint8_t resolutionBits;
     if (freq > 300000) {
@@ -77,24 +76,23 @@ bool PinService::setupPwm(uint8_t pin, uint32_t freq, uint8_t dutyPercent) {
         resolutionBits = 10;
     }
 
-    if (!ledcAttachChannel(pin, freq, resolutionBits, channel)) {
+    if (!ledcAttach(pin, freq, resolutionBits)) {
         return false;
     }
 
     uint32_t dutyMax = (1UL << resolutionBits) - 1;
     uint32_t dutyVal = (uint32_t(dutyPercent) * dutyMax) / 100U;
-    ledcWrite(channel, dutyVal);
+    ledcWrite(pin, dutyVal);
 
     return true;
 }
 
 void PinService::setServoAngle(uint8_t pin, uint8_t angle) {
-  const int channel = 0;
   const int freq = 50; // Hz
   const int resolution = 14;  // max stable
 
   // setup et attach
-  ledcAttachChannel(pin, freq, resolution, channel);
+  ledcAttach(pin, freq, resolution);
 
   // period and duty
   const uint32_t periodUs = 1000000UL / freq;    // 20000 us
@@ -104,7 +102,7 @@ void PinService::setServoAngle(uint8_t pin, uint8_t angle) {
   uint32_t pulseUs = map(angle, 0, 180, 1000, 2000);
   uint32_t dutyVal = (pulseUs * dutyMax) / periodUs;
 
-  ledcWrite(channel, dutyVal);
+  ledcWrite(pin, dutyVal);
 }
 
 PinService::pullType PinService::getPullType(uint8_t pin){
