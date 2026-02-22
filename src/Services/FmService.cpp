@@ -57,6 +57,20 @@ void FmService::stop() {
     isRunning_ = false;
 }
 
+void FmService::reset() {
+    if (!isInitialized_ || !radio_) return;
+
+    // Hard reset via reset pin
+    radio_->reset();
+
+    // Reset state
+    isRunning_ = false;
+    frequency10kHz_ = 0;
+    txPower_ = 0;
+    isRdsEnabled_ = false;
+    isTaEnabled_ = false;
+}
+
 bool FmService::setTxPower(uint8_t dbuV, uint8_t antCap) {
     if (!isInitialized_ || !radio_) return false;
     radio_->setTXpower(dbuV, antCap);
