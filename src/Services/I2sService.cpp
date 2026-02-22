@@ -34,7 +34,7 @@ inline void I2sService::writeStereo16(int16_t s) {
     i2s.write((uint8_t)((s >> 8) & 0xFF));
 }
 
-void I2sService::configureOutput(uint8_t bclk, uint8_t lrck, uint8_t dout, uint32_t sampleRate, uint8_t bits) {
+void I2sService::configureOutput(uint8_t bclk, uint8_t lrck, uint8_t dout, uint32_t sampleRate, uint8_t bits, uint32_t level) {
     end();
 
 #if defined(DEVICE_CARDPUTER) || defined(DEVICE_STICKS3)
@@ -58,6 +58,7 @@ void I2sService::configureOutput(uint8_t bclk, uint8_t lrck, uint8_t dout, uint3
     bitsPerSample = bits;
     sampleRateHz = sampleRate;
     isTx = true;
+    maxLevel = level;
     initialized = true;
 }
 
@@ -98,7 +99,7 @@ void I2sService::playTone(uint32_t /*sampleRate*/, uint16_t freq, uint16_t durat
 
     static constexpr size_t FRAMES = 256; 
     int16_t buf[FRAMES * 2];
-    const int16_t amp = 32767;
+    const int32_t amp = maxLevel;
 
     const uint32_t totalFrames = (sr * (uint32_t)durationMs) / 1000UL;
     uint32_t done = 0;
@@ -130,7 +131,7 @@ void I2sService::playToneInterruptible(uint32_t /*sampleRate*/, uint16_t freq, u
 
     static constexpr size_t FRAMES = 256;
     int16_t buf[FRAMES * 2];
-    const int16_t amp = 32767;
+    const int16_t amp = maxLevel;
 
     const uint32_t totalFrames = (sr * durationMs) / 1000UL;
     uint32_t done = 0;
@@ -161,8 +162,15 @@ void I2sService::playPcm(const int16_t* data, size_t numBytes) {
 
     const size_t sampleCount = numBytes / sizeof(int16_t);
 
+    uint32_t level = 1 << (bitsPerSample) - 1;
+    uint8_t shift = 0;
+    while(level > maxLevel){
+        level = level >> 1;
+        shift++;
+    }
+    
     for (size_t i = 0; i < sampleCount; i++) {
-        int16_t s = data[i];
+        int16_t s = shift>0? data[i] >> shift : data[i];
         writeStereo16(s);
     }
 }
