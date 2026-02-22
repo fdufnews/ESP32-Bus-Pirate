@@ -47,7 +47,8 @@ public:
 
     // Init client
     void init(const std::string& deviceName = "Bus-Pirate-Bluetooth");
-    
+    void deinit();
+
     // Pair as client
     void pairWithAddress(const std::string& addrStr);      // pair <addr>
 
