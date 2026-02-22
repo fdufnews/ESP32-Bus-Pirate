@@ -55,7 +55,9 @@ public:
                                               uint32_t minEdges = 10,
                                               bool pullup = true);
     uint32_t detectBaudByEdge(uint8_t pin, uint32_t totalMs = 5000, uint32_t windowMs = 300, uint32_t minEdges = 30, bool pullup = true);
-
+    std::vector<uint32_t> getBaudList() const { 
+        return std::vector<uint32_t>(kBaudRates, kBaudRates + kBaudRatesCount); 
+    }
 private:
     XModem xmodem;
     static File* currentFile;
