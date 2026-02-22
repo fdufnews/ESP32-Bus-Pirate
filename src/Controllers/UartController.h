@@ -10,6 +10,7 @@
 #include "Services/SdService.h"
 #include "Interfaces/ITerminalView.h"
 #include "Interfaces/IInput.h"
+#include "Interfaces/IDeviceView.h"
 #include "States/GlobalState.h"
 #include "Transformers/ArgTransformer.h"
 #include "Managers/UserInputManager.h"
@@ -22,6 +23,7 @@ public:
     // Constructor
     UartController(ITerminalView& terminalView, 
                    IInput& terminalInput,
+                   IDeviceView& deviceView,
                    IInput& deviceInput,
                    UartService& uartService, 
                    SdService& sdService,
@@ -94,6 +96,7 @@ private:
     void handleTrigger(const TerminalCommand& cmd);
     
     ITerminalView& terminalView;
+    IDeviceView& deviceView;
     IInput& terminalInput;
     IInput& deviceInput;
     UartService& uartService;
