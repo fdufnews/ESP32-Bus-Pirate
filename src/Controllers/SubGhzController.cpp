@@ -779,6 +779,7 @@ void SubGhzController::handleRecord() {
 
         // Save or discard
         if (!userInputManager.readYesNo("Save this frame?", true)) {
+            subGhzService.readRawFrame(); // clear buffer for next frame
             terminalView.println("Waiting for next frame... Press [ENTER] to stop.\n");
             continue;
         }
