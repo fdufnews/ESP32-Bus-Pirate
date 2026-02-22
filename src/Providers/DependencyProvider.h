@@ -72,6 +72,7 @@ and injecting shared instances of core components
 #include "Transformers/SubGhzTransformer.h"
 #include "Transformers/ProfileTransformer.h"
 #include "Transformers/AtTransformer.h"
+#include "Transformers/PinoutTransformer.h"
 #include "Managers/CommandHistoryManager.h"
 #include "Managers/BinaryAnalyzeManager.h"
 #include "Managers/UserInputManager.h"
@@ -183,6 +184,7 @@ public:
     SubGhzTransformer &getSubGhzTransformer();
     ProfileTransformer &getProfileTransformer();
     AtTransformer &getAtTransformer();
+    PinoutTransformer &getPinoutTransformer();
 
     // Managers
     CommandHistoryManager &getCommandHistoryManager();
@@ -299,6 +301,7 @@ private:
     SubGhzTransformer subGhzTransformer;
     ProfileTransformer profileTransformer;
     AtTransformer atTransformer;
+    PinoutTransformer pinoutTransformer;
 
     // Managers
     CommandHistoryManager commandHistoryManager;

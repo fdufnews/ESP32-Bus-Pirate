@@ -183,6 +183,7 @@ ArgTransformer &DependencyProvider::getArgTransformer() { return argTransformer;
 WebRequestTransformer &DependencyProvider::getWebRequestTransformer() { return webRequestTransformer; }
 JsonTransformer &DependencyProvider::getJsonTransformer() { return jsonTransformer; }
 AtTransformer &DependencyProvider::getAtTransformer() { return atTransformer; }
+PinoutTransformer &DependencyProvider::getPinoutTransformer() { return pinoutTransformer; }
 
 // Managers
 CommandHistoryManager &DependencyProvider::getCommandHistoryManager() { return commandHistoryManager; }
