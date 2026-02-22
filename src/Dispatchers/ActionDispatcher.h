@@ -35,6 +35,12 @@ private:
     // Handle a sequence of bytecode instructions
     void dispatchInstructions(const std::vector<Instruction>& instructions);
 
+    // Switch to a different mode
+    void setCurrentMode(ModeEnum newMode);
+
+    // Release mode resources if needed
+    void releaseMode(ModeEnum currentMode, ModeEnum newMode);
+
     // Read user input with cursor support
     std::string getUserAction();
 
@@ -55,7 +61,4 @@ private:
 
     // Handle Enter key and dispatch line
     bool handleEnterKey(char c, const std::string& inputLine);
-
-    // Switch to a different input mode
-    void setCurrentMode(ModeEnum newMode);
 };
