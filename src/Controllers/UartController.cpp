@@ -275,24 +275,36 @@ Autobaud
 */
 void UartController::handleAutoBaud() {
     uint8_t rxPin = state.getUartRxPin();
-    terminalView.println("UART Autobaud: Listening on RX GPIO " + std::to_string(rxPin) + " until detected..." + " Press [ENTER] to stop\n");
+    terminalView.println(
+        "UART Autobaud: Listening on RX GPIO " + std::to_string(rxPin) +
+        " until detected... Press [ENTER] to stop\n"
+    );
+
     uartService.clearUartBuffer();
 
+    auto bauds = uartService.getBaudList();
+    size_t baudIndex = 0;
+    size_t probeIndex = 0;
+    uint32_t lastBaudShown = 0;
+
     while (true) {
+        // Stop
         char key = terminalInput.readChar();
         if (key == '\r' || key == '\n') {
             terminalView.println("UART Autobaud: Stopped by user.");
             return;
         }
 
+        // Measure edges on RX
         uint32_t baud = uartService.detectBaudByEdge(
             rxPin,
-            30,     // totalMs
-            10,    // windowMs
-            5,     // minEdges
+            60,   // totalMs
+            20,   // windowMs
+            5,    // minEdges
             true  // pullup
         );
 
+        // Baud found
         if (baud != 0) {
             terminalView.println("UART Autobaud: Baudrate detected " + std::to_string(baud));
             auto confirm = userInputManager.readYesNo("Save baudrate to config?", true);
@@ -300,13 +312,19 @@ void UartController::handleAutoBaud() {
                 state.setUartBaudRate(baud);
                 uartService.switchBaudrate(baud);
                 terminalView.println("UART Autobaud: Baudrate saved to config.\n");
-            } 
+            }
             return;
         }
-    }
 
-    terminalView.println("UART Autobaud: Detection finished.");
-    terminalView.println("");
+        // Not found, send one probe to wake up device
+        uint32_t testBaud = bauds[baudIndex];
+        uartService.switchBaudrate(testBaud);
+        uartService.write(probes[probeIndex]);
+
+        // Increment
+        baudIndex = (baudIndex + 1) % bauds.size();
+        probeIndex = (probeIndex + 1) % probes.size();
+    }
 }
 
 /*
