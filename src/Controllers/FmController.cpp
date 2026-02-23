@@ -36,6 +36,7 @@ void FmController::handleCommand(const TerminalCommand& cmd) {
     else if (root == "trace") handleTrace(cmd);
     else if (root == "waterfall") handleWaterfall();
     else if (root == "broadcast") handleBroadcast();
+    else if (root == "reset") handleReset();
     else handleHelp();
 }
 
@@ -419,6 +420,15 @@ Broadcast
 void FmController::handleBroadcast() {
     if (!ensurePresent_()) return;
     fmBroadcastShell.run();
+}
+
+/*
+Reset
+*/
+void FmController::handleReset() {
+    if (!ensurePresent_()) return;
+    terminalView.println("FM: ResettingSI4713 via reset pin...");
+    fmService.reset();
 }
 
 /*

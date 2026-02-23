@@ -5,8 +5,22 @@
 /*
 Constructor
 */
-DioController::DioController(ITerminalView& terminalView, IInput& terminalInput, PinService& pinService, ArgTransformer& argTransformer, HelpShell& helpShell, UserInputManager& userInputManager)
-    : terminalView(terminalView), terminalInput(terminalInput), pinService(pinService), argTransformer(argTransformer), helpShell(helpShell), userInputManager(userInputManager) {}
+DioController::DioController(
+    ITerminalView& terminalView,
+    IInput& terminalInput,
+    IDeviceView& deviceView,
+    PinService& pinService,
+    ArgTransformer& argTransformer,
+    HelpShell& helpShell,
+    UserInputManager& userInputManager
+)
+    : terminalView(terminalView),
+      terminalInput(terminalInput),
+      deviceView(deviceView),
+      pinService(pinService),
+      argTransformer(argTransformer),
+      helpShell(helpShell),
+      userInputManager(userInputManager) {}
 
 /*
 Entry point to handle a DIO command
@@ -140,6 +154,9 @@ void DioController::handleScan(const TerminalCommand& cmd) {
     // Init maps
     std::map<uint8_t, int> lastState;
     std::map<uint8_t, uint32_t> edgeCount;
+    std::vector<std::string> activeLines; //for deviceView pinout
+    PinoutConfig cfg;
+    PinoutConfig lastCfg; //to avoid updating deviceView if no change
 
     // high/low sample counters
     std::map<uint8_t, uint32_t> highSamples;
@@ -239,8 +256,23 @@ void DioController::handleScan(const TerminalCommand& cmd) {
                         " | edges=" + padSpaces + std::to_string(edges) +
                         " | HIGH=" + std::to_string(hiPct) + "% LOW=" + std::to_string(loPct) + "%"
                     );
-                }
 
+                    if (activeLines.size() >= 4) continue; //avoid overflowing deviceView
+                    activeLines.push_back("GPIO " + std::to_string(pin));
+                }
+                
+                // Update device view
+                if (!activeLines.empty()) {
+                    cfg.setMode("SCAN");
+                    cfg.setMappings(activeLines);
+
+                    if (lastCfg.getMappings() != cfg.getMappings()) {
+                        lastCfg = cfg;
+                        deviceView.show(cfg);
+                    }
+                    activeLines.clear();
+                }
+                
                 terminalView.println("");
             }
 
@@ -381,9 +413,9 @@ void DioController::handlePwm(const TerminalCommand& cmd) {
     // Setup PWM
     bool ok = pinService.setupPwm(pin, freq, duty);
     if (!ok) {
-        terminalView.println("DIO PWM: Cannot generate " + std::to_string(freq) +
-                             " Hz. Try a lower frequency.");
-        return;
+        terminalView.println("DIO PWM: Cannot set " + std::to_string(pin) +
+                            " either wrong argument or too many allocated PWM");
+         return;
     }
 
     terminalView.println("\nDIO PWM: Pin " + std::to_string(pin) +

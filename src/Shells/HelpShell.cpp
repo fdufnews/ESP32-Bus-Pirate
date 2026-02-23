@@ -324,6 +324,7 @@ void HelpShell::cmdWifi() {
         "ping <host>          - Ping a remote host",
         "discovery            - Discover network devices",
         "sniff                - Monitor Wi-Fi packets",
+        "waterfall            - Show channel activity",
         "probe                - Search for net access",
         "repeater             - Forward Wi-Fi traffic",
         "spoof ap <mac>       - Spoof AP MAC",
@@ -457,6 +458,7 @@ void HelpShell::cmdFm() {
         "trace [freq]         - Observe frequency signal",
         "waterfall            - Show frequency peaks",
         "broadcast            - Create FM station",
+        "reset                - Reset via pin", 
         "config               - Configure Si4713 settings"
     };
     printLines(lines, (int)(sizeof(lines) / sizeof(lines[0])));
@@ -466,9 +468,11 @@ void HelpShell::cmdCell() {
     printHeader("CELL");
     static const char* const lines[] = {
         "modem                - Show modem info",
-        "sim                  - Show SIM card info",
         "network              - Show network info",
+        "operator             - Show available operators",
+        "sim                  - Show SIM card info",
         "unlock               - Unlock SIM with PIN",
+        "phonebook            - Show SIM phonebook",
         "sms                  - SMS operations",
         "call                 - Call operations",
         "ussd [code]          - Send USSD code",

@@ -1,13 +1,5 @@
 #include "WifiService.h"
 
-// Static member
-std::vector<std::string> WifiService::sniffLog;
-portMUX_TYPE WifiService::sniffMux = portMUX_INITIALIZER_UNLOCKED;
-
-std::vector<std::array<uint8_t, 6>> WifiService::staList;
-uint8_t WifiService::apBSSID[6];
-portMUX_TYPE WifiService::staMux = portMUX_INITIALIZER_UNLOCKED;
-
 WifiService::WifiService() : connected(false) {
     WiFi.mode(WIFI_STA);
 }
@@ -209,6 +201,78 @@ std::string WifiService::encryptionTypeToString(wifi_auth_mode_t enc) {
         case WIFI_AUTH_WAPI_PSK: return "WAPI";
         default: return "UNKNOWN";
     }
+}
+
+int8_t WifiService::scanRssiOnChannel(uint8_t channel)
+{
+    // reset old results
+    esp_wifi_clear_ap_list();
+
+    wifi_scan_config_t config{};
+    config.channel = channel;
+    config.show_hidden = true;
+    config.scan_type = WIFI_SCAN_TYPE_PASSIVE;
+    config.scan_time.passive = 200; 
+
+    esp_err_t err = esp_wifi_scan_start(&config, true);
+    if (err != ESP_OK) {
+        esp_wifi_clear_ap_list();
+        return -127;
+    }
+
+    uint16_t apCount = 0;
+    err = esp_wifi_scan_get_ap_num(&apCount);
+    if (err != ESP_OK || apCount == 0) {
+        esp_wifi_clear_ap_list();
+        return -127;
+    }
+
+    const uint16_t MAX_AP = 32;
+    if (apCount > MAX_AP) apCount = MAX_AP;
+
+    wifi_ap_record_t list[MAX_AP];
+    uint16_t n = apCount;
+
+    err = esp_wifi_scan_get_ap_records(&n, list);
+    if (err != ESP_OK || n == 0) {
+        esp_wifi_clear_ap_list();
+        return -127;
+    }
+
+    int sum = 0;
+    for (uint16_t i = 0; i < n; ++i) {
+        sum += list[i].rssi;
+    }
+
+    esp_wifi_clear_ap_list();
+    return sum / (int)n;
+}
+
+void WifiService::pktCountCb(void* buf, wifi_promiscuous_pkt_type_t)
+{
+    (void)buf;
+    g_pktCount++;
+}
+
+uint32_t WifiService::countPacketsOnChannel(uint8_t channel, uint16_t dwellMs)
+{
+    esp_wifi_set_channel(channel, WIFI_SECOND_CHAN_NONE);
+
+    g_pktCount = 0;
+
+    esp_wifi_set_promiscuous(false);
+    esp_wifi_set_promiscuous_rx_cb(&pktCountCb);
+    esp_wifi_set_promiscuous(true);
+
+    uint32_t start = millis();
+    while (millis() - start < dwellMs) {
+        delay(1);
+    }
+
+    esp_wifi_set_promiscuous(false);
+    esp_wifi_set_promiscuous_rx_cb(nullptr);
+
+    return g_pktCount;
 }
 
 void WifiService::startPassiveSniffing() {

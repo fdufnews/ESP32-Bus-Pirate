@@ -39,6 +39,7 @@ private:
     void handleTrace(const TerminalCommand& cmd);
     void handleWaterfall();
     void handleBroadcast();
+    void handleReset();
     void handleHelp();
 
 private:

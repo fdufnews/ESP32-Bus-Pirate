@@ -10,6 +10,7 @@ Constructor
 InfraredController::InfraredController(
     ITerminalView&           view,
     IInput&                  terminalInput,
+    IDeviceView&             deviceView,
     InfraredService&         service,
     LittleFsService&         littleFsService,
     I2cService&              i2cService,
@@ -21,6 +22,7 @@ InfraredController::InfraredController(
 )
     : terminalView(view),
       terminalInput(terminalInput),
+      deviceView(deviceView),
       infraredService(service),
       i2cService(i2cService),
       littleFsService(littleFsService),
@@ -92,6 +94,12 @@ void InfraredController::handleReceive() {
 
     terminalView.println("INFRARED Receive: Waiting for signal...");
     terminalView.println("Press [ENTER] to stop.\n");
+
+    // deviceView
+    std::vector<std::string> lines;
+    lines.reserve(4);
+    PinoutConfig cfg;
+    PinoutConfig lastCfg;
     
     infraredService.startReceiver();
 
@@ -115,6 +123,22 @@ void InfraredController::handleReceive() {
                 terminalView.println("  Command  : " + std::to_string(cmd.getFunction()));
                 terminalView.println("");
                 terminalView.println("INFRARED Receive: Waiting for next signal or press [ENTER] to exit.");
+                
+                // show on device screen
+                lines.clear();
+                lines.push_back(InfraredProtocolMapper::toString(cmd.getProtocol()));
+                lines.push_back("Device: " + std::to_string(cmd.getDevice()));
+                lines.push_back("SubDev: " + std::to_string(cmd.getSubdevice()));
+                lines.push_back("Command: " + std::to_string(cmd.getFunction()));
+                cfg.setMappings(lines);
+
+                if (cfg.getMappings() != lastCfg.getMappings()) {
+                    cfg.setMode("RECV");
+                    cfg.setMappings(lines);
+                    lastCfg = cfg;
+                    deviceView.show(cfg);
+                }
+                lines.clear();
             }
         } else {
             // Raw mode
@@ -233,6 +257,10 @@ void InfraredController::handleRecord() {
     // Record decoded commands
     std::vector<InfraredFileRemoteCommand> cmds;
     cmds.reserve(64);
+    std::vector<std::string> lines;
+    PinoutConfig cfg;
+    PinoutConfig lastCfg;
+    lines.reserve(4);
 
     terminalView.println("\nINFRARED Record: Waiting for frames (max 64)... Press [ENTER] to stop.\n");
 
@@ -266,9 +294,26 @@ void InfraredController::handleRecord() {
         terminalView.println("  Command  : " + std::to_string(decoded.getFunction()));
         terminalView.println("");
 
+        // show on device screen
+        lines.clear();
+        lines.push_back(InfraredProtocolMapper::toString(decoded.getProtocol()));
+        lines.push_back("Device: " + std::to_string(decoded.getDevice()));
+        lines.push_back("SubDev: " + std::to_string(decoded.getSubdevice()));
+        lines.push_back("Command: " + std::to_string(decoded.getFunction()));
+        cfg.setMappings(lines);
+
+        if (cfg.getMappings() != lastCfg.getMappings()) {
+            cfg.setMode("RECORD");
+            cfg.setMappings(lines);
+            lastCfg = cfg;
+            deviceView.show(cfg);
+            lines.clear();
+        }
+
         // Save the command ?
         if (!userInputManager.readYesNo("Save this command?", true)) {
             terminalView.println("\nSkipped. Press [ENTER] to stop or wait for next signal...\n");
+            infraredService.receiveInfraredCommand(); // Clear the buffer to avoid duplicate reception during prompt
             continue;
         }
 
@@ -298,6 +343,7 @@ void InfraredController::handleRecord() {
         cmds.push_back(cmd);
 
         terminalView.println("\n✅ Saved '" + funcName + "'\n");
+        infraredService.receiveInfraredCommand(); // Clear the buffer for received cmd during prompt
         terminalView.println("INFRARED Record: Waiting for next signal... Press [ENTER] to stop and save.\n");
     }
 

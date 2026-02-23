@@ -7,6 +7,7 @@ Constructor
 UartController::UartController(
     ITerminalView& terminalView,
     IInput& terminalInput,
+    IDeviceView& deviceView,
     IInput& deviceInput,
     UartService& uartService,
     SdService& sdService,
@@ -19,6 +20,7 @@ UartController::UartController(
 )
     : terminalView(terminalView),
       terminalInput(terminalInput),
+      deviceView(deviceView),
       deviceInput(deviceInput),
       uartService(uartService),
       sdService(sdService),
@@ -213,6 +215,9 @@ void UartController::handleScan() {
     
     // Accumulateur for activity
     std::map<uint8_t, UartService::PinActivity> accum;
+    std::vector<std::string> activeLines; //for deviceView pinout
+    PinoutConfig cfg;
+    PinoutConfig lastCfg;
 
     terminalView.println("UART Scan: Measuring edges on pins... Press [ENTER] to stop.\n");
     terminalView.println("[INFO]");
@@ -261,6 +266,20 @@ void UartController::handleScan() {
                         " | edges=" + std::to_string(r.edges) +
                         " | approxBaud=" + std::to_string(r.approxBaud)
                     );
+                    if (activeLines.size() >= 4) continue; //avoid overflowing deviceView
+                    activeLines.push_back("GPIO " + std::to_string(pin));
+                }
+                
+                // Show active lines on device screen
+                if (!activeLines.empty()) {
+                    cfg.setMode("SCAN");
+                    cfg.setMappings(activeLines);
+
+                    if (lastCfg.getMappings() != cfg.getMappings()) {
+                        lastCfg = cfg;
+                        deviceView.show(cfg);
+                    }
+                    activeLines.clear(); //clear active lines for next report
                 }
             }
 
@@ -275,24 +294,36 @@ Autobaud
 */
 void UartController::handleAutoBaud() {
     uint8_t rxPin = state.getUartRxPin();
-    terminalView.println("UART Autobaud: Listening on RX GPIO " + std::to_string(rxPin) + " until detected..." + " Press [ENTER] to stop\n");
+    terminalView.println(
+        "UART Autobaud: Listening on RX GPIO " + std::to_string(rxPin) +
+        " until detected... Press [ENTER] to stop\n"
+    );
+
     uartService.clearUartBuffer();
 
+    auto bauds = uartService.getBaudList();
+    size_t baudIndex = 0;
+    size_t probeIndex = 0;
+    uint32_t lastBaudShown = 0;
+
     while (true) {
+        // Stop
         char key = terminalInput.readChar();
         if (key == '\r' || key == '\n') {
             terminalView.println("UART Autobaud: Stopped by user.");
             return;
         }
 
+        // Measure edges on RX
         uint32_t baud = uartService.detectBaudByEdge(
             rxPin,
-            30,     // totalMs
-            10,    // windowMs
-            5,     // minEdges
+            60,   // totalMs
+            20,   // windowMs
+            5,    // minEdges
             true  // pullup
         );
 
+        // Baud found
         if (baud != 0) {
             terminalView.println("UART Autobaud: Baudrate detected " + std::to_string(baud));
             auto confirm = userInputManager.readYesNo("Save baudrate to config?", true);
@@ -300,13 +331,19 @@ void UartController::handleAutoBaud() {
                 state.setUartBaudRate(baud);
                 uartService.switchBaudrate(baud);
                 terminalView.println("UART Autobaud: Baudrate saved to config.\n");
-            } 
+            }
             return;
         }
-    }
 
-    terminalView.println("UART Autobaud: Detection finished.");
-    terminalView.println("");
+        // Not found, send one probe to wake up device
+        uint32_t testBaud = bauds[baudIndex];
+        uartService.switchBaudrate(testBaud);
+        uartService.write(probes[probeIndex]);
+
+        // Increment
+        baudIndex = (baudIndex + 1) % bauds.size();
+        probeIndex = (probeIndex + 1) % probes.size();
+    }
 }
 
 /*

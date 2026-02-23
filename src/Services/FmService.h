@@ -13,7 +13,8 @@ public:
     bool isRunning() const { return isRunning_; }
     bool begin();          // radio.begin()
     void stop();           // power down / reset / tx power 0
-
+    void reset();          // hard reset via reset pin 
+    
     // TX parameters
     bool setTxPower(uint8_t dbuV, uint8_t antCap = 0);  // 88..115, 0..15
     uint8_t getTxPower() const { return txPower_; }

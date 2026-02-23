@@ -20,8 +20,15 @@ public:
     std::string formatSimState(const std::string& cpinRaw) const;      // +CPIN: READY
     std::string formatSignal(const std::string& csqRaw) const;         // +CSQ: rssi,ber
     std::string formatOperator(const std::string& copsRaw) const;      // +COPS: ...
+    std::string formatScanOperators(const std::string& copsRaw) const; // +COPS=?
     std::string formatRegistration(const std::string& regRaw) const;   // +CREG/+CEREG: ...
     std::string formatPinLock(const std::string& raw) const;              // +CLCK: ...
+    std::string formatSpn(const std::string& raw) const;                  // +CSPN: ...
+    std::string formatSimRetries(const std::string& raw) const;           // +CPINR: ...
+    std::string formatPhonebookStorage(const std::string& raw) const;     // +CPBS: ...
+    std::string formatPhonebookCaps(const std::string& raw) const;        // +CPBR: ?
+    std::string formatSmsStorage(const std::string& raw) const;           // +CPMS: ...
+    std::string formatClock(const std::string& cclkRaw) const;
     
     // Identity / misc
     std::string formatManufacturer(const std::string& cgmiRaw) const;
@@ -41,12 +48,13 @@ public:
     std::string formatPdpActive(const std::string& cgactRaw) const;
     std::string formatPdpAddress(const std::string& cgpaddrRaw) const;
 
-    // SMS / USSD / Calls (basic readable output)
+    // SMS / USSD / Calls / Location (basic readable output)
     std::string formatSmsList(const std::string& cmglRaw) const;
     std::string formatSmsRead(const std::string& cmgrRaw) const;
     std::string formatUssd(const std::string& cusdRaw) const;
     std::string formatCallList(const std::string& clccRaw) const;
-
+    std::string formatGsmLocation(const std::string& raw) const;
+    std::string formatPhonebookEntries(const std::string& raw) const;
 
 private:
     static std::string trim(const std::string& s);

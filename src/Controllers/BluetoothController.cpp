@@ -353,7 +353,7 @@ void BluetoothController::handleReset() {
 Config
 */
 void BluetoothController::handleConfig() {
-    // bluetoothService.releaseBtClassic();
+    bluetoothService.init();
 }
 
 /*
@@ -371,5 +371,15 @@ void BluetoothController::ensureConfigured() {
     if (!configured) {
         handleConfig();
         configured = true;
+    }
+}
+
+/*
+Ensure Released
+*/
+void BluetoothController::ensureReleased() {
+    if (configured) {
+        bluetoothService.deinit();
+        configured = false;
     }
 }

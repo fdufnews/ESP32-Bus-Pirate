@@ -8,10 +8,12 @@
 
 #include "Interfaces/ITerminalView.h"
 #include "Interfaces/IInput.h"
+#include "Interfaces/IDeviceView.h"
 #include "Services/InfraredService.h"
 #include "Services/LittleFsService.h"
 #include "Services/I2cService.h"
 #include "Models/TerminalCommand.h"
+#include "Models/PinoutConfig.h"
 #include "Transformers/ArgTransformer.h"
 #include "Transformers/InfraredRemoteTransformer.h"
 #include "Managers/UserInputManager.h"
@@ -22,7 +24,7 @@
 class InfraredController {
 public:
     // Constructor
-    InfraredController(ITerminalView& view, IInput& terminalInput, 
+    InfraredController(ITerminalView& view, IInput& terminalInput, IDeviceView& deviceView,
                        InfraredService& service, LittleFsService& littleFsService, I2cService& i2cService,  
                        ArgTransformer& argTransformer, InfraredRemoteTransformer& infraredRemoteTransformer,
                        UserInputManager& userInputManager, UniversalRemoteShell& universalRemoteShell, HelpShell& helpShell);
@@ -36,6 +38,7 @@ public:
 private:
     ITerminalView& terminalView;
     IInput& terminalInput;
+    IDeviceView& deviceView;
     InfraredService& infraredService;
     I2cService& i2cService;
     GlobalState& state = GlobalState::getInstance();

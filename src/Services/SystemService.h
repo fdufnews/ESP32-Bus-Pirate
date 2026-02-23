@@ -59,4 +59,6 @@ public:
 
     // Others
     std::string getInfraredBackend() const;
+    float getInternalTemperatureC() const;
+    std::string getInternalTemperatureCStr() const;
 };

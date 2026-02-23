@@ -60,7 +60,8 @@ static const char* const autoCompleteWords[] = {
     "broadcast",
 
     // --- CELL ---
-    "call", "sms", "modem", "sim", "network", "unlock", "ussd", "setmode", 
+    "call", "sms", "modem", "sim", "network", "unlock", "ussd", "setmode",
+    "operator", "phonebook",
 
     // --- MODE shortcuts ---
     "m hiz","m 1wire","m uart","m hduart","m i2c","m spi",

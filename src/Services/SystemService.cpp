@@ -2,7 +2,7 @@
 
 #include <Arduino.h>
 #include <LittleFS.h>
-
+#include "driver/temperature_sensor.h"
 #include <esp_system.h>
 #include <esp_chip_info.h>
 #include <esp_flash.h>
@@ -396,4 +396,46 @@ std::string SystemService::getInfraredBackend() const {
     #else
         return "Arduino-IRremote";
     #endif
+}
+
+float SystemService::getInternalTemperatureC() const {
+    temperature_sensor_handle_t temp_handle = nullptr;
+
+    temperature_sensor_config_t temp_config = TEMPERATURE_SENSOR_CONFIG_DEFAULT(10, 50);
+
+    if (temperature_sensor_install(&temp_config, &temp_handle) != ESP_OK) {
+        return NAN;
+    }
+
+    if (temperature_sensor_enable(temp_handle) != ESP_OK) {
+        temperature_sensor_uninstall(temp_handle);
+        return NAN;
+    }
+
+    float temp = 0.0f;
+    esp_err_t err = temperature_sensor_get_celsius(temp_handle, &temp);
+
+    temperature_sensor_disable(temp_handle);
+    temperature_sensor_uninstall(temp_handle);
+
+    if (err != ESP_OK) {
+        return NAN;
+    }
+
+    // 🔹 Arrondi à 2 décimales
+    temp = std::round(temp * 100.0f) / 100.0f;
+
+    return temp;
+}
+
+std::string SystemService::getInternalTemperatureCStr() const {
+    float temp = getInternalTemperatureC();
+
+    if (std::isnan(temp)) {
+        return "N/A";
+    }
+
+    char buf[16];
+    snprintf(buf, sizeof(buf), "%.2f", temp);
+    return std::string(buf);
 }

@@ -79,6 +79,18 @@ std::string AtTransformer::formatImei(const std::string& gsnRaw) const
     return "IMEI: no response";
 }
 
+std::string AtTransformer::formatClock(const std::string& raw) const
+{
+    std::string l = firstValueLine(raw);
+    if (l.empty()) return "";
+
+    if (startsWith(l, "+CCLK:")) {
+        return trim(l.substr(6)); // +CCLK:
+    }
+
+    return l; // fallback 
+}
+
 // ---------------- SIM / security ----------------
 
 std::string AtTransformer::formatSimState(const std::string& cpinRaw) const
@@ -225,6 +237,194 @@ std::string AtTransformer::formatPinLock(const std::string& raw) const
     return "PIN lock: unknown state";
 }
 
+std::string AtTransformer::formatSpn(const std::string& raw) const
+{
+    std::string l = firstValueLine(raw);
+    if (l.empty()) return "SPN: no response";
+    return "SPN: " + l;
+}
+
+std::string AtTransformer::formatSimRetries(const std::string& raw) const
+{
+    std::string l = firstValueLine(raw);
+    if (l.empty()) return "PIN retries: no response";
+
+    if (l.find("ERROR") != std::string::npos || l.find("+CME ERROR") != std::string::npos) {
+        return "PIN retries: not supported";
+    }
+
+    return "PIN retries: " + l;
+}
+
+std::string AtTransformer::formatPhonebookStorage(const std::string& raw) const
+{
+    std::string l = firstValueLine(raw);
+    if (l.empty()) return "Phonebook: no response";
+
+    if (l.find("ERROR") != std::string::npos || l.find("+CME ERROR") != std::string::npos) {
+        return "Phonebook: not available";
+    }
+
+    // +CPBS: "SM",7,250
+    size_t p = l.find("+CPBS:");
+    if (p == std::string::npos) {
+        return "Phonebook: " + l;
+    }
+
+    // Extract storage between quotes
+    size_t q1 = l.find('"', p);
+    size_t q2 = (q1 != std::string::npos) ? l.find('"', q1 + 1) : std::string::npos;
+
+    std::string storage = (q1 != std::string::npos && q2 != std::string::npos)
+                            ? l.substr(q1 + 1, q2 - q1 - 1)
+                            : "";
+
+    // Parse used,total after quotes
+    int used = -1, total = -1;
+    if (q2 != std::string::npos) {
+        const char* s = l.c_str() + q2 + 1;
+        // skip commas/spaces
+        while (*s == ',' || *s == ' ') s++;
+        // try parse: used,total
+        if (sscanf(s, "%d,%d", &used, &total) != 2) {
+            used = -1; total = -1;
+        }
+    }
+
+    if (!storage.empty() && used >= 0 && total >= 0) {
+        return "Phonebook: " + storage + " (" + std::to_string(used) + "/" + std::to_string(total) + " used)";
+    }
+
+    // Fallback raw
+    return "Phonebook: " + l;
+}
+
+std::string AtTransformer::formatPhonebookCaps(const std::string& raw) const
+{
+    std::string l = firstValueLine(raw);
+    if (l.empty()) return "Phonebook caps: no response";
+
+    if (l.find("ERROR") != std::string::npos || l.find("+CME ERROR") != std::string::npos) {
+        return "Phonebook caps: not available";
+    }
+
+    // +CPBR: (1-250),40,30
+    size_t p = l.find("+CPBR:");
+    if (p == std::string::npos) {
+        return "Phonebook caps: " + l;
+    }
+
+    // Parse range and sizes 
+    int minIdx = -1, maxIdx = -1, maxNumLen = -1, maxTextLen = -1;
+    if (sscanf(l.c_str(), " +CPBR: (%d-%d),%d,%d", &minIdx, &maxIdx, &maxNumLen, &maxTextLen) != 4 &&
+        sscanf(l.c_str(), "+CPBR: (%d-%d),%d,%d", &minIdx, &maxIdx, &maxNumLen, &maxTextLen) != 4) {
+        return "Phonebook caps: " + l;
+    }
+
+    return "Phonebook caps: index " + std::to_string(minIdx) + "-" + std::to_string(maxIdx) +
+           ", numberLen=" + std::to_string(maxNumLen) +
+           ", nameLen=" + std::to_string(maxTextLen);
+}
+
+std::string AtTransformer::formatSmsStorage(const std::string& raw) const
+{
+    std::string l = firstValueLine(raw);
+    if (l.empty()) return "SMS storage: no response";
+
+    if (l.find("ERROR") != std::string::npos || l.find("+CME ERROR") != std::string::npos) {
+        return "SMS storage: not available";
+    }
+
+    // +CPMS: "SM_P",0,20,"SM_P",0,20,"SM_P",0,20
+    size_t p = l.find("+CPMS:");
+    if (p == std::string::npos) {
+        return "SMS storage: " + l;
+    }
+
+    char mem1[24] = {0}, mem2[24] = {0}, mem3[24] = {0};
+    int used1 = -1, total1 = -1, used2 = -1, total2 = -1, used3 = -1, total3 = -1;
+
+    int parsed = sscanf(l.c_str(),
+                        " +CPMS: \"%23[^\"]\",%d,%d,\"%23[^\"]\",%d,%d,\"%23[^\"]\",%d,%d",
+                        mem1, &used1, &total1, mem2, &used2, &total2, mem3, &used3, &total3);
+
+    if (parsed != 9) {
+        parsed = sscanf(l.c_str(),
+                        "+CPMS: \"%23[^\"]\",%d,%d,\"%23[^\"]\",%d,%d,\"%23[^\"]\",%d,%d",
+                        mem1, &used1, &total1, mem2, &used2, &total2, mem3, &used3, &total3);
+    }
+
+    if (parsed == 9) {
+        return "SMS storage: " +
+               std::string(mem1) + " " + std::to_string(used1) + "/" + std::to_string(total1) +
+               " | " + std::string(mem2) + " " + std::to_string(used2) + "/" + std::to_string(total2) +
+               " | " + std::string(mem3) + " " + std::to_string(used3) + "/" + std::to_string(total3);
+    }
+
+    return "SMS storage: " + l;
+}
+
+std::string AtTransformer::formatPhonebookEntries(const std::string& raw) const
+{
+    if (raw.empty()) return "Phonebook entries: no response";
+    if (raw.find("ERROR") != std::string::npos || raw.find("+CME ERROR") != std::string::npos) {
+        return "Phonebook entries: not available";
+    }
+
+    std::string out;
+    int count = 0;
+
+    size_t pos = 0;
+    while (pos < raw.size()) {
+        size_t eol = raw.find('\n', pos);
+        if (eol == std::string::npos) eol = raw.size();
+
+        std::string line = raw.substr(pos, eol - pos);
+        // trim CR
+        if (!line.empty() && line.back() == '\r') line.pop_back();
+
+        if (line.rfind("+CPBR:", 0) == 0) {
+            // +CPBR: <idx>,"<number>",<type>,"<text>"
+            int idx = -1;
+            char number[64] = {0};
+            int type = -1;
+            char text[64] = {0};
+
+            int parsed = sscanf(line.c_str(),
+                                "+CPBR: %d,\"%63[^\"]\",%d,\"%63[^\"]\"",
+                                &idx, number, &type, text);
+
+            if (parsed >= 3) {
+                count++;
+                if (!out.empty()) out += "\n\r";
+
+                out += "  ";
+                out += std::to_string(idx);
+                out += ": ";
+
+                if (parsed == 4 && text[0]) {
+                    out += "\"";
+                    out += text;
+                    out += "\" ";
+                }
+
+                out += number[0] ? number : "(no number)";
+            } else {
+                // fallback
+                count++;
+                if (!out.empty()) out += "\n\r";
+                out += "  ";
+                out += line;
+            }
+        }
+
+        pos = (eol < raw.size()) ? (eol + 1) : raw.size();
+    }
+
+    if (count == 0) return "  No entries found.";
+    return out;
+}
+
 // ---------------- Network ----------------
 
 std::string AtTransformer::formatSignal(const std::string& csqRaw) const
@@ -264,7 +464,76 @@ std::string AtTransformer::formatOperator(const std::string& copsRaw) const
 {
     std::string l = firstValueLine(copsRaw);
     if (l.empty()) return "Operator: no response";
+
+    // Cas +COPS: 0 (auto)
+    if (l == "+COPS: 0" || l == "+COPS:0") {
+        return "Operator: auto";
+    }
+
     return "Operator: " + l;
+}
+
+std::string AtTransformer::formatScanOperators(const std::string& copsRaw) const
+{
+    if (copsRaw.empty()) return "Operator: no response";
+
+    if (copsRaw.find("+COPS:") == std::string::npos || copsRaw.find('(') == std::string::npos) {
+        // pas un scan (ou réponse vide)
+        std::string l = firstValueLine(copsRaw);
+        if (l.empty()) return "Operator: no response";
+        return "Operator: " + l;
+    }
+
+    int found = 0;
+    std::string out = "[Operators detected]\n\r";
+
+    size_t pos = copsRaw.find("+COPS:");
+    if (pos == std::string::npos) return "Operator scan: no +COPS";
+
+    // On parcourt chaque tuple "( ... )"
+    size_t p = copsRaw.find('(', pos);
+    while (p != std::string::npos) {
+        size_t q = copsRaw.find(')', p + 1);
+        if (q == std::string::npos) break;
+
+        std::string tuple = copsRaw.substr(p + 1, q - p - 1);
+        p = copsRaw.find('(', q + 1);
+
+        // ignore capabilities
+        if (tuple.find('-') != std::string::npos) continue;
+
+        int stat = -1;
+        char longName[64] = {0};
+        char shortName[64] = {0};
+        char mccmnc[16] = {0};
+
+        // strict: (stat,"long","short","mccmnc")
+        int parsed = sscanf(tuple.c_str(),
+                            "%d,\"%63[^\"]\",\"%63[^\"]\",\"%15[^\"]\"",
+                            &stat, longName, shortName, mccmnc);
+
+        if (parsed != 4) continue;
+
+        out += "  - ";
+        out += longName;
+        out += " (";
+        out += mccmnc;
+        out += ")\n\r";
+        found++;
+    }
+
+    if (found == 0) {
+        // fallback
+        size_t a = copsRaw.find("+COPS:");
+        if (a == std::string::npos) return "Operator scan: no operators parsed (no +COPS)";
+        size_t b = copsRaw.find("\n", a);
+        if (b == std::string::npos) b = copsRaw.size();
+        std::string line1 = copsRaw.substr(a, b - a);
+
+        return "Operator scan: no operators parsed\n  Raw first +COPS line: " + line1;
+    }
+
+    return out;
 }
 
 std::string AtTransformer::formatRegistration(const std::string& regRaw) const
@@ -544,4 +813,17 @@ std::vector<std::string> AtTransformer::lines(const std::string& raw) const
     if (!t.empty()) out.push_back(t);
 
     return out;
+}
+
+std::string AtTransformer::formatGsmLocation(const std::string& raw) const
+{
+    std::string l = firstValueLine(raw);
+    if (l.empty()) return "Location: no response";
+
+    //  +CIPGSMLOC: <err>,<lat>,<lon>,<date>,<time>
+    if (l.find("+CIPGSMLOC:") == std::string::npos) {
+        return "Location: " + l;
+    }
+
+    return "Location: " + l;
 }

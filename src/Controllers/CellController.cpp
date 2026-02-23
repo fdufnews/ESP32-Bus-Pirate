@@ -34,8 +34,10 @@ void CellController::handleCommand(const TerminalCommand& command)
     if (root == "config")         handleConfig();
     else if (root == "modem")     handleModem();  
     else if (root == "network")   handleNetwork();
+    else if (root == "operator")  handleOperator();
     else if (root == "sim")       handleSim();
     else if (root == "unlock")    handleUnlock(command); 
+    else if (root == "phonebook") handlePhoneBook();
     else if (root == "setmode")   handleSetMode();
     else if (root == "sms")       handleSms(command); 
     else if (root == "ussd")      handleUssd(command); 
@@ -103,6 +105,7 @@ void CellController::handleModem()
     terminalView.println("  " + atTransformer.clean(cellService.getRevision()));
     terminalView.println("  " + atTransformer.formatImei(cellService.getImei()));
     terminalView.println("  " + atTransformer.formatFunctionality(cellService.getFunctionality())); 
+    terminalView.println("  Clock: " + atTransformer.formatClock(cellService.getClock()));
     terminalView.println("\n  Use 'setmode' command to change mode.");
     terminalView.println("");
 }
@@ -113,15 +116,23 @@ SIM
 void CellController::handleSim()
 {
     terminalView.println("\n[SIM CARD]");
+
     terminalView.println("  " + atTransformer.formatSimState(cellService.getSimState()));
+    terminalView.println("  " + atTransformer.formatSimRetries(cellService.getSimRetries()));
+    terminalView.println("  " + atTransformer.formatSpn(cellService.getServiceProviderName()));
+
     terminalView.println("  " + atTransformer.formatIccid(cellService.getIccid()));
     terminalView.println("  " + atTransformer.formatImsi(cellService.getImsi()));
     terminalView.println("  " + atTransformer.formatMsisdn(cellService.getMsisdn()));
-    terminalView.println("  " + atTransformer.formatPinLock(cellService.getPinLockStatus())); // AT+CLCK="SC",2
-    
+
+    terminalView.println("  " + atTransformer.formatPinLock(cellService.getPinLockStatus())); 
+
+    terminalView.println("  " + atTransformer.formatPhonebookStorage(cellService.getPhonebookStorage()));
+    terminalView.println("  " + atTransformer.formatSmsStorage(cellService.getSmsStorage()));
+
     if (!cellService.isSimReady()) {
         terminalView.println("\n  Use 'unlock' command to enter SIM PIN.");
-    } 
+    }
 
     terminalView.println("");
 }
@@ -146,6 +157,30 @@ void CellController::handleNetwork()
 }
 
 /*
+Operator
+*/
+void CellController::handleOperator()
+{
+    if (!configured) return;
+
+    terminalView.println("\nCell Operator: Scanning... (can take up to 1 minute)\n");
+
+    std::string scan = cellService.scanOperators(); // 60 seconds timeout
+
+    terminalView.println(atTransformer.formatScanOperators(scan));
+
+    terminalView.println("Current " + atTransformer.formatOperator(cellService.getOperator()));
+    bool autoMode = userInputManager.readYesNo("Reset modem operator to auto mode?", false);
+
+    if (autoMode) {
+        bool ok = cellService.setOperatorAuto();
+        terminalView.println(ok ? "✅ Set operator auto: OK\n" : "❌ Set operator auto: ERROR\n");
+    } else {
+        terminalView.println(""); // align
+    }
+}
+
+/*
 Unlock SIM (enter PIN)
 */
 void CellController::handleUnlock(const TerminalCommand& command)
@@ -160,6 +195,26 @@ void CellController::handleUnlock(const TerminalCommand& command)
     bool ok = cellService.enterPin(pin);
     terminalView.println(ok ? "PIN accepted (OK)." : "PIN failed (ERROR).");
     terminalView.println(atTransformer.formatSimState(cellService.getSimState()) + "\n");
+}
+
+/*
+Phonebook
+*/
+void CellController::handlePhoneBook()
+{
+    if (!configured) return;
+
+    terminalView.println("\n[PHONEBOOK]");
+    terminalView.println("  " + atTransformer.formatPhonebookStorage(cellService.getPhonebookStorage()));
+    terminalView.println("  " + atTransformer.formatPhonebookCaps(cellService.getPhonebookCaps()));
+    terminalView.println("");
+    terminalView.println("[ENTRIES]");
+
+    // Dump all entries 
+    std::string resp = cellService.phonebookReadRange(1, 250);
+
+    terminalView.println(atTransformer.formatPhonebookEntries(resp));
+    terminalView.println("");
 }
 
 /*

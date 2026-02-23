@@ -247,12 +247,28 @@ std::vector<std::string> BluetoothService::connectTo(const std::string& addr) {
 
 void BluetoothService::init(const std::string& deviceName) {
     if (mode == BluetoothMode::CLIENT && BLEDevice::getInitialized()) {
-        // Already init
         return;
     }
 
     BLEDevice::init(String(deviceName.c_str()));
     mode = BluetoothMode::CLIENT;
+}
+
+void BluetoothService::deinit() {
+    if (hid) {
+        delete hid;
+        hid = nullptr;
+    }
+
+    mouseInput = nullptr;
+    keyboardInput = nullptr;
+
+    if (BLEDevice::getInitialized()) {
+        BLEDevice::deinit();
+    }
+
+    connected = false;
+    mode = BluetoothMode::NONE;
 }
 
 BluetoothMode BluetoothService::getMode() {

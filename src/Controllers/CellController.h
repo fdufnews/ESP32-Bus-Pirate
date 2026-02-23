@@ -26,8 +26,11 @@ public:
                    HelpShell& helpShell,
                    CellCallShell& cellCallShell,
                    CellSmsShell& cellSmsShell);
-
+    
+    // Entry point for cell command
     void handleCommand(const TerminalCommand& command);
+
+    // Configure before use
     void ensureConfigured();
 
 private:
@@ -43,15 +46,40 @@ private:
     GlobalState& state = GlobalState::getInstance();
 
     bool configured = false;
-
+    
+    // Configure RX/TX pins and baudrate
     void handleConfig();
+
+    // Display modem info and status
     void handleModem();
+
+    // Display SIM card info
     void handleSim();
+
+    // Set modem mode (CFUN)
     void handleSetMode();
+
+    // Unlock SIM if PIN protected
     void handleUnlock(const TerminalCommand& command);
+
+    // Display network registration and signal info
     void handleNetwork();
+    
+    // SMS shellsfor listing/sending/deleting SMS
     void handleSms(const TerminalCommand& command);
+
+    // Send USSD cmd
     void handleUssd(const TerminalCommand& command);
+
+    // Call hell (dial, answer, hangup, list)
     void handleCall(const TerminalCommand& command);
+
+    // List operators and selected operator
+    void handleOperator();
+
+    // Display phonebook storage info and entries
+    void handlePhoneBook();
+
+    // Show help
     void handleHelp();
 };

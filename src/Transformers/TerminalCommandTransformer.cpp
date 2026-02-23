@@ -112,7 +112,8 @@ bool TerminalCommandTransformer::isScreenCommand(const TerminalCommand& cmd) con
    return cmd.getRoot() == "config" || cmd.getRoot() == "setprotocol" || cmd.getRoot() == "trace"
        || cmd.getRoot() == "pullup" || cmd.getRoot() == "pulldown" || cmd.getRoot() == "reset"
        || cmd.getRoot() == "swap" || cmd.getRoot() == "logic" || cmd.getRoot() == "analogic"
-       || cmd.getRoot() == "waterfall";
+       || cmd.getRoot() == "waterfall" || cmd.getRoot() == "scan" || cmd.getRoot() == "record"
+       || cmd.getRoot() == "receive";
 }
 
 std::string TerminalCommandTransformer::normalizeRaw(const std::string& raw) const {

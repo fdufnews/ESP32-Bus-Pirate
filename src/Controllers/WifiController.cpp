@@ -14,6 +14,7 @@ void WifiController::handleCommand(const TerminalCommand &cmd)
     else if (root == "ap") handleAp(cmd);
     else if (root == "spoof") handleSpoof(cmd);
     else if (root == "scan") handleScan(cmd);
+    else if (root == "waterfall") handleWaterfall();
     else if (root == "probe") handleProbe();
     else if (root == "ping") handlePing(cmd);
     else if (root == "sniff") handleSniff(cmd);
@@ -99,7 +100,17 @@ void WifiController::handleConnect(const TerminalCommand &cmd)
         if (!confirmation) {
             terminalView.println("Wifi: Scanning for available networks...");
             auto networks = wifiService.scanNetworks();
+            if (networks.empty()) {
+                terminalView.println("No Wi-Fi networks found.\n");
+                return;
+            }
+
+            networks.push_back("Exit");
             int selectedIndex = userInputManager.readValidatedChoiceIndex("\nSelect Wi-Fi network", networks, 0);
+            if (selectedIndex == networks.size() - 1) {
+                terminalView.println("Exiting network selection....\n");
+                return;
+            }
             ssid = networks[selectedIndex];
             terminalView.println("Selected SSID: " + ssid);
             terminalView.print("Password: ");
@@ -650,6 +661,100 @@ void WifiController::handleFlood(const TerminalCommand& cmd)
      }
 
     terminalView.println("WiFi Flood: Stopped by user.\n");
+}
+
+/*
+Waterfall
+*/
+void WifiController::handleWaterfall()
+{
+    std::string title = "Peak: --";
+    uint16_t pktDwellMs = userInputManager.readValidatedInt("Hold time per channel (ms)", 50, 5, 500);
+    
+    // Scale packet count to keep waterfall bars visually 
+    // consistent across different dwell times
+    // reference is [dwell 80ms, 1 packet = +5]
+    // meaning 10 packets received in 80ms = max score
+    const float refDwellMs = 80.0f;
+    const float refMul = 5.0f;
+    const float timeScale = refDwellMs / (float)pktDwellMs; 
+
+    terminalView.println("\nWiFi Waterfall: Displaying on the ESP32 screen... Press [ENTER] to stop.");
+    wifiService.startPassiveSniffing();
+
+    while (true)
+    {
+        int8_t bestCh = -1;
+        int8_t bestRssi = -127;
+        int8_t bestLevel = -1;
+        int8_t channel = -1;
+
+        for (uint8_t idx = 0; idx < 13; ++idx)
+        {
+            channel = idx + 1;
+
+            // Enter press to stop
+            char c = terminalInput.readChar();
+            if (c == '\n' || c == '\r') {
+                terminalView.println("WiFi Waterfall: Stopped by user.\n");
+                wifiService.stopPassiveSniffing();
+                return;
+            }
+
+            // Get RSSI on channel
+            int8_t rssi = wifiService.scanRssiOnChannel(channel);
+
+            // Get packet count on channel
+            uint32_t pkts = wifiService.countPacketsOnChannel(channel, pktDwellMs);
+
+            // RSSI, score 0 to 50
+            int rssiPart = 0;
+            if (rssi != -127) {
+                int rr = rssi;
+                if (rr < -100) rr = -100;
+                if (rr > -30)  rr = -30;
+                rssiPart = (rr + 100) * 50 / 70;
+
+                if (rssiPart < 0) rssiPart = 0;
+                if (rssiPart > 50) rssiPart = 50;
+            }
+
+            // Packets, score 0 to 50
+            int pktPart = (int)((float)pkts * refMul * timeScale);
+            if (pktPart > 50) pktPart = 50;
+            if (pktPart < 0)  pktPart = 0;
+
+            // Final level
+            // 50% RSSI and 50% packets
+            int8_t level = rssiPart + pktPart;
+            if (level < 1) level = 1; // show progress
+
+            // Draw the channel line
+            deviceView.drawWaterfall(
+                title,
+                1.0f, 13.0f,
+                "ch",
+                idx,
+                13,
+                level
+            );
+
+            // printed each start of loop, hack to reset after printing
+            if (idx == 0) title = "Peak: --";
+
+            // best peak
+            if (rssi != -127 && (level > bestLevel)) {
+                bestLevel = level;
+                bestRssi = rssi;
+                bestCh = channel;
+
+                title = "Peak: CH" + std::to_string(bestCh) +
+                        " (" + std::to_string(2407 + bestCh * 5) + "MHz) " +
+                        std::to_string(bestRssi) + " dBm";
+            }
+
+        }
+    }
 }
 
 /*

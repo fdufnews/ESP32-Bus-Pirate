@@ -166,9 +166,8 @@ bool SubGhzService::startRawSniffer(int pin) {
         return false;
     }
 
-    // --- user buffer (DMA writes here) : keep it modest to avoid DMA cap errors
-    // Start with 256; if you later confirm 512 works on your build, you can increase.
-    rx_buf_.assign(256, {});
+    // --- buffer 
+    rx_buf_.assign(1024, {});
 
     // --- receive config
     rmt_receive_config_t rcfg{};

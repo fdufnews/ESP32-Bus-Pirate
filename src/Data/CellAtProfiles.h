@@ -7,6 +7,8 @@ struct CellAtProfile {
     const char* ati;
     const char* echoOff;
     const char* verboseErrorsOn;
+    const char* getClock;      // AT+CCLK?
+    const char* setClockFmt;   //AT+CCLK=\"%s\"
 
     // ---------------- Identity
     const char* getManufacturer;   // AT+CGMI  (3GPP 27.007)
@@ -21,11 +23,20 @@ struct CellAtProfile {
     const char* getImsi;           // AT+CIMI
     const char* getMsisdn;         // AT+CNUM 
     const char* getPinLockStatus;  // AT+CLCK="SC",2 
+    const char* getSimRetries;      // AT+CPINR?
+    const char* getSpn;             // AT+CSPN?
+    const char* getPhonebookCaps;   // AT+CPBR=?
+    const char* getPhonebookStorage;// AT+CPBS?
+    const char* getSmsStorage;      // AT+CPMS?
+    const char* pbReadIndexFmt;   // "AT+CPBR=%u"
+    const char* pbReadRangeFmt;   // "AT+CPBR=%u,%u"
 
     // ---------------- Network / registration
     const char* getSignal;         // AT+CSQ
     const char* getOperator;       // AT+COPS?
+    const char* scanOperators;     // AT+COPS=?
     const char* setOperatorAuto;   // AT+COPS=0
+    const char* setOperatorFmt;    // ex: "AT+COPS=1,2,\"%s\""
     const char* getRegCS;          // AT+CREG?   (CS registration)
     const char* getRegPS;          // AT+CGREG?  (PS/GPRS registration)
     const char* getFun;            // AT+CFUN?
@@ -60,6 +71,9 @@ struct CellAtProfile {
     const char* answer;            // ATA
     const char* hangup;            // ATH
     const char* listCalls;         // AT+CLCC
+
+    // ---------------- Location
+    const char* getGsmLocation;   // AT+CIPGSMLOC=1,1
 };
 
 inline constexpr CellAtProfile GENERIC_CELL_PROFILE = {
@@ -68,6 +82,8 @@ inline constexpr CellAtProfile GENERIC_CELL_PROFILE = {
     "ATI",
     "ATE0",
     "AT+CMEE=2",
+    "AT+CCLK?",
+    "AT+CCLK=\"%s\"",
 
     // Identity
     "AT+CGMI",
@@ -82,11 +98,21 @@ inline constexpr CellAtProfile GENERIC_CELL_PROFILE = {
     "AT+CIMI",
     "AT+CNUM",
     "AT+CLCK=\"SC\",2",
+    "AT+CPINR?",
+    "AT+CSPN?",
+    "AT+CPBR=?",
+    "AT+CPBS?",
+    "AT+CPMS?",
+    "AT+CPBR=%u",
+    "AT+CPBR=%u,%u",
 
     // Network
     "AT+CSQ",
     "AT+COPS?",
+    "AT+COPS=?",
     "AT+COPS=0",
+    "AT+COPS=1,2,\"%s\"",
+    
     "AT+CREG?",
     "AT+CGREG?",
     "AT+CFUN?", 
@@ -121,4 +147,7 @@ inline constexpr CellAtProfile GENERIC_CELL_PROFILE = {
     "ATA",
     "ATH",
     "AT+CLCC"
+
+    // Location
+    "AT+CIPGSMLOC=1,1"
 };

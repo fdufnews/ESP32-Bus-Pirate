@@ -27,6 +27,9 @@ public:
 
     // Ensure BT configuration
     void ensureConfigured();
+
+    // Release BT memory
+    void ensureReleased();
     
 private:
     ITerminalView& terminalView;

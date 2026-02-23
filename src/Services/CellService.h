@@ -15,7 +15,8 @@ public:
     std::string getModel();
     std::string getRevision();
     std::string getImei();
-
+    std::string getClock();
+    
     // SIM
     bool isSimReady();
     std::string getSimState();
@@ -24,11 +25,18 @@ public:
     std::string getImsi();
     std::string getMsisdn();
     std::string getPinLockStatus();
+    std::string getSimRetries();
+    std::string getServiceProviderName();
+    std::string getPhonebookStorage();
+    std::string getPhonebookCaps();
+    std::string getSmsStorage();
 
     // Network
     std::string getSignal();
     std::string getOperator();
+    std::string scanOperators(uint32_t timeoutMs = 60000);
     bool setOperatorAuto();
+    bool setOperator(const std::string& mccmnc);
     std::string getRegistrationCS();
     std::string getRegistrationPS();
     bool setFunctionality(uint8_t fun);
@@ -54,6 +62,8 @@ public:
     bool smsDelete(uint16_t index, uint8_t flag);
     bool smsBeginSend(const std::string& number); // waits for '>'
     bool smsSendText(const std::string& text);    // sends text + Ctrl+Z
+    std::string phonebookReadIndex(uint16_t index);
+    std::string phonebookReadRange(uint16_t start, uint16_t end);
 
     // USSD
     bool ussdRequest(const std::string& code, uint8_t dcs = 15);
@@ -64,6 +74,9 @@ public:
     bool answerCall();
     bool hangupCall();
     std::string listCalls();
+
+    // GSM loc
+    std::string getGsmLocation();
 
 private:
     std::string sendCommand(const std::string& cmd, uint32_t timeoutMs = 1000);
