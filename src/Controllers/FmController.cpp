@@ -92,14 +92,10 @@ void FmController::handleConfig() {
     state.setI2cFrequency(i2cFreqHz);
     configured = true; // consider configured to avoid looping
 
-    if (resetPin != -1) {
-        // Hard reset before configuring
-        // if it stucks, it can't be detected
-        // and then, can't be resetted by the lib
-        fmService.reset(resetPin);
-    } else {
-
-    }
+    // Hard reset before configuring
+    // if it stucks, it can't be detected
+    // and then, can't be resetted by the lib
+    fmService.reset(resetPin);
 
     if (!fmService.configure(resetPin, sdaPin, sclPin, i2cFreqHz)) {
         terminalView.println("\n❌ SI4713 configure failed.\n");
