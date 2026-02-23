@@ -169,6 +169,8 @@ private:
     std::string usbSerialString = "ESP32-BP-010203040506";     // MAC address will be suffixed in runtime for uniqueness
     uint16_t usbVid = 0x303A;   // VID for USB device descriptor
     uint16_t usbPid = 0x1001;   // PID for USB device descriptor
+    std::string webUSBString = "https://geo-tp.github.io/ESP32-Bus-Pirate/webflasher/";
+
     // Helper for setting the USB serial string from the eFUSE set by Espressif
     void setupUSBSerialString() {
         uint8_t mac[6];
@@ -432,12 +434,14 @@ public:
     const std::string& getUSBSerialString() { this->setupUSBSerialString(); return usbSerialString; }
     uint16_t getUSBVid() const { return usbVid; }
     uint16_t getUSBPid() const { return usbPid; }
+    const std::string& getWebUSBString() const { return webUSBString; }
 
     void setUSBProductString(const std::string& productStr) { usbProductString = productStr; }
     void setUSBManufacturerString(const std::string& manufacturerStr) { usbManufacturerString = manufacturerStr; }
     void setUSBSerialString(const std::string& serialStr) { usbSerialString = serialStr; }
     void setUSBVid(uint16_t vid) { usbVid = vid; }
     void setUSBPid(uint16_t pid) { usbPid = pid; }
+    void setWebUSBString(const std::string& webUSBStr) { webUSBString = webUSBStr; }
     
     // SD File Limits
     size_t getFileCountLimit() const { return fileCountLimit; }
