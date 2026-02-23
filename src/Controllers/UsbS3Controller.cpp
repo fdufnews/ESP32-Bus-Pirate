@@ -270,7 +270,8 @@ void UsbS3Controller::handleConfig() {
     std::string manufacturerString = userInputManager.readSanitizedString("USB Manufacturer String", state.getUSBManufacturerString(), false);
     state.setUSBManufacturerString(manufacturerString);
 
-    std::string serialString = userInputManager.readSanitizedString("USB Serial String", state.getUSBSerialString(), false);
+    auto serialStr = state.getUSBSerialString().empty() ? usbService.getUsbSerialFromEfuseMac() : state.getUSBSerialString();
+    std::string serialString = userInputManager.readSanitizedString("USB Serial String", serialStr, false);
     state.setUSBSerialString(serialString);
 
     uint16_t vid = userInputManager.readValidatedUint16("USB VID", state.getUSBVid(), true);

@@ -62,6 +62,7 @@ public:
     // Config
     void configure(const std::string& productStr, const std::string& manufacturerStr, const std::string& serialStr, uint16_t vid, uint16_t pid, const std::string& webUSBString);
     void reset();
+    std::string getUsbSerialFromEfuseMac();
 
 private:
     bool initialized;

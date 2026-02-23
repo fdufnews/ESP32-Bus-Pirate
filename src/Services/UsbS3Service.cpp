@@ -1,5 +1,6 @@
 #include "UsbS3Service.h"
 #include <sstream>  
+#include <esp_mac.h>
 
 UsbS3Service::UsbS3Service()
   : keyboardActive(false), storageActive(false), initialized(false) {}
@@ -621,4 +622,17 @@ void UsbS3Service::configure(const std::string& productStr, const std::string& m
     USB.VID(vid);
     USB.PID(pid);
     USB.webUSBURL(webUSBString.c_str());
+}
+
+std::string UsbS3Service::getUsbSerialFromEfuseMac() {
+    uint8_t mac[6] = {0};
+    if (esp_efuse_mac_get_default(mac) != ESP_OK) {
+        return std::string(); // empty -> caller can fallback
+    }
+
+    char macSuffix[13] = {0}; // 12 hex + null
+    snprintf(macSuffix, sizeof(macSuffix), "%02X%02X%02X%02X%02X%02X",
+             mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+
+    return std::string("ESP32-BP-") + macSuffix;
 }
