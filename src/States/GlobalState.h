@@ -7,6 +7,7 @@
 #include "Enums/ModeEnum.h"
 #include "Enums/TerminalTypeEnum.h"
 #include <array>
+#include <esp_mac.h>
 
 class GlobalState {
 private:
@@ -165,10 +166,19 @@ private:
     // USB Default Configuration
     std::string usbProductString = "ESP32-Bus-Pirate";
     std::string usbManufacturerString = "Free Open Source";
-    std::string usbSerialString = "ESP32-BP-"; // TODO add MAC suffix in runtime for uniqueness
+    std::string usbSerialString = "ESP32-BP-010203040506";     // MAC address will be suffixed in runtime for uniqueness
     uint16_t usbVid = 0x303A;   // VID for USB device descriptor
     uint16_t usbPid = 0x1001;   // PID for USB device descriptor
-
+    // Helper for setting the USB serial string from the eFUSE set by Espressif
+    void setupUSBSerialString() {
+        uint8_t mac[6];
+        if (esp_efuse_mac_get_default(mac) == ESP_OK) {
+            char macSuffix[13];
+            snprintf(macSuffix, sizeof(macSuffix), "%02X%02X%02X%02X%02X%02X",
+                     mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+            usbSerialString = "ESP32-BP-" + std::string(macSuffix);
+        }
+    }
 public:
     GlobalState(const GlobalState&) = delete;
     GlobalState& operator=(const GlobalState&) = delete;
@@ -419,7 +429,7 @@ public:
     // USB
     const std::string& getUSBProductString() const { return usbProductString; }
     const std::string& getUSBManufacturerString() const { return usbManufacturerString; }
-    const std::string& getUSBSerialString() const { return usbSerialString; }
+    const std::string& getUSBSerialString() { this->setupUSBSerialString(); return usbSerialString; }
     uint16_t getUSBVid() const { return usbVid; }
     uint16_t getUSBPid() const { return usbPid; }
 
