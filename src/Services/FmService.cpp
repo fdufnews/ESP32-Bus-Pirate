@@ -57,18 +57,21 @@ void FmService::stop() {
     isRunning_ = false;
 }
 
-void FmService::reset() {
-    if (!isInitialized_ || !radio_) return;
-
-    // Hard reset via reset pin
-    radio_->reset();
-
+void FmService::reset(uint8_t pin) {
     // Reset state
     isRunning_ = false;
     frequency10kHz_ = 0;
     txPower_ = 0;
     isRdsEnabled_ = false;
     isTaEnabled_ = false;
+
+    // Reset hardware via pin
+    pinMode(pin, OUTPUT);
+    digitalWrite(pin, HIGH);
+    delay(10);
+    digitalWrite(pin, LOW);
+    delay(10);
+    digitalWrite(pin, HIGH);
 }
 
 bool FmService::setTxPower(uint8_t dbuV, uint8_t antCap) {
