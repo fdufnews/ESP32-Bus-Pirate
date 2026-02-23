@@ -41,6 +41,7 @@ Keyboard
 void UsbS3Controller::handleKeyboard(const TerminalCommand& cmd) {
     auto sub = cmd.getSubcommand();
 
+    usbService.configure(state.getUSBProductString(), state.getUSBManufacturerString(), state.getUSBSerialString(), state.getUSBVid(), state.getUSBPid(), state.getWebUSBString());
     if (sub.empty()) handleKeyboardBridge();
     else if (sub == "bridge") handleKeyboardBridge();
     else handleKeyboardSend(cmd);
@@ -158,6 +159,8 @@ void UsbS3Controller::handleMouse(const TerminalCommand& cmd)  {
         return;
     }
 
+    usbService.configure(state.getUSBProductString(), state.getUSBManufacturerString(), state.getUSBSerialString(), state.getUSBVid(), state.getUSBPid(), state.getWebUSBString());
+
     terminalView.println("USB Mouse: Configuring HID...");
     usbService.mouseBegin();
     terminalView.println("USB Mouse: Initialize HID...");
@@ -205,7 +208,8 @@ Gamepad
 */
 void UsbS3Controller::handleGamepad(const TerminalCommand& cmd) {
     terminalView.println("USB Gamepad: Configuring HID...");
-    usbService.gamepadBegin();
+
+    usbService.configure(state.getUSBProductString(), state.getUSBManufacturerString(), state.getUSBSerialString(), state.getUSBVid(), state.getUSBPid(), state.getWebUSBString());
 
     std::string subcmd = cmd.getSubcommand();
     std::transform(subcmd.begin(), subcmd.end(), subcmd.begin(), ::tolower);
@@ -259,6 +263,22 @@ void UsbS3Controller::handleConfig() {
         uint8_t mosi = userInputManager.readValidatedPinNumber("SD Card MOSI pin", state.getSdCardMosiPin(), forbidden);
         state.setSdCardMosiPin(mosi);
     }
+
+    std::string productString = userInputManager.readSanitizedString("USB Product String", state.getUSBProductString(), false);
+    state.setUSBProductString(productString);
+
+    std::string manufacturerString = userInputManager.readSanitizedString("USB Manufacturer String", state.getUSBManufacturerString(), false);
+    state.setUSBManufacturerString(manufacturerString);
+
+    std::string serialString = userInputManager.readSanitizedString("USB Serial String", state.getUSBSerialString(), false);
+    state.setUSBSerialString(serialString);
+
+    uint16_t vid = userInputManager.readValidatedUint16("USB VID", state.getUSBVid(), true);
+    state.setUSBVid(vid);
+
+    uint16_t pid = userInputManager.readValidatedUint16("USB PID", state.getUSBPid(), true);
+    state.setUSBPid(pid);
+
     terminalView.println("USB Configured.");
 
     if (state.getTerminalMode() == TerminalTypeEnum::Standalone) {

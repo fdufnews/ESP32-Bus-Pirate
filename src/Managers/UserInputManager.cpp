@@ -137,6 +137,25 @@ uint8_t UserInputManager::readValidatedUint8(const std::string& label, uint8_t d
     return readValidatedUint8(label, defaultVal, 0, 255);
 }
 
+uint16_t UserInputManager::readValidatedUint16(const std::string& label, uint16_t def, bool hex) {
+    while (true) {
+        if (hex) {
+            terminalView.print(label + " [0x" + argTransformer.toHex(def, 4) + "]: ");
+        } else {
+            terminalView.print(label + " [" + std::to_string(def) + "]: ");
+        }
+        std::string input = getLine();
+        if (input.empty()) return def;
+
+        if (argTransformer.isValidNumber(input)) {
+            uint32_t val = argTransformer.parseHexOrDec16(input);
+            if (val <= 0xFFFFU) return static_cast<uint16_t>(val);
+        }
+
+        terminalView.println("Invalid number.");
+    }
+}
+
 uint32_t UserInputManager::readValidatedUint32(const std::string& label, uint32_t def, bool hex) {
     while (true) {
         if (hex) {

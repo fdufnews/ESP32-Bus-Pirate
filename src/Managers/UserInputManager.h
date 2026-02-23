@@ -19,6 +19,7 @@ public:
     std::string readString(const std::string& label, const std::string& def);
     uint8_t readValidatedUint8(const std::string& label, uint8_t def, uint8_t min, uint8_t max);
     uint8_t readValidatedUint8(const std::string& label, uint8_t defaultVal);
+    uint16_t readValidatedUint16(const std::string& label, uint16_t def, bool hex=false);
     uint32_t readValidatedUint32(const std::string& label, uint32_t def, bool hex=false);
     int readValidatedInt(const std::string& label, int def, int min = -127, int max = 127);
     uint32_t readValidatedHex(const std::string& label, int def, int min, int max);
