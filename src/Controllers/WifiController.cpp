@@ -361,7 +361,8 @@ Probe
 void WifiController::handleProbe() 
 {
     terminalView.println("WIFI: Starting probe for internet access on open networks...");
-    terminalView.println("\n[WARNING] This will try to connect to surrounding open networks.\n");
+    terminalView.println("\n [⚠️  WARNING] ");
+    terminalView.println(" This will try to connect to surrounding open networks.\n");
 
     // Confirm before starting
     auto confirmation = userInputManager.readYesNo("Start Wi-Fi probe to find internet access?", false);
@@ -775,13 +776,14 @@ void WifiController::handleWebUi(const TerminalCommand &)
     {
         auto ip = wifiService.getLocalIP();
         terminalView.println("");
-        terminalView.println("[WARNING] If you're connected via serial,");
-        terminalView.println("          the web UI will not be active.");
-        terminalView.println("          Reset the device and choose WiFi Web.");
+        terminalView.println("[⚠️  WARNING] ");
+        terminalView.println("If you're connected via serial,");
+        terminalView.println("the web UI will not be active.");
+        terminalView.println("Reset the device and choose WiFi Web.");
         terminalView.println("");
         terminalView.println("[BAREBONE] To launch the WebUI without a screen:");
         terminalView.println("  1. Reset the device (don’t hold the board button during boot)");
-        terminalView.println("  1. Once the device is powered, you have 3 seconds to press the board button");
+        terminalView.println("  2. Once the device is powered, you have 3 seconds to press the board button");
         terminalView.println("  3. The built-in LED shows the following status:");
         terminalView.println("     • Blue  = No Wi-Fi credentials saved.");
         terminalView.println("     • White = Connecting in progress");
@@ -802,11 +804,12 @@ Config
 void WifiController::handleConfig()
 {
     if (state.getTerminalMode() == TerminalTypeEnum::WiFiClient) {
-        terminalView.println("[WARNING] You are connected via the Web CLI,");
-        terminalView.println("          executing some Wi-Fi commands will cause ");
-        terminalView.println("          the terminal session to disconnect.");
-        terminalView.println("          Don't use: sniff, probe, connect, scan, spoof...");
-        terminalView.println("          Use USB serial or restart if connection is lost.\n");
+        terminalView.println(" [⚠️  WARNING] ");
+        terminalView.println(" You are connected via the Web CLI,");
+        terminalView.println(" executing some Wi-Fi commands will cause ");
+        terminalView.println(" the terminal session to disconnect.");
+        terminalView.println(" Don't use: sniff, probe, connect, scan, spoof...");
+        terminalView.println(" Use USB serial or restart if connection is lost.\n");
     }
 }
 

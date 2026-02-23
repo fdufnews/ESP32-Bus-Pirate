@@ -69,9 +69,10 @@ void UsbS3Controller::handleKeyboardBridge() {
 
     auto sameHost = false;
     if (state.getTerminalMode() != TerminalTypeEnum::Standalone) {
-        terminalView.println("\n[WARNING] If the USB device is plugged on the same host as");
-        terminalView.println("          the terminal, it may cause looping issues with ENTER.");
-        terminalView.println("          (That makes no sense to bridge your keyboard on the same host)\n");
+        terminalView.println("\n [⚠️  WARNING] ");
+        terminalView.println(" If the USB device is plugged on the same host as");
+        terminalView.println(" the terminal, it may cause looping issues with ENTER.");
+        terminalView.println(" (That makes no sense to bridge keyboard on same host)\n");
         
         sameHost = userInputManager.readYesNo("Are you connected on the same host? (y/n)", true);
     
@@ -288,9 +289,10 @@ void UsbS3Controller::handleConfig() {
     };
 
     if (state.getTerminalMode() == TerminalTypeEnum::SerialPort) {
-        terminalView.println("\n[WARNING] You are using USB Serial terminal mode,");
-        terminalView.println("          using USB commands WILL INTERRUPT the session.");
-        terminalView.println("          Use Web UI or restart if connection is lost.\n");
+        terminalView.println("\n [⚠️  WARNING] ");
+        terminalView.println(" You are using USB Serial terminal mode,");
+        terminalView.println(" using USB commands WILL INTERRUPT the session.");
+        terminalView.println(" Use Web UI or restart if connection is lost.\n");
     } else {
         terminalView.println(""); // align
     }

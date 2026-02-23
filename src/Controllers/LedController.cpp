@@ -197,8 +197,8 @@ void LedController::handleConfig() {
     uint16_t defaultLength = state.getLedLength();
 
     // LEDs pins, locked because FastLED needs them at compile time
-    terminalView.println("[WARNING] Data pin cannot be changed. Data pin set to : " + std::to_string(defaultDataPin));
-    terminalView.println("[WARNING] Clock pin cannot be changed. Clock pin set to: " + std::to_string(defaultClockPin));
+    terminalView.println("[⚠️  WARNING] Data pin cannot be changed. Set to : " + std::to_string(defaultDataPin));
+    terminalView.println("[⚠️  WARNING] Clock pin cannot be changed. Set to: " + std::to_string(defaultClockPin));
 
     // LEDs count
     uint16_t length = userInputManager.readValidatedUint32("Number of LEDs", defaultLength);

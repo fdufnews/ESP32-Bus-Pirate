@@ -188,9 +188,10 @@ void BluetoothController::handleKeyboardBridge() {
     bool sameHost = false;
     if (state.getTerminalMode() != TerminalTypeEnum::Standalone) {
 
-        terminalView.println("\n[WARNING] If the BLE device is plugged on the same host as");
-        terminalView.println("          the terminal, it may cause looping issues with ENTER.");
-        terminalView.println("          (That makes no sense to bridge your keyboard on the same host)\n");
+        terminalView.println("\n [⚠️  WARNING] ");
+        terminalView.println(" If the BLE device is plugged on the same host as");
+        terminalView.println(" the terminal, it may cause looping issues with ENTER.");
+        terminalView.println(" (That makes no sense to bridge keyboard on same host)\n");
     
         sameHost = userInputManager.readYesNo("Are you connected on the same host? (y/n)", true);
         if (sameHost) {
