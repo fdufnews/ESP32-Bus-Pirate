@@ -58,11 +58,11 @@ void LedController::handleInstruction(const std::vector<ByteCode>& bytecodes) {
 Scan
 */
 void LedController::handleScan() {
-    terminalView.println("\n  [INFO] LED protocol scan.");
-    terminalView.println("         A short 'chase' animation will be played for each protocol.");
-    terminalView.println("         Watch the LEDs: they should light up one by one in blue,");
-    terminalView.println("         then turn off in sequence. If it looks correct, press [ENTER].");
-    terminalView.println("         Otherwise, wait 3 seconds and it will try the next protocol.\n");
+    terminalView.println("\n [ℹ️  INFORMATION] LED protocol scan.");
+    terminalView.println(" A short 'chase' animation will be played for each protocol.");
+    terminalView.println(" Watch the LEDs: they should light up one by one in blue,");
+    terminalView.println(" then turn off in sequence. If it looks correct, press [ENTER].");
+    terminalView.println(" Otherwise, wait 3 seconds and it will try the next protocol.\n");
 
     terminalView.println("Which type of LED are you scanning?");
     terminalView.println("  1. Single-wire (DATA only)");

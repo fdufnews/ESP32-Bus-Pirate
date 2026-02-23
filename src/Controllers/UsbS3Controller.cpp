@@ -321,10 +321,11 @@ void UsbS3Controller::handleHost() {
 
     terminalView.println("");
     terminalView.println("USB Host: Plug a USB device to the ESP32... Press [ENTER] to stop.\n");
-    terminalView.println("[INFO] USB Host will print connected device descriptors.");
-    terminalView.println("       This feature works only with USB *devices*,");
-    terminalView.println("       such as keyboards, mice, gamepads, etc.");
-    terminalView.println("       Make sure your board provides 5V on USB.\n");
+    terminalView.println(" [ℹ️  INFORMATION] ");
+    terminalView.println(" USB Host will print device descriptors.");
+    terminalView.println(" This feature works only with USB *devices*,");
+    terminalView.println(" such as keyboards, mice, gamepads, etc.");
+    terminalView.println(" Make sure your board provides 5V on USB.\n");
     while (true) {
         char c = terminalInput.readChar();
         if (c == '\r' || c == '\n') break;

@@ -369,9 +369,10 @@ void OneWireController::handleSniff() {
     terminalView.println("OneWire Sniff: Oberserving data line... Press [ENTER] to stop.\n");
 
     if (state.getTerminalMode() != TerminalTypeEnum::Standalone) {
-        terminalView.println("  [INFO] This feature uses very fast timing.");
-        terminalView.println("         The Web CLI may miss some signals,");
-        terminalView.println("         use Serial CLI for best results.\n");
+        terminalView.println(" [ℹ️  INFORMATION] ");
+        terminalView.println(" This feature uses very fast timing.");
+        terminalView.println(" The Web CLI may miss some signals,");
+        terminalView.println(" use Serial CLI for best results.\n");
     }
 
     // Init the pin to read passively

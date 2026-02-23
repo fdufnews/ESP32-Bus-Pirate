@@ -845,7 +845,8 @@ void SubGhzController::handleListen() {
     terminalView.println("\nSUBGHZ: RSSI to Audio mapping @ " + argTransformer.toFixed2(mhz) +
                          " MHz... Press [ENTER] to stop.\n");
 
-    terminalView.println("[INFO] Using I2S configured pins for audio output.\n");
+    terminalView.println(" [ℹ️  INFORMATION] ");
+    terminalView.println(" Using I2S configured pins for audio output.\n");
 
     // Mapping params
     const uint16_t fMin = 800;      // Hz for weak signals
@@ -915,9 +916,10 @@ void SubGhzController::handleConfig() {
     } else {
 
         if (state.getTerminalMode() != TerminalTypeEnum::Standalone) {
-            terminalView.println("\n[INFO] For SubGHz features, use **USB Serial** connection.");
-            terminalView.println("       It offers lower latency and more reliable logging.");
-            terminalView.println("       The WiFi Web UI can introduce delays and miss pulses.\n");
+            terminalView.println("\n [ℹ️  INFORMATION] ");
+            terminalView.println(" For SubGHz features, use **USB** connection.");
+            terminalView.println(" It offers lower latency and reliable logging.");
+            terminalView.println(" TheWeb UI can introduce delays and miss pulses.\n");
         }
         
         // Apply settings

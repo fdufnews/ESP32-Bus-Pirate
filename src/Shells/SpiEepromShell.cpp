@@ -78,7 +78,7 @@ void SpiEepromShell::run() {
 }
 
 void SpiEepromShell::cmdProbe() {
-    terminalView.println("\n[INFO] Probing SPI EEPROM...");
+    terminalView.println("\n [ℹ️  INFORMATION] Probing SPI EEPROM...");
 
     const bool ok = spiService.probeEeprom();
 

@@ -71,10 +71,10 @@ void SpiController::handleSniff() {
     terminalView.println("SPI Sniffer: In progress... Press [ENTER] to stop.");
 
     terminalView.println("");
-    terminalView.println("  [INFO]");
-    terminalView.println("    SPI Sniff mode listens passively on the SPI bus.");
-    terminalView.println("    Connect SCK, MOSI, MISO and CS lines to the Bus Pirate.");
-    terminalView.println("    Data is only captured when CS (chip select) is active.");
+    terminalView.println(" [ℹ️  INFORMATION]");
+    terminalView.println(" SPI Sniff mode listens passively on the bus.");
+    terminalView.println(" Connect SCK, MOSI, MISO and CS lines.");
+    terminalView.println(" Data is only captured when CS is active.");
     terminalView.println("");
 
     // Launch SPI slave on the selected line
@@ -136,10 +136,10 @@ void SpiController::handleSlave() {
     spiService.startSlave(sclk, miso, mosi, cs);
 
     terminalView.println("");
-    terminalView.println("  [INFO]");
-    terminalView.println("    SPI Slave mode listens passively on the SPI bus.");
-    terminalView.println("    Any command sent by a SPI master will be captured and logged");
-    terminalView.println("    Data is only captured when CS (chip select) is active.");
+    terminalView.println(" [ℹ️  INFORMATION]");
+    terminalView.println(" SPI Slave mode listens passively on the SPI bus.");
+    terminalView.println(" Any command sent by a master will be captured");
+    terminalView.println(" Data is only captured when CS is active.");
     terminalView.println("");
 
     while (true) {

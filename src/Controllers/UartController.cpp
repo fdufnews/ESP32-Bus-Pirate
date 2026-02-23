@@ -220,10 +220,10 @@ void UartController::handleScan() {
     PinoutConfig lastCfg;
 
     terminalView.println("UART Scan: Measuring edges on pins... Press [ENTER] to stop.\n");
-    terminalView.println("[INFO]");
-    terminalView.println("  The UART scan passively monitors GPIO pins to detect");
-    terminalView.println("  UART-like electrical activity (edges and timings).");
-    terminalView.println("  Pins showing activity are potential UART lines.");
+    terminalView.println(" [ℹ️  INFORMATION]");
+    terminalView.println(" The UART scan monitors GPIO pins to detect");
+    terminalView.println(" UART-like electrical activity (edges and timings).");
+    terminalView.println(" Pins showing activity are potential UART lines.");
     terminalView.println("");
     delay(300); // since the loop below is fast, the message above may not be seen without delay
     
@@ -469,9 +469,10 @@ void UartController::handleXmodemSend(const std::string& path) {
     }
 
     // Infos
-    terminalView.println(" [INFO]  No progress bar will be shown on WEBUI.");
-    terminalView.println("         Progress bar is only visible over USB Serial.");
-    terminalView.println("         Please be patient during the transfer.\n");
+    terminalView.println(" [ℹ️  INFORMATION]");
+    terminalView.println(" No progress bar will be shown on WEBUI.");
+    terminalView.println(" Progress bar is only visible over USB Serial.");
+    terminalView.println(" Please be patient during the transfer.\n");
     std::stringstream ss;
     ss << "         Estimated duration: ~" 
     << (uint32_t)((file.size() * 10.0) / state.getUartBaudRate()) 
@@ -515,12 +516,13 @@ void UartController::handleXmodemReceive(const std::string& path) {
 
     // Infos
     terminalView.println("");
-    terminalView.println("  [INFO] XMODEM receive mode is blocking.");
-    terminalView.println("         No progress bar will be shown on WEBUI.");
-    terminalView.println("         Progress bar is only visible over USB Serial.");
-    terminalView.println("         The device will wait for incoming data");
-    terminalView.println("         for up to 2 minutes. Once started,");
-    terminalView.println("         the transfer must complete before exiting.\n");
+    terminalView.println(" [ℹ️  INFORMATION] ");
+    terminalView.println(" XMODEM receive mode is blocking.");
+    terminalView.println(" No progress bar will be shown on WEBUI.");
+    terminalView.println(" Progress bar is only visible over USB Serial.");
+    terminalView.println(" The device will wait for incoming data");
+    terminalView.println(" for up to 2 minutes. Once started,");
+    terminalView.println(" the transfer must complete before exiting.\n");
 
     // Receive
     terminalView.println("UART XMODEM: Receiving...");
