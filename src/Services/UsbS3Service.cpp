@@ -614,10 +614,11 @@ std::string UsbS3Service::usbHostTick() {
     return "";
 }
 
-void UsbS3Service::configure(const std::string& productStr, const std::string& manufacturerStr, const std::string& serialStr, uint16_t vid, uint16_t pid) {
+void UsbS3Service::configure(const std::string& productStr, const std::string& manufacturerStr, const std::string& serialStr, uint16_t vid, uint16_t pid, const std::string& webUSBString) {
     USB.productName(productStr.c_str());
     USB.manufacturerName(manufacturerStr.c_str());
     USB.serialNumber(serialStr.c_str());
     USB.VID(vid);
     USB.PID(pid);
+    USB.webUSBURL(webUSBString.c_str());
 }
