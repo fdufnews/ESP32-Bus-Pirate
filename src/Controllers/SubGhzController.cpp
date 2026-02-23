@@ -837,7 +837,9 @@ void SubGhzController::handleListen() {
     // I2S init with configured pins
     i2sService.configureOutput(
         state.getI2sBclkPin(), state.getI2sLrckPin(), state.getI2sDataPin(),
-        state.getI2sSampleRate(), state.getI2sBitsPerSample()
+        state.getI2sSampleRate(), state.getI2sBitsPerSample(),
+        state.getI2sMaxLevel()
+
     );
 
     terminalView.println("\nSUBGHZ: RSSI to Audio mapping @ " + argTransformer.toFixed2(mhz) +

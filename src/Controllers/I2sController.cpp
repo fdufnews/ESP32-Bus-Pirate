@@ -220,7 +220,8 @@ void I2sController::handleTestSpeaker() {
         state.getI2sLrckPin(),
         state.getI2sDataPin(),
         12000,
-        16
+        16,
+        state.getI2sMaxLevel()
     );
     
     // PCM Playback test
@@ -233,7 +234,8 @@ void I2sController::handleTestSpeaker() {
         state.getI2sLrckPin(),
         state.getI2sDataPin(),
         state.getI2sSampleRate(),
-        state.getI2sBitsPerSample()
+        state.getI2sBitsPerSample(),
+        state.getI2sMaxLevel()
     );
     
     terminalView.println("\nI2S Speaker Test: Done.");
@@ -320,6 +322,9 @@ void I2sController::handleConfig() {
     uint8_t bits = userInputManager.readValidatedUint8("Bits per sample (e.g. 16)", state.getI2sBitsPerSample());
     state.setI2sBitsPerSample(bits);
 
+    uint32_t level = userInputManager.readValidatedUint32("Max level (e.g 16383)", state.getI2sMaxLevel());
+    state.setI2sMaxLevel(min(level, (uint32_t)(1<<(bits-1) - 1)));
+
     // Config will be applied at next play/record/test action
     terminalView.println("I2S configured.\n");
 }
@@ -360,10 +365,16 @@ void I2sController::switchOutputInput(bool output) {
     if (output) {
         i2sService.configureOutput(state.getI2sBclkPin(), state.getI2sLrckPin(),
                              state.getI2sDataPin(), state.getI2sSampleRate(),
-                             state.getI2sBitsPerSample());
+                             state.getI2sBitsPerSample(), state.getI2sMaxLevel());
+        if(!i2sService.isInitialized()){
+            terminalView.println("I2S switchOutputInput: can't configure output .");
+        }
     } else {
         i2sService.configureInput(state.getI2sBclkPin(), state.getI2sLrckPin(),
                             state.getI2sDataPin(), state.getI2sSampleRate(),
                             state.getI2sBitsPerSample());
+        if(!i2sService.isInitialized()){
+            terminalView.println("I2S switchOutputInput: can't configure input .");
+        }
     }
 }
