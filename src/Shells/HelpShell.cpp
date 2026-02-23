@@ -42,6 +42,9 @@ void HelpShell::run(ModeEnum currentMode, bool select) {
         );
     }
 
+    if (choice != actionsStr.size() - 1) // not exit
+         cmdGeneral(); // print general cmds for all modes
+
     switch (choice) {
         case 0:  cmdAll();       break;
         case 1:  cmdOneWire();   break;
@@ -70,9 +73,6 @@ void HelpShell::run(ModeEnum currentMode, bool select) {
         default:
             break;
     }
-    
-    if (choice != actionsStr.size() - 1) // not exit
-         cmdGeneral();
 
     terminalView.println("");
 }
