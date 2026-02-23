@@ -73,15 +73,33 @@ void FmController::handleConfig() {
 
     const auto& forbidden = state.getProtectedPins();
 
+    // I2C
     uint8_t sdaPin = (uint8_t)userInputManager.readValidatedPinNumber("SI4713 SDA pin", state.getTwoWireIoPin(), forbidden);
     uint8_t sclPin = (uint8_t)userInputManager.readValidatedPinNumber("SI4713 SCL pin", state.getTwoWireClkPin(), forbidden);
+
+    // RST
+    terminalView.println("\nReset pin is required, or you can");
+    terminalView.println("briefly connect SI4713 RST to GND");
+    terminalView.println("to activate the device.\n");
     int8_t resetPin = (int8_t)userInputManager.readValidatedPinNumber("SI4713 RESET pin", state.getTwoWireRstPin(), forbidden); // -1 = none
+
+    // Freq
     uint32_t i2cFreqHz = userInputManager.readValidatedUint32("I2C frequency (Hz)", state.getI2cFrequency());
 
     state.setTwoWireClkPin(sclPin);
     state.setTwoWireIoPin(sdaPin);
     state.setTwoWireRstPin(resetPin);
     state.setI2cFrequency(i2cFreqHz);
+    configured = true; // consider configured to avoid looping
+
+    if (resetPin != -1) {
+        // Hard reset before configuring
+        // if it stucks, it can't be detected
+        // and then, can't be resetted by the lib
+        fmService.reset(resetPin);
+    } else {
+
+    }
 
     if (!fmService.configure(resetPin, sdaPin, sclPin, i2cFreqHz)) {
         terminalView.println("\n❌ SI4713 configure failed.\n");
@@ -94,8 +112,6 @@ void FmController::handleConfig() {
     } else {
         terminalView.println("\n✅ SI4713 configured successfully.\n");
     }
-    
-    configured = true;
 }
 
 /*
@@ -426,14 +442,14 @@ void FmController::handleBroadcast() {
 Reset
 */
 void FmController::handleReset() {
-    if (!ensurePresent_()) return;
-    terminalView.println("FM: ResettingSI4713 via reset pin...");
-    fmService.reset();
+    terminalView.println("FM: Resetting SI4713 via reset pin...");
+    fmService.reset(state.getTwoWireRstPin());
 }
 
 /*
 Help
 */
 void FmController::handleHelp() {
+    terminalView.println("\nUnknown command. Available FM commands:");
     helpShell.run(state.getCurrentMode(), false);
 }
