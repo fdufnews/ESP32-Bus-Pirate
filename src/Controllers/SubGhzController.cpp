@@ -838,7 +838,7 @@ void SubGhzController::handleListen() {
     i2sService.configureOutput(
         state.getI2sBclkPin(), state.getI2sLrckPin(), state.getI2sDataPin(),
         state.getI2sSampleRate(), state.getI2sBitsPerSample(),
-        state.getI2sMaxLevel()
+        state.getI2sPercentLevel()
 
     );
 
