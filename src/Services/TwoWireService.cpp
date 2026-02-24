@@ -12,7 +12,8 @@ void TwoWireService::configure(uint8_t clk, uint8_t io, uint8_t rst) {
 
     gpio_set_direction((gpio_num_t)clkPin, GPIO_MODE_OUTPUT);
     gpio_set_direction((gpio_num_t)rstPin, GPIO_MODE_OUTPUT);
-    gpio_set_direction((gpio_num_t)ioPin, GPIO_MODE_OUTPUT);
+    gpio_set_direction((gpio_num_t)ioPin, GPIO_MODE_INPUT_OUTPUT_OD);
+    gpio_set_pull_mode((gpio_num_t)ioPin, GPIO_PULLUP_ONLY);
 
     gpio_set_level((gpio_num_t)clkPin, 0);
     gpio_set_level((gpio_num_t)rstPin, 0);
@@ -42,18 +43,11 @@ void TwoWireService::setCLK(bool level) {
 }
 
 void TwoWireService::setIO(bool level) {
-    if (level) {
-        gpio_set_direction((gpio_num_t)ioPin, GPIO_MODE_INPUT);
-        gpio_set_pull_mode((gpio_num_t)ioPin, GPIO_FLOATING);
-    } else {
-        gpio_set_pull_mode((gpio_num_t)ioPin, GPIO_FLOATING);
-        gpio_set_direction((gpio_num_t)ioPin, GPIO_MODE_OUTPUT);
-        gpio_set_level((gpio_num_t)ioPin, 0);
-    }
+    gpio_set_level((gpio_num_t)ioPin, level ? 1 : 0);
 }
 
 bool TwoWireService::readIO() {
-    gpio_set_direction((gpio_num_t)ioPin, GPIO_MODE_INPUT);
+    // gpio_set_direction((gpio_num_t)ioPin, GPIO_MODE_INPUT);
     return gpio_get_level((gpio_num_t)ioPin);
 }
 
@@ -401,14 +395,16 @@ bool TwoWireService::unlockSmartCard(const uint8_t psc[3]) {
 // ================== SNIFFER: helpers ==================
 
 inline void IRAM_ATTR TwoWireService::pushEvent(uint8_t type, uint8_t data) {
+    portENTER_CRITICAL_ISR(&sn_mux);
+
     uint16_t next = (sn_qHead + 1) % SNIFF_Q_SIZE;
-    if (next == sn_qTail) return; // overflow
+    if (next != sn_qTail) {
+        sn_q[sn_qHead].type = type;
+        sn_q[sn_qHead].data = data;
+        sn_qHead = next;
+    }
 
-    // Write fields from the volatile element
-    sn_q[sn_qHead].type = type;
-    sn_q[sn_qHead].data = data;
-
-    sn_qHead = next;
+    portEXIT_CRITICAL_ISR(&sn_mux);
 }
 
 bool TwoWireService::popEvent(uint8_t& type, uint8_t& data) {
@@ -539,14 +535,29 @@ void TwoWireService::stopSniffer() {
     sn_active = false;
 
     // Detach ISRs
+    gpio_intr_disable((gpio_num_t)clkPin);
+    gpio_intr_disable((gpio_num_t)ioPin);
+
     gpio_isr_handler_remove((gpio_num_t)clkPin);
     gpio_isr_handler_remove((gpio_num_t)ioPin);
 
-    // Reset pins to idle state
-    gpio_set_direction((gpio_num_t)clkPin, GPIO_MODE_INPUT);
+    // ---- Restore "bus active" pin configuration ----
+    // CLK push-pull output (idle low)
+    gpio_set_direction((gpio_num_t)clkPin, GPIO_MODE_OUTPUT);
     gpio_set_pull_mode((gpio_num_t)clkPin, GPIO_FLOATING);
-    gpio_set_direction((gpio_num_t)ioPin, GPIO_MODE_INPUT);
-    gpio_set_pull_mode((gpio_num_t)ioPin, GPIO_FLOATING);
+    gpio_set_level((gpio_num_t)clkPin, 0);
+
+    // RST push-pull output (idle low) - if you want it restored too
+    if (rstPin != 0xFF) {
+        gpio_set_direction((gpio_num_t)rstPin, GPIO_MODE_OUTPUT);
+        gpio_set_pull_mode((gpio_num_t)rstPin, GPIO_FLOATING);
+        gpio_set_level((gpio_num_t)rstPin, 0);
+    }
+
+    // IO open-drain with input enabled + pull-up, released
+    gpio_set_direction((gpio_num_t)ioPin, GPIO_MODE_INPUT_OUTPUT_OD);
+    gpio_set_pull_mode((gpio_num_t)ioPin, GPIO_PULLUP_ONLY);
+    gpio_set_level((gpio_num_t)ioPin, 1); // released
 }
 
 bool TwoWireService::getNextSniffEvent(uint8_t& type, uint8_t& data) {

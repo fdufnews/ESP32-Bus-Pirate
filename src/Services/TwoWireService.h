@@ -86,6 +86,7 @@ private:
     volatile uint8_t sn_bitIndex = 0;
     volatile uint8_t sn_currentByte = 0;
     volatile uint8_t sn_lastIO = 1;
+    volatile bool isr_service_installed = false;
 
     // Ring buffer
     struct SniffEvent { uint8_t type; uint8_t data; };
