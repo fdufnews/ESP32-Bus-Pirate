@@ -96,7 +96,7 @@ private:
     void handleRecord();
 
     // Convert RSSI to audio
-    void handleListen();
+    void handleEar();
 
     // Configure CC1101
     void handleConfig();

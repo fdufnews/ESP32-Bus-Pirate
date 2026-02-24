@@ -17,7 +17,7 @@ void SubGhzController::handleCommand(const TerminalCommand& cmd) {
     else if (root == "decode")       handleDecode(cmd);
     else if (root == "trace")        handleTrace();
     else if (root == "waterfall")    handleWaterfall();
-    else if (root == "listen")       handleListen();
+    else if (root == "ear")          handleEar();
     else if (root == "record")       handleRecord();
     else if (root == "load")         handleLoad();
     else if (root == "config")       handleConfig();
@@ -819,9 +819,9 @@ void SubGhzController::handleRecord() {
 }
 
 /*
-Listen
+Ear
 */
-void SubGhzController::handleListen() {
+void SubGhzController::handleEar() {
     // Params
     float mhz = userInputManager.readValidatedFloat("Enter frequency (MHz):", state.getSubGhzFrequency(), 0.0f, 1000.0f);
     int   rssiGate = userInputManager.readValidatedInt("RSSI gate (dBm):", -65, -127, 0);
@@ -846,7 +846,8 @@ void SubGhzController::handleListen() {
                          " MHz... Press [ENTER] to stop.\n");
 
     terminalView.println(" [ℹ️  INFORMATION] ");
-    terminalView.println(" Using I2S configured pins for audio output.\n");
+    terminalView.println(" Using I2S configured pins for audio output.");
+    terminalView.println(" You can set volume in the I2S mode settings.\n");
 
     // Mapping params
     const uint16_t fMin = 800;      // Hz for weak signals
@@ -874,7 +875,7 @@ void SubGhzController::handleListen() {
         delayMicroseconds(refreshUs);
     }
 
-    terminalView.println("\nSUBGHZ Listen: Stopped by user.\n");
+    terminalView.println("SUBGHZ Ear: Stopped by user.\n");
 }
 
 /*
