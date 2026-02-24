@@ -76,7 +76,10 @@ void CellController::handleConfig()
     uint32_t baud = userInputManager.readValidatedUint32("Baudrate", 115200);
     state.setUartBaudRate(baud);
 
-    cellService.init(rx, tx, baud);
+    // Swap RX/TX we ask for RX/TX but since it is UART
+    // we should connect RX to TX and TX to RX, so swap
+    // to match modem header mentioning RX/TX pins
+    cellService.init(tx, rx, baud);
 
     terminalView.println("\nDetecting modem...");
     if (!cellService.detect()) {
