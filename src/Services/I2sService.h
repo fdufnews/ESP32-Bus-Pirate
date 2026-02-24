@@ -6,10 +6,10 @@
 
 class I2sService {
 public:
-    void configureOutput(uint8_t bclk, uint8_t lrck, uint8_t dout, uint32_t sampleRate, uint8_t bits, uint32_t level);
+    void configureOutput(uint8_t bclk, uint8_t lrck, uint8_t dout, uint32_t sampleRate, uint8_t bits, uint8_t percentlevel);
     void configureInput(uint8_t bclk, uint8_t lrck, uint8_t din,  uint32_t sampleRate, uint8_t bits);
 
-    void playTone(uint32_t sampleRate, uint16_t freq, uint16_t durationMs);
+    void playTone(uint32_t sampleRate, uint16_t freq, uint32_t durationMs);
     void playToneInterruptible(uint32_t sampleRate, uint16_t freq, uint32_t durationMs, std::function<bool()> shouldStop);
 
     void playPcm(const int16_t* data, size_t numBytes);
@@ -27,7 +27,7 @@ private:
     uint8_t prevBclk = 0, prevLrck = 0, prevDout = 0, prevDin = 0;
     uint8_t bitsPerSample = 16;
     uint32_t sampleRateHz = 8000;
-    uint32_t maxLevel = 32767;
+    uint32_t percentLevel = 100;
 
     // helpers 
     inline void writeStereo16(int16_t s);

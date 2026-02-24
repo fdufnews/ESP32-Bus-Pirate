@@ -34,7 +34,7 @@ inline void I2sService::writeStereo16(int16_t s) {
     i2s.write((uint8_t)((s >> 8) & 0xFF));
 }
 
-void I2sService::configureOutput(uint8_t bclk, uint8_t lrck, uint8_t dout, uint32_t sampleRate, uint8_t bits, uint32_t level) {
+void I2sService::configureOutput(uint8_t bclk, uint8_t lrck, uint8_t dout, uint32_t sampleRate, uint8_t bits, uint8_t percentlevel) {
     end();
 
 #if defined(DEVICE_CARDPUTER) || defined(DEVICE_STICKS3)
@@ -58,7 +58,7 @@ void I2sService::configureOutput(uint8_t bclk, uint8_t lrck, uint8_t dout, uint3
     bitsPerSample = bits;
     sampleRateHz = sampleRate;
     isTx = true;
-    maxLevel = level;
+    percentLevel = percentlevel;
     initialized = true;
 }
 
@@ -91,7 +91,7 @@ void I2sService::configureInput(uint8_t bclk, uint8_t lrck, uint8_t din,
     initialized = true;
 }
 
-void I2sService::playTone(uint32_t /*sampleRate*/, uint16_t freq, uint16_t durationMs) {
+void I2sService::playTone(uint32_t /*sampleRate*/, uint16_t freq, uint32_t durationMs) {
     if (!initialized || !isTx) return;
 
     const uint32_t sr = sampleRateHz;  
@@ -99,10 +99,11 @@ void I2sService::playTone(uint32_t /*sampleRate*/, uint16_t freq, uint16_t durat
 
     static constexpr size_t FRAMES = 256; 
     int16_t buf[FRAMES * 2];
-    const int32_t amp = maxLevel;
+    const float amp = (float) ((1 << (bitsPerSample - 1)) - 1.0) * (float) percentLevel / 100.0 ;
 
-    const uint32_t totalFrames = (sr * (uint32_t)durationMs) / 1000UL;
+    const uint32_t totalFrames = (sr * durationMs) / 1000UL;
     uint32_t done = 0;
+    float omega = 2.0f * (float)M_PI * (float)freq;
 
     while (done < totalFrames) {
         size_t n = FRAMES;
@@ -110,7 +111,7 @@ void I2sService::playTone(uint32_t /*sampleRate*/, uint16_t freq, uint16_t durat
 
         for (size_t i = 0; i < n; i++) {
             float t = (float)(done + (uint32_t)i) / (float)sr;
-            int16_t s = (int16_t)(sinf(2.0f * (float)M_PI * (float)freq * t) * (float)amp);
+            int16_t s = (int16_t)(sinf(omega * t) * amp);
 
             buf[2 * i]     = s; // L
             buf[2 * i + 1] = s; // R
@@ -131,10 +132,11 @@ void I2sService::playToneInterruptible(uint32_t /*sampleRate*/, uint16_t freq, u
 
     static constexpr size_t FRAMES = 256;
     int16_t buf[FRAMES * 2];
-    const int16_t amp = maxLevel;
+    const float amp = (float) ((1 << (bitsPerSample - 1)) - 1.0) * (float) percentLevel / 100.0 ;
 
     const uint32_t totalFrames = (sr * durationMs) / 1000UL;
     uint32_t done = 0;
+    float omega = 2.0f * (float)M_PI * (float)freq;
 
     while (done < totalFrames) {
         if (shouldStop && shouldStop()) break;
@@ -144,7 +146,7 @@ void I2sService::playToneInterruptible(uint32_t /*sampleRate*/, uint16_t freq, u
 
         for (size_t i = 0; i < n; i++) {
             float t = (float)(done + (uint32_t)i) / (float)sr;
-            int16_t s = (int16_t)(sinf(2.0f * (float)M_PI * (float)freq * t) * (float)amp);
+            int16_t s = (int16_t)(sinf(omega * t) * amp);
 
             buf[2 * i]     = s;
             buf[2 * i + 1] = s;
@@ -164,13 +166,10 @@ void I2sService::playPcm(const int16_t* data, size_t numBytes) {
 
     uint32_t level = 1 << (bitsPerSample) - 1;
     uint8_t shift = 0;
-    while(level > maxLevel){
-        level = level >> 1;
-        shift++;
-    }
+    float att = (float) percentLevel / 100.0;
     
     for (size_t i = 0; i < sampleCount; i++) {
-        int16_t s = shift>0? data[i] >> shift : data[i];
+        int16_t s = int16_t ((float) data[i] * att);
         writeStereo16(s);
     }
 }

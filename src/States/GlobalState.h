@@ -107,7 +107,7 @@ private:
     uint8_t i2sDataPin = 42;
     uint32_t i2sSampleRate = 44100;
     uint8_t i2sBitsPerSample = 16;
-    uint32_t i2sMaxLeveL = 32767;
+    uint8_t i2sPercentLevel = 100;
 
     // CAN Default Configuration
     uint8_t canCspin = 1;
@@ -325,14 +325,14 @@ public:
     uint8_t getI2sDataPin() const { return i2sDataPin; }
     uint32_t getI2sSampleRate() const { return i2sSampleRate; }
     uint8_t getI2sBitsPerSample() const { return i2sBitsPerSample; }
-    uint32_t getI2sMaxLevel() const {return i2sMaxLeveL;}
+    uint8_t getI2sPercentLevel() const {return i2sPercentLevel;}
 
     void setI2sBclkPin(uint8_t pin) { i2sBclkPin = pin; }
     void setI2sLrckPin(uint8_t pin) { i2sLrckPin = pin; }
     void setI2sDataPin(uint8_t pin) { i2sDataPin = pin; }
     void setI2sSampleRate(uint32_t rate) { i2sSampleRate = rate; }
     void setI2sBitsPerSample(uint8_t bits) { i2sBitsPerSample = bits; }
-    void setI2sMaxLevel(uint32_t level) {i2sMaxLeveL = level;}
+    void setI2sPercentLevel(uint8_t level) {i2sPercentLevel = level;}
 
     // JTAG
     const std::vector<uint8_t>& getJtagScanPins() const { return jtagScanPins; }
