@@ -105,7 +105,7 @@ bool TerminalCommandTransformer::isGlobalCommand(const TerminalCommand& cmd) con
             root == "logic" || root == "analogic" || root == "P" || root == "p" || 
             root == "system" || root == "sys" || root == "guide" || root == "man" || root == "wizard" ||
             root == "help" || root == "h" || root == "?" || root == "hex" || root == "dec" ||
-            root == "profile" || root == "delay" || root == "d";
+            root == "profile" || root == "delay" || root == "listen";
 }
 
 bool TerminalCommandTransformer::isScreenCommand(const TerminalCommand& cmd) const {

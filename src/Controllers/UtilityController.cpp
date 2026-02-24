@@ -8,6 +8,7 @@ UtilityController::UtilityController(
     IDeviceView& deviceView,
     IInput& terminalInput,
     PinService& pinService,
+    I2sService& i2sService,
     UserInputManager& userInputManager,
     PinAnalyzeManager& pinAnalyzeManager,
     ArgTransformer& argTransformer,
@@ -20,6 +21,7 @@ UtilityController::UtilityController(
       deviceView(deviceView),
       terminalInput(terminalInput),
       pinService(pinService),
+      i2sService(i2sService),
       userInputManager(userInputManager),
       pinAnalyzeManager(pinAnalyzeManager),
       argTransformer(argTransformer),
@@ -44,6 +46,7 @@ void UtilityController::handleCommand(const TerminalCommand& cmd) {
     else if (cmd.getRoot() == "wizard")                                          handleWizard(cmd);
     else if (cmd.getRoot() == "hex" || cmd.getRoot() == "dec")                   handleHex(cmd);
     else if (cmd.getRoot() == "profile")                                         handleProfile();
+    else if (cmd.getRoot() == "listen")                                          handleListen(cmd);
     else if (cmd.getRoot() == "delay")                                           handleDelay(cmd);
     else {
         // just display commands for the mode without prompting
@@ -473,6 +476,112 @@ void UtilityController::handleWizard(const TerminalCommand& cmd) {
 
     // Cleanup buffers
     pinAnalyzeManager.end();
+}
+
+/*
+Listen
+*/
+void UtilityController::handleListen(const TerminalCommand& cmd) {
+    // Pin arg
+    uint8_t pin = 0;
+    if (!cmd.getSubcommand().empty() && argTransformer.isValidNumber(cmd.getSubcommand())) {
+        pin = argTransformer.toUint8(cmd.getSubcommand());
+    } else {
+        terminalView.println("Usage: listen <pin>");
+        return;
+    }
+
+    // Protected
+    if (state.isPinProtected(pin)) {
+        terminalView.println("Listen: This pin is protected or reserved.");
+        return;
+    }
+
+    // Used by I2S
+    if (state.getI2sBclkPin() == pin || state.getI2sLrckPin() == pin || state.getI2sDataPin() == pin) {
+        terminalView.println("Listen: This pin is used by I2S.");
+        return;
+    }
+
+    // Apply existing pull config
+    PinService::pullType pull = pinService.getPullType(pin);
+    if (pull == PinService::PULL_UP)         pinService.setInputPullup(pin);
+    else if (pull == PinService::PULL_DOWN)  pinService.setInputPullDown(pin);
+    else                                     pinService.setInput(pin);
+
+    // I2S init with configured pins
+    i2sService.configureOutput(
+        state.getI2sBclkPin(), state.getI2sLrckPin(), state.getI2sDataPin(),
+        state.getI2sSampleRate(), state.getI2sBitsPerSample(),
+        state.getI2sPercentLevel()
+    );
+
+    terminalView.println("\nListen: Activity to Audio @ GPIO " + std::to_string(pin) +
+                         "... Press [ENTER] to stop.\n");
+
+    terminalView.println(" [ℹ️  INFORMATION] ");
+    terminalView.println(" Using I2S configured pins for audio output.");
+    terminalView.println(" You can set volume in the I2S mode settings.\n");
+
+    //  params
+    const uint16_t toneMs = 1;
+    const uint16_t refreshUs = 200;
+    const uint32_t windowUs = 20000;     // 20 ms
+    const uint16_t fMin = 200;           // audio low
+    const uint16_t fMax = 12000;         // audio high
+
+    int last = pinService.read(pin);
+    uint32_t windowStartUs = micros();
+    uint32_t edgesWindow = 0;
+
+    while (true) {
+
+        // Stop on ENTER
+        char c = terminalInput.readChar();
+        if (c == '\n' || c == '\r') break;
+
+        // sample a bunch
+        for (uint16_t i = 0; i < 256; i++) {
+            int cur = pinService.read(pin);
+            if (cur != last) {
+                last = cur;
+                edgesWindow++;
+            }
+        }
+
+        uint32_t nowUs = micros();
+        if (nowUs - windowStartUs >= windowUs) {
+
+            // approx edges per second
+            float secs = (nowUs - windowStartUs) / 1000000.0f;
+            float edgesPerSec = (secs > 0) ? (edgesWindow / secs) : 0.0f;
+            float approxSignalHz = edgesPerSec * 0.5f;
+
+            // clamp to something reasonable
+            if (approxSignalHz < 0) approxSignalHz = 0;
+            if (approxSignalHz > 50000) approxSignalHz = 50000;
+
+            // Frequency has an impact on the sound
+            float norm = approxSignalHz / 50000.0f;
+            if (norm > 1) norm = 1;
+            
+            // audio freq to play based on activity
+            uint16_t audioHz = fMin + (uint16_t)(norm * (float)(fMax - fMin));
+
+            // Play tone only if we saw activity
+            if (edgesWindow > 0) {
+                i2sService.playTone(state.getI2sSampleRate(), audioHz, toneMs);
+            }
+
+            // reset window
+            edgesWindow = 0;
+            windowStartUs = nowUs;
+        }
+
+        delayMicroseconds(refreshUs);
+    }
+
+    terminalView.println("Listen: Stopped by user.\n");
 }
 
 /*

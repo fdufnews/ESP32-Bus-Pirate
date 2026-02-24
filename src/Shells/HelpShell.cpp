@@ -108,6 +108,7 @@ void HelpShell::cmdGeneral() {
         "logic <pin>          - Logic analyzer",
         "analogic <pin>       - Analogic plotter",
         "wizard <pin>         - Pin activity analyzer",
+        "listen <pin>         - Pin activity to audio",
         "P                    - Enable pull-up",
         "p                    - Disable pull-up",
         "",

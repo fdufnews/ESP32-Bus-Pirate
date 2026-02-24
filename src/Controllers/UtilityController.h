@@ -12,6 +12,7 @@
 #include "States/GlobalState.h"
 #include "Enums/ModeEnum.h"
 #include "Services/PinService.h"
+#include "Services/I2sService.h"
 #include "Managers/UserInputManager.h"
 #include "Managers/PinAnalyzeManager.h"
 #include "Transformers/ArgTransformer.h"
@@ -27,7 +28,8 @@ public:
         ITerminalView& terminalView, 
         IDeviceView& deviceView, 
         IInput& terminalInput, 
-        PinService& pinService, 
+        PinService& pinService,
+        I2sService& i2sService,
         UserInputManager& userInputManager,
         PinAnalyzeManager& pinAnalyzeManager,
         ArgTransformer& argTransformer,
@@ -74,6 +76,9 @@ private:
     // Pin diagnostic with periodic report
     void handleWizard(const TerminalCommand& cmd);
 
+    // Pin activity to audio
+    void handleListen(const TerminalCommand& cmd);
+
     // Hexadecimal converter
     void handleHex(const TerminalCommand& cmd);
     
@@ -84,6 +89,7 @@ private:
     IDeviceView& deviceView;
     IInput& terminalInput;
     PinService& pinService;
+    I2sService& i2sService;
     UserInputManager& userInputManager;
     PinAnalyzeManager& pinAnalyzeManager;
     ArgTransformer& argTransformer;
