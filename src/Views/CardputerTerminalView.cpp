@@ -478,7 +478,7 @@ std::string CardputerTerminalView::mapCodepointToASCII(uint32_t cp) const {
     if (cp == 0x2713 || cp == 0x2705) return "v";  // ✓ / ✔
     if (cp == 0x2717 || cp == 0x274C) return "x"; // ❌
     if (cp == 0x00B0) return " deg ";   // °
-    if (cp == 0x03BC) return "u";       // µ
+    if (cp == 0x03BC || cp == 0x00B5) return "u"; // µ / micro sign
 
     return "";
 }
