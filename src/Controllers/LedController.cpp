@@ -201,10 +201,9 @@ void LedController::handleConfig() {
     terminalView.println(" Clock pin cannot be changed. Set to: " + std::to_string(defaultClockPin));
     terminalView.println("");
 
-    // LEDs count
-    uint16_t length = userInputManager.readValidatedUint32("Number of LEDs", defaultLength);
-    if (length <= 0) length = 1;
-    if (length > 16) {
+    // LEDs count, up to 128
+    uint8_t length = userInputManager.readValidatedUint8("Number of LEDs (1-128)", defaultLength, 1, 128);
+    if (length > 8) {
         terminalView.println("\n [⚠️  WARNING]");
         terminalView.println(" Large LED count may exceed USB power limits.");
         terminalView.println(" This can cause brownouts, or USB port shutdown.");
@@ -213,7 +212,7 @@ void LedController::handleConfig() {
 
     // LED Brightness
     uint8_t defaultBrightness = state.getLedBrightness();
-    uint8_t brightness = userInputManager.readValidatedUint8("Brightness (0–255)", defaultBrightness);
+    uint8_t brightness = userInputManager.readValidatedUint8("Brightness (0–255)", defaultBrightness, 0, 255);
 
     // LED Protocol
     auto selectedProtocol = state.getLedProtocol();

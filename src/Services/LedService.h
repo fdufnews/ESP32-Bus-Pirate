@@ -19,6 +19,7 @@ public:
     static std::vector<std::string> getSpiChipsets();
     static std::vector<std::string> getSupportedProtocols();
     static std::vector<std::string> getSupportedAnimations();
+    static int getMaxLeds();
     CRGB parseStringColor(const std::string& input);
     CRGB parseHtmlColor(const std::string& input);
 private:
@@ -29,5 +30,5 @@ private:
 
     // Allocate a maximum number of LEDs once
     // to avoid dynamic allocation issues with FastLED
-    const uint16_t MAX_LEDS = 128;
+    static const uint16_t MAX_LEDS = 128;
 };

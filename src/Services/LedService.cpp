@@ -259,6 +259,10 @@ std::vector<std::string> LedService::getSupportedAnimations() {
     };
 }
 
+int LedService::getMaxLeds() {
+    return MAX_LEDS;
+}
+
 CRGB LedService::parseStringColor(const std::string& input) {
     auto toLower = [](const std::string& str) {
         std::string result = str;
