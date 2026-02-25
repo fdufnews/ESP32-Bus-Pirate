@@ -62,6 +62,7 @@ int PinService::readAnalog(uint8_t pin) {
 bool PinService::setupPwm(uint8_t pin, uint32_t freq, uint8_t dutyPercent) {
     if (dutyPercent > 100) dutyPercent = 100;
 
+    detachSignal(pin); // detach if already active
 
     uint8_t resolutionBits;
     if (freq > 300000) {
@@ -82,14 +83,20 @@ bool PinService::setupPwm(uint8_t pin, uint32_t freq, uint8_t dutyPercent) {
 
     uint32_t dutyMax = (1UL << resolutionBits) - 1;
     uint32_t dutyVal = (uint32_t(dutyPercent) * dutyMax) / 100U;
-    ledcWrite(pin, dutyVal);
+    
+    bool writeResult = ledcWrite(pin, dutyVal);
+    if (writeResult) {
+        markActivePwmPin(pin);
+    }
 
-    return true;
+    return writeResult;
 }
 
-void PinService::setServoAngle(uint8_t pin, uint8_t angle) {
+bool PinService::setServoAngle(uint8_t pin, uint8_t angle) {
   const int freq = 50; // Hz
   const int resolution = 14;  // max stable
+
+  detachSignal(pin); // detach if already active
 
   // setup et attach
   ledcAttach(pin, freq, resolution);
@@ -102,7 +109,12 @@ void PinService::setServoAngle(uint8_t pin, uint8_t angle) {
   uint32_t pulseUs = map(angle, 0, 180, 1000, 2000);
   uint32_t dutyVal = (pulseUs * dutyMax) / periodUs;
 
-  ledcWrite(pin, dutyVal);
+  bool writeResult = ledcWrite(pin, dutyVal);
+  if (writeResult) {
+      markActivePwmPin(pin);
+  }
+  
+  return writeResult;
 }
 
 PinService::pullType PinService::getPullType(uint8_t pin){
@@ -118,4 +130,26 @@ std::vector<uint8_t> PinService::getConfiguredPullPins() {
     }
 
     return pins;
+}
+
+void PinService::detachSignal(uint8_t pin) {
+    if (!isActivePwmPin(pin)) return;
+
+    ledcDetach(pin);
+    unmarkActivePwmPin(pin);
+}
+
+bool PinService::isActivePwmPin(uint8_t pin) const {
+    return std::find(activePwmPins.begin(), activePwmPins.end(), pin) != activePwmPins.end();
+}
+
+void PinService::markActivePwmPin(uint8_t pin) {
+    if (!isActivePwmPin(pin)) activePwmPins.push_back(pin);
+}
+
+void PinService::unmarkActivePwmPin(uint8_t pin) {
+    auto it = std::remove(activePwmPins.begin(), activePwmPins.end(), pin);
+    if (it != activePwmPins.end()) {
+        activePwmPins.erase(it, activePwmPins.end());
+    }
 }

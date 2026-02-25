@@ -17,10 +17,19 @@ public:
     void togglePullDown(uint8_t pin);
     int readAnalog(uint8_t pin);
     bool setupPwm(uint8_t pin, uint32_t freq, uint8_t dutyPercent);
-    void setServoAngle(uint8_t pin, uint8_t angle);
+    bool setServoAngle(uint8_t pin, uint8_t angle);
     typedef enum  pullType { NOPULL = 0, PULL_UP, PULL_DOWN}  pullType;
     pullType getPullType(uint8_t pin);
     std::vector<uint8_t> getConfiguredPullPins();
+    void detachSignal(uint8_t pin);
 private:
+    // track pins with pull config 
     std::unordered_map<uint8_t, pullType> pullState; 
+
+    // track pins with active PWM 
+    std::vector<uint8_t> activePwmPins;
+
+    bool isActivePwmPin(uint8_t pin) const;
+    void markActivePwmPin(uint8_t pin);
+    void unmarkActivePwmPin(uint8_t pin);
 };
