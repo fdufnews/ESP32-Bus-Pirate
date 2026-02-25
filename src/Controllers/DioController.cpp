@@ -576,8 +576,7 @@ void DioController::handleResetPin(const TerminalCommand& cmd) {
     uint8_t pin = argTransformer.toUint8(cmd.getSubcommand());
     if (!isPinAllowed(pin, "Reset")) return;
 
-    // Detacher PWM
-    ledcDetach(pin);
+    pinService.detachSignal(pin); // detach PWM if active
 
     // Reset Pullup
     pinService.setInput(pin);
@@ -602,7 +601,9 @@ void DioController::handleServo(const TerminalCommand& cmd) {
 
     uint8_t angle = argTransformer.parseHexOrDec(cmd.getArgs());
     pinService.setServoAngle(pin, angle);
-    terminalView.println("DIO Servo: Set pin " + std::to_string(pin) + " to angle " + std::to_string(angle) + ".");
+    terminalView.println("DIO Servo: Set pin " + std::to_string(pin) + 
+                         " to angle " + std::to_string(angle) + 
+                         "... Use 'reset " + std::to_string(pin) + "' to stop.");
 }
 
 /*
@@ -625,15 +626,27 @@ void DioController::handlePulse(const TerminalCommand& cmd) {
 
     uint32_t durationUs = argTransformer.toUint32(cmd.getArgs());
 
-    // Configure en sortie
+    // Read current state to determine pulse level
+    int base = pinService.read(pin);           // 0 or 1
+    int pulseLevel = base ? 0 : 1;             // inverse
+
+    // Set as output
     pinService.setOutput(pin);
 
-    pinService.setHigh(pin);
-    delayMicroseconds(durationUs);
-    pinService.setLow(pin);
+    // Pulse inverse
+    if (pulseLevel) pinService.setHigh(pin);
+    else            pinService.setLow(pin);
 
-    terminalView.println("DIO Pulse: Pin " + std::to_string(pin) +
-                         " HIGH for " + std::to_string(durationUs) + " µs.");
+    delayMicroseconds(durationUs);
+
+    if (base) pinService.setHigh(pin);
+    else      pinService.setLow(pin);
+
+    terminalView.println(
+        "DIO Pulse: Pin " + std::to_string(pin) +
+        " pulsed " + std::string(pulseLevel ? "HIGH" : "LOW") +
+        " for " + std::to_string(durationUs) + " us."
+    );
 }
 
 /*
