@@ -26,4 +26,8 @@ private:
     uint16_t ledCount = 0;
     bool usesClock = false;
     bool animationRunning = false;
+
+    // Allocate a maximum number of LEDs once
+    // to avoid dynamic allocation issues with FastLED
+    const uint16_t MAX_LEDS = 128;
 };

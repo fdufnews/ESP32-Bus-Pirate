@@ -14,10 +14,14 @@ void LedService::configure(uint8_t dataPin, uint8_t clockPin, uint16_t length, c
         leds = nullptr;
         delay(20);
     }
-    
+
+    if (ledCount > MAX_LEDS) {
+        ledCount = MAX_LEDS;
+    } 
+
     FastLED = CFastLED();  // full reset of FastLED
     ledCount = length;
-    leds = new CRGB[ledCount];
+    leds = new CRGB[MAX_LEDS](); // allocate max LEDs to avoid dynamic allocation 
     FastLED.clear();
     FastLED.clearData();
 
