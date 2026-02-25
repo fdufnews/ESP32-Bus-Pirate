@@ -312,7 +312,7 @@ void CellController::handleSetMode()
 
     int idx = userInputManager.readValidatedChoiceIndex("Select modem mode", choices, defaultIndex);
     if (idx == defaultIndex) {
-        terminalView.println("\nExit setmode.");
+        terminalView.println("Exit setmode....\n");
         return;
     }
 
