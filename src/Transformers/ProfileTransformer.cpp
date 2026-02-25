@@ -49,6 +49,7 @@ std::string ProfileTransformer::toProfileText() {
     o << "i2s.data=" << (int)gs.getI2sDataPin() << "\n";
     o << "i2s.rate=" << gs.getI2sSampleRate() << "\n";
     o << "i2s.bits=" << (int)gs.getI2sBitsPerSample() << "\n\n";
+    o << "i2s.level=" << (int)gs.getI2sPercentLevel() << "\n\n";
 
     // CAN
     o << "can.cs=" << (int)gs.getCanCspin() << "\n";
@@ -83,6 +84,31 @@ std::string ProfileTransformer::toProfileText() {
     o << "sd.mosi=" << (int)gs.getSdCardMosiPin() << "\n";
     o << "sd.freq=" << gs.getSdCardFrequency() << "\n";
 
+    // USB
+    o << "usb.product=" << gs.getUSBProductString() << "\n";
+    o << "usb.manufacturer=" << gs.getUSBManufacturerString() << "\n";
+    o << "usb.serial=" << gs.getUSBSerialString() << "\n";
+    o << "usb.vid=" << gs.getUSBVid() << "\n";
+    o << "usb.pid=" << gs.getUSBPid() << "\n";
+    o << "usb.webusb=" << gs.getWebUSBString() << "\n";
+
+    // Ethernet
+    o << "eth.cs=" << (int)gs.getEthernetCsPin() << "\n";
+    o << "eth.clk=" << (int)gs.getEthernetSckPin() << "\n";
+    o << "eth.miso=" << (int)gs.getEthernetMisoPin() << "\n";
+    o << "eth.mosi=" << (int)gs.getEthernetMosiPin() << "\n";
+    o << "eth.irq=" << (int)gs.getEthernetIrqPin() << "\n";
+    o << "eth.freq=" << gs.getEthernetFrequency() << "\n";
+
+    // FM
+    o << "fm.sda=" << (int)gs.getTwoWireIoPin() << "\n";
+    o << "fm.scl=" << (int)gs.getTwoWireClkPin() << "\n";
+    o << "fm.rst=" << (int)gs.getTwoWireRstPin() << "\n\n";
+
+    // CELL
+    o << "cell.tx=" << (int)gs.getUartTxPin() << "\n";
+    o << "cell.rx=" << (int)gs.getUartRxPin() << "\n";
+    o << "cell.baud=" << gs.getUartBaudRate() << "\n";
 
     return o.str();
 }
@@ -153,65 +179,65 @@ bool ProfileTransformer::fromProfileText(
     // -----------------------------
     // SPI 
     // -----------------------------
-    if (getStr(kv, "spi.cs", v)   && !parseU8(v, u8))  { error = "Invalid spi.cs"; return false; }
+    if (getStr(kv, "spi.cs", v)   && !parseU8(v, u8))  { error = "Invalid spi.cs";}
     else if (!v.empty()) gs.setSpiCSPin(u8);
 
-    if (getStr(kv, "spi.clk", v)  && !parseU8(v, u8))  { error = "Invalid spi.clk"; return false; }
+    if (getStr(kv, "spi.clk", v)  && !parseU8(v, u8))  { error = "Invalid spi.clk";}
     else if (!v.empty()) gs.setSpiCLKPin(u8);
 
-    if (getStr(kv, "spi.miso", v) && !parseU8(v, u8))  { error = "Invalid spi.miso"; return false; }
+    if (getStr(kv, "spi.miso", v) && !parseU8(v, u8))  { error = "Invalid spi.miso";}
     else if (!v.empty()) gs.setSpiMISOPin(u8);
 
-    if (getStr(kv, "spi.mosi", v) && !parseU8(v, u8))  { error = "Invalid spi.mosi"; return false; }
+    if (getStr(kv, "spi.mosi", v) && !parseU8(v, u8))  { error = "Invalid spi.mosi";}
     else if (!v.empty()) gs.setSpiMOSIPin(u8);
 
-    if (getStr(kv, "spi.freq", v) && !parseU32(v, u32)) { error = "Invalid spi.freq"; return false; }
+    if (getStr(kv, "spi.freq", v) && !parseU32(v, u32)) { error = "Invalid spi.freq";}
     else if (!v.empty()) gs.setSpiFrequency(u32);
 
     // -----------------------------
     // I2C
     // -----------------------------
-    if (getStr(kv, "i2c.sda", v) && !parseU8(v, u8))   { error = "Invalid i2c.sda"; return false; }
+    if (getStr(kv, "i2c.sda", v) && !parseU8(v, u8))   { error = "Invalid i2c.sda";}
     else if (!v.empty()) gs.setI2cSdaPin(u8);
 
-    if (getStr(kv, "i2c.scl", v) && !parseU8(v, u8))   { error = "Invalid i2c.scl"; return false; }
+    if (getStr(kv, "i2c.scl", v) && !parseU8(v, u8))   { error = "Invalid i2c.scl";}
     else if (!v.empty()) gs.setI2cSclPin(u8);
 
-    if (getStr(kv, "i2c.freq", v) && !parseU32(v, u32)) { error = "Invalid i2c.freq"; return false; }
+    if (getStr(kv, "i2c.freq", v) && !parseU32(v, u32)) { error = "Invalid i2c.freq";}
     else if (!v.empty()) gs.setI2cFrequency(u32);
 
     // -----------------------------
     // UART 
     // -----------------------------
-    if (getStr(kv, "uart.baud", v) && !parseU32(v, u32)) { error = "Invalid uart.baud"; return false; }
+    if (getStr(kv, "uart.baud", v) && !parseU32(v, u32)) { error = "Invalid uart.baud";}
     else if (!v.empty()) gs.setUartBaudRate((unsigned long)u32);
 
-    if (getStr(kv, "uart.rx", v) && !parseU8(v, u8)) { error = "Invalid uart.rx"; return false; }
+    if (getStr(kv, "uart.rx", v) && !parseU8(v, u8)) { error = "Invalid uart.rx";}
     else if (!v.empty()) gs.setUartRxPin(u8);
 
-    if (getStr(kv, "uart.tx", v) && !parseU8(v, u8)) { error = "Invalid uart.tx"; return false; }
+    if (getStr(kv, "uart.tx", v) && !parseU8(v, u8)) { error = "Invalid uart.tx";}
     else if (!v.empty()) gs.setUartTxPin(u8);
 
-    if (getStr(kv, "uart.databits", v) && !parseU8(v, u8)) { error = "Invalid uart.databits"; return false; }
+    if (getStr(kv, "uart.databits", v) && !parseU8(v, u8)) { error = "Invalid uart.databits";}
     else if (!v.empty()) gs.setUartDataBits(u8);
 
     if (getStr(kv, "uart.parity", v)) {
         gs.setUartParity(v);
     }
 
-    if (getStr(kv, "uart.stopbits", v) && !parseU8(v, u8)) { error = "Invalid uart.stopbits"; return false; }
+    if (getStr(kv, "uart.stopbits", v) && !parseU8(v, u8)) { error = "Invalid uart.stopbits";}
     else if (!v.empty()) gs.setUartStopBits(u8);
 
-    if (getStr(kv, "uart.inverted", v) && !parseBool01(v, b)) { error = "Invalid uart.inverted"; return false; }
+    if (getStr(kv, "uart.inverted", v) && !parseBool01(v, b)) { error = "Invalid uart.inverted";}
     else if (!v.empty()) gs.setUartInverted(b);
 
     // -----------------------------
     // Infrared
     // -----------------------------
-    if (getStr(kv, "ir.tx", v) && !parseU8(v, u8)) { error = "Invalid ir.tx"; return false; }
+    if (getStr(kv, "ir.tx", v) && !parseU8(v, u8)) { error = "Invalid ir.tx";}
     else if (!v.empty()) gs.setInfraredTxPin(u8);
 
-    if (getStr(kv, "ir.rx", v) && !parseU8(v, u8)) { error = "Invalid ir.rx"; return false; }
+    if (getStr(kv, "ir.rx", v) && !parseU8(v, u8)) { error = "Invalid ir.rx";}
     else if (!v.empty()) gs.setInfraredRxPin(u8);
 
     if (getStr(kv, "ir.protocol", v)) {
@@ -221,145 +247,238 @@ bool ProfileTransformer::fromProfileText(
     // -----------------------------
     // LED
     // -----------------------------
-    if (getStr(kv, "led.data", v) && !parseU8(v, u8)) { error = "Invalid led.data"; return false; }
+    if (getStr(kv, "led.data", v) && !parseU8(v, u8)) { error = "Invalid led.data";}
     else if (!v.empty()) gs.setLedDataPin(u8);
 
-    if (getStr(kv, "led.clock", v) && !parseU8(v, u8)) { error = "Invalid led.clock"; return false; }
+    if (getStr(kv, "led.clock", v) && !parseU8(v, u8)) { error = "Invalid led.clock";}
     else if (!v.empty()) gs.setLedClockPin(u8);
 
-    if (getStr(kv, "led.len", v) && !parseU16(v, u16)) { error = "Invalid led.len"; return false; }
+    if (getStr(kv, "led.len", v) && !parseU16(v, u16)) { error = "Invalid led.len";}
     else if (!v.empty()) gs.setLedLength(u16);
 
     if (getStr(kv, "led.proto", v)) {
         gs.setLedProtocol(v);
     }
 
-    if (getStr(kv, "led.brightness", v) && !parseU8(v, u8)) { error = "Invalid led.brightness"; return false; }
+    if (getStr(kv, "led.brightness", v) && !parseU8(v, u8)) { error = "Invalid led.brightness";}
     else if (!v.empty()) gs.setLedBrightness(u8);
 
     // -----------------------------
     // HDUART
     // -----------------------------
-    if (getStr(kv, "hduart.baud", v) && !parseU32(v, u32)) { error = "Invalid hduart.baud"; return false; }
+    if (getStr(kv, "hduart.baud", v) && !parseU32(v, u32)) { error = "Invalid hduart.baud";}
     else if (!v.empty()) gs.setHdUartBaudRate((unsigned long)u32);
 
-    if (getStr(kv, "hduart.pin", v) && !parseU8(v, u8)) { error = "Invalid hduart.pin"; return false; }
+    if (getStr(kv, "hduart.pin", v) && !parseU8(v, u8)) { error = "Invalid hduart.pin";}
     else if (!v.empty()) gs.setHdUartPin(u8);
 
-    if (getStr(kv, "hduart.databits", v) && !parseU8(v, u8)) { error = "Invalid hduart.databits"; return false; }
+    if (getStr(kv, "hduart.databits", v) && !parseU8(v, u8)) { error = "Invalid hduart.databits";}
     else if (!v.empty()) gs.setHdUartDataBits(u8);
 
     if (getStr(kv, "hduart.parity", v)) {
         gs.setHdUartParity(v);
     }
 
-    if (getStr(kv, "hduart.stopbits", v) && !parseU8(v, u8)) { error = "Invalid hduart.stopbits"; return false; }
+    if (getStr(kv, "hduart.stopbits", v) && !parseU8(v, u8)) { error = "Invalid hduart.stopbits";}
     else if (!v.empty()) gs.setHdUartStopBits(u8);
 
-    if (getStr(kv, "hduart.inverted", v) && !parseBool01(v, b)) { error = "Invalid hduart.inverted"; return false; }
+    if (getStr(kv, "hduart.inverted", v) && !parseBool01(v, b)) { error = "Invalid hduart.inverted";}
     else if (!v.empty()) gs.setHdUartInverted(b);
 
     // -----------------------------
     // I2S
     // -----------------------------
-    if (getStr(kv, "i2s.bclk", v) && !parseU8(v, u8)) { error = "Invalid i2s.bclk"; return false; }
+    if (getStr(kv, "i2s.bclk", v) && !parseU8(v, u8)) { error = "Invalid i2s.bclk";}
     else if (!v.empty()) gs.setI2sBclkPin(u8);
 
-    if (getStr(kv, "i2s.lrck", v) && !parseU8(v, u8)) { error = "Invalid i2s.lrck"; return false; }
+    if (getStr(kv, "i2s.lrck", v) && !parseU8(v, u8)) { error = "Invalid i2s.lrck";}
     else if (!v.empty()) gs.setI2sLrckPin(u8);
 
-    if (getStr(kv, "i2s.data", v) && !parseU8(v, u8)) { error = "Invalid i2s.data"; return false; }
+    if (getStr(kv, "i2s.data", v) && !parseU8(v, u8)) { error = "Invalid i2s.data";}
     else if (!v.empty()) gs.setI2sDataPin(u8);
 
-    if (getStr(kv, "i2s.rate", v) && !parseU32(v, u32)) { error = "Invalid i2s.rate"; return false; }
+    if (getStr(kv, "i2s.rate", v) && !parseU32(v, u32)) { error = "Invalid i2s.rate";}
     else if (!v.empty()) gs.setI2sSampleRate(u32);
 
-    if (getStr(kv, "i2s.bits", v) && !parseU8(v, u8)) { error = "Invalid i2s.bits"; return false; }
+    if (getStr(kv, "i2s.bits", v) && !parseU8(v, u8)) { error = "Invalid i2s.bits";}
     else if (!v.empty()) gs.setI2sBitsPerSample(u8);
+
+    if (getStr(kv, "i2s.level", v)) {
+        if (!parseU8(v, u8)) { error = "Invalid i2s.level";}
+        gs.setI2sPercentLevel(u8);
+    }
 
     // -----------------------------
     // CAN
     // -----------------------------
-    if (getStr(kv, "can.cs", v) && !parseU8(v, u8)) { error = "Invalid can.cs"; return false; }
+    if (getStr(kv, "can.cs", v) && !parseU8(v, u8)) { error = "Invalid can.cs";}
     else if (!v.empty()) gs.setCanCspin(u8);
 
-    if (getStr(kv, "can.sck", v) && !parseU8(v, u8)) { error = "Invalid can.sck"; return false; }
+    if (getStr(kv, "can.sck", v) && !parseU8(v, u8)) { error = "Invalid can.sck";}
     else if (!v.empty()) gs.setCanSckPin(u8);
 
-    if (getStr(kv, "can.si", v) && !parseU8(v, u8)) { error = "Invalid can.si"; return false; }
+    if (getStr(kv, "can.si", v) && !parseU8(v, u8)) { error = "Invalid can.si";}
     else if (!v.empty()) gs.setCanSiPin(u8);
 
-    if (getStr(kv, "can.so", v) && !parseU8(v, u8)) { error = "Invalid can.so"; return false; }
+    if (getStr(kv, "can.so", v) && !parseU8(v, u8)) { error = "Invalid can.so";}
     else if (!v.empty()) gs.setCanSoPin(u8);
 
-    if (getStr(kv, "can.kbps", v) && !parseU32(v, u32)) { error = "Invalid can.kbps"; return false; }
+    if (getStr(kv, "can.kbps", v) && !parseU32(v, u32)) { error = "Invalid can.kbps";}
     else if (!v.empty()) gs.setCanKbps(u32);
 
     // -----------------------------
     // SubGHz
     // -----------------------------
-    if (getStr(kv, "subghz.sck", v) && !parseU8(v, u8)) { error = "Invalid subghz.sck"; return false; }
+    if (getStr(kv, "subghz.sck", v) && !parseU8(v, u8)) { error = "Invalid subghz.sck";}
     else if (!v.empty()) gs.setSubGhzSckPin(u8);
 
-    if (getStr(kv, "subghz.miso", v) && !parseU8(v, u8)) { error = "Invalid subghz.miso"; return false; }
+    if (getStr(kv, "subghz.miso", v) && !parseU8(v, u8)) { error = "Invalid subghz.miso";}
     else if (!v.empty()) gs.setSubGhzMisoPin(u8);
 
-    if (getStr(kv, "subghz.mosi", v) && !parseU8(v, u8)) { error = "Invalid subghz.mosi"; return false; }
+    if (getStr(kv, "subghz.mosi", v) && !parseU8(v, u8)) { error = "Invalid subghz.mosi";}
     else if (!v.empty()) gs.setSubGhzMosiPin(u8);
 
-    if (getStr(kv, "subghz.cs", v) && !parseU8(v, u8)) { error = "Invalid subghz.cs"; return false; }
+    if (getStr(kv, "subghz.cs", v) && !parseU8(v, u8)) { error = "Invalid subghz.cs";}
     else if (!v.empty()) gs.setSubGhzCsPin(u8);
 
-    if (getStr(kv, "subghz.gdo", v) && !parseU8(v, u8)) { error = "Invalid subghz.gdo"; return false; }
+    if (getStr(kv, "subghz.gdo", v) && !parseU8(v, u8)) { error = "Invalid subghz.gdo";}
     else if (!v.empty()) gs.setSubGhzGdoPin(u8);
 
-    if (getStr(kv, "subghz.freq", v) && !parseF32(v, f32)) { error = "Invalid subghz.freq"; return false; }
+    if (getStr(kv, "subghz.freq", v) && !parseF32(v, f32)) { error = "Invalid subghz.freq";}
     else if (!v.empty()) gs.setSubGhzFrequency(f32);
 
     // -----------------------------
     // NRF24
     // -----------------------------
-    if (getStr(kv, "rf24.csn", v) && !parseU8(v, u8)) { error = "Invalid rf24.csn"; return false; }
+    if (getStr(kv, "rf24.csn", v) && !parseU8(v, u8)) { error = "Invalid rf24.csn";}
     else if (!v.empty()) gs.setRf24CsnPin(u8);
 
-    if (getStr(kv, "rf24.ce", v) && !parseU8(v, u8)) { error = "Invalid rf24.ce"; return false; }
+    if (getStr(kv, "rf24.ce", v) && !parseU8(v, u8)) { error = "Invalid rf24.ce";}
     else if (!v.empty()) gs.setRf24CePin(u8);
 
-    if (getStr(kv, "rf24.sck", v) && !parseU8(v, u8)) { error = "Invalid rf24.sck"; return false; }
+    if (getStr(kv, "rf24.sck", v) && !parseU8(v, u8)) { error = "Invalid rf24.sck";}
     else if (!v.empty()) gs.setRf24SckPin(u8);
 
-    if (getStr(kv, "rf24.miso", v) && !parseU8(v, u8)) { error = "Invalid rf24.miso"; return false; }
+    if (getStr(kv, "rf24.miso", v) && !parseU8(v, u8)) { error = "Invalid rf24.miso";}
     else if (!v.empty()) gs.setRf24MisoPin(u8);
 
-    if (getStr(kv, "rf24.mosi", v) && !parseU8(v, u8)) { error = "Invalid rf24.mosi"; return false; }
+    if (getStr(kv, "rf24.mosi", v) && !parseU8(v, u8)) { error = "Invalid rf24.mosi";}
     else if (!v.empty()) gs.setRf24MosiPin(u8);
 
     // -----------------------------
     // RFID
     // -----------------------------
-    if (getStr(kv, "rfid.sda", v) && !parseU8(v, u8)) { error = "Invalid rfid.sda"; return false; }
+    if (getStr(kv, "rfid.sda", v) && !parseU8(v, u8)) { error = "Invalid rfid.sda";}
     else if (!v.empty()) gs.setRfidSdaPin(u8);
 
-    if (getStr(kv, "rfid.scl", v) && !parseU8(v, u8)) { error = "Invalid rfid.scl"; return false; }
+    if (getStr(kv, "rfid.scl", v) && !parseU8(v, u8)) { error = "Invalid rfid.scl";}
     else if (!v.empty()) gs.setRfidSclPin(u8);
 
     // -----------------------------
     // SD Card
     // -----------------------------
-    if (getStr(kv, "sd.cs", v) && !parseU8(v, u8)) { error = "Invalid sd.cs"; return false; }
+    if (getStr(kv, "sd.cs", v) && !parseU8(v, u8)) { error = "Invalid sd.cs";}
     else if (!v.empty()) gs.setSdCardCsPin(u8);
 
-    if (getStr(kv, "sd.clk", v) && !parseU8(v, u8)) { error = "Invalid sd.clk"; return false; }
+    if (getStr(kv, "sd.clk", v) && !parseU8(v, u8)) { error = "Invalid sd.clk";}
     else if (!v.empty()) gs.setSdCardClkPin(u8);
 
-    if (getStr(kv, "sd.miso", v) && !parseU8(v, u8)) { error = "Invalid sd.miso"; return false; }
+    if (getStr(kv, "sd.miso", v) && !parseU8(v, u8)) { error = "Invalid sd.miso";}
     else if (!v.empty()) gs.setSdCardMisoPin(u8);
 
-    if (getStr(kv, "sd.mosi", v) && !parseU8(v, u8)) { error = "Invalid sd.mosi"; return false; }
+    if (getStr(kv, "sd.mosi", v) && !parseU8(v, u8)) { error = "Invalid sd.mosi";}
     else if (!v.empty()) gs.setSdCardMosiPin(u8);
 
-    if (getStr(kv, "sd.freq", v) && !parseU32(v, u32)) { error = "Invalid sd.freq"; return false; }
+    if (getStr(kv, "sd.freq", v) && !parseU32(v, u32)) { error = "Invalid sd.freq";}
     else if (!v.empty()) gs.setSdCardFrequency(u32);
+
+    // -----------------------------
+    // USB
+    // -----------------------------
+    if (getStr(kv, "usb.product", v)) {
+        gs.setUSBProductString(v);
+    }
+    if (getStr(kv, "usb.manufacturer", v)) {
+        gs.setUSBManufacturerString(v);
+    }
+    if (getStr(kv, "usb.serial", v)) {
+        gs.setUSBSerialString(v);
+    }
+    if (getStr(kv, "usb.webusb", v)) {
+        gs.setWebUSBString(v);
+    }
+    if (getStr(kv, "usb.vid", v)) {
+        if (!parseU16(v, u16)) { error = "Invalid usb.vid";}
+        gs.setUSBVid(u16);
+    }
+    if (getStr(kv, "usb.pid", v)) {
+        if (!parseU16(v, u16)) { error = "Invalid usb.pid";}
+        gs.setUSBPid(u16);
+    }
+
+    // -----------------------------
+    // ETHERNET
+    // -----------------------------
+    if (getStr(kv, "eth.cs", v)) {
+        if (!parseU8(v, u8)) { error = "Invalid eth.cs";}
+        gs.setEthernetCsPin(u8);
+    }
+    if (getStr(kv, "eth.clk", v)) {
+        if (!parseU8(v, u8)) { error = "Invalid eth.clk";}
+        gs.setEthernetSckPin(u8);
+    }
+    if (getStr(kv, "eth.miso", v)) {
+        if (!parseU8(v, u8)) { error = "Invalid eth.miso";}
+        gs.setEthernetMisoPin(u8);
+    }
+    if (getStr(kv, "eth.mosi", v)) {
+        if (!parseU8(v, u8)) { error = "Invalid eth.mosi";}
+        gs.setEthernetMosiPin(u8);
+    }
+    if (getStr(kv, "eth.irq", v)) {
+        if (!parseU8(v, u8)) { error = "Invalid eth.irq";}
+        gs.setEthernetIrqPin(u8);
+    }
+    if (getStr(kv, "eth.freq", v)) {
+        if (!parseU32(v, u32)) { error = "Invalid eth.freq";}
+        gs.setEthernetFrequency(u32);
+    }
+
+    // -----------------------------
+    // FM
+    // -----------------------------
+    if (getStr(kv, "fm.sda", v)) {
+        if (!parseU8(v, u8)) { error = "Invalid fm.sda";}
+        gs.setTwoWireIoPin(u8);
+    }
+    if (getStr(kv, "fm.scl", v)) {
+        if (!parseU8(v, u8)) { error = "Invalid fm.scl";}
+        gs.setTwoWireClkPin(u8);
+    }
+    if (getStr(kv, "fm.rst", v)) {
+        if (!parseU8(v, u8)) { error = "Invalid fm.rst";}
+        gs.setTwoWireRstPin(u8);
+    }
+
+    // -----------------------------
+    // CELL
+    // -----------------------------
+    if (getStr(kv, "cell.tx", v)) {
+        if (!parseU8(v, u8)) { error = "Invalid cell.tx";}
+        gs.setUartTxPin(u8);
+    }
+    if (getStr(kv, "cell.rx", v)) {
+        if (!parseU8(v, u8)) { error = "Invalid cell.rx";}
+        gs.setUartRxPin(u8);
+    }
+    if (getStr(kv, "cell.baud", v)) {
+        if (!parseU32(v, u32)) { error = "Invalid cell.baud";}
+        gs.setUartBaudRate((unsigned long)u32);
+    }
+
+    if (!error.empty()) {
+        return false;
+    }
 
     return true;
 }

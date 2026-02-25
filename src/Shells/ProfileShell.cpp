@@ -80,7 +80,8 @@ void ProfileShell::cmdLoad() {
 
     std::string err;
     if (!profileTransformer.fromProfileText(content, err)) {
-        terminalView.println("\n❌ Invalid profile: " + err);
+        terminalView.println("\n❌ Some keys are missing: " + err);
+        terminalView.println("Profile may be partially loaded.");
         return;
     }
 
