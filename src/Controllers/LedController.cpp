@@ -201,8 +201,9 @@ void LedController::handleConfig() {
     terminalView.println(" Clock pin cannot be changed. Set to: " + std::to_string(defaultClockPin));
     terminalView.println("");
 
-    // LEDs count, up to 128
-    uint8_t length = userInputManager.readValidatedUint8("Number of LEDs (1-128)", defaultLength, 1, 128);
+    // LEDs count
+    const auto maxLeds = ledService.getMaxLeds();
+    uint8_t length = userInputManager.readValidatedUint8("Number of LEDs (1-" + std::to_string(maxLeds) + ")", defaultLength, 1, maxLeds);
     if (length > 8) {
         terminalView.println("\n [⚠️  WARNING]");
         terminalView.println(" Large LED count may exceed USB power limits.");
