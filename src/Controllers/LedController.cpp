@@ -16,35 +16,22 @@ LedController::LedController(ITerminalView& terminalView, IInput& terminalInput,
 Command
 */
 void LedController::handleCommand(const TerminalCommand& cmd) {
-    if (cmd.getRoot() == "fill") {
-        handleFill(cmd);
+    if (cmd.getRoot() == "fill") handleFill(cmd);
+    else if (cmd.getRoot() == "set") handleSet(cmd);
+    else if (cmd.getRoot() == "reset") handleReset(cmd);
+    else if (cmd.getRoot() == "blink") handleAnimation(cmd);
+    else if (cmd.getRoot() == "rainbow") handleAnimation(cmd);
+    else if (cmd.getRoot() == "chase") handleAnimation(cmd);
+    else if (cmd.getRoot() == "cycle") handleAnimation(cmd);
+    else if (cmd.getRoot() == "wave") handleAnimation(cmd);
+    else if (cmd.getRoot() == "config") handleConfig();
+    else if (cmd.getRoot() == "setprotocol") handleSetProtocol();
 
     // Not possible anymore with the new core because of limited RMT channel
     // Just disable it here in case a workaround is found later
-    // } else if (cmd.getRoot() == "scan") {
-    //     handleScan();
+    // else if (cmd.getRoot() == "scan") handleScan();
 
-    } else if (cmd.getRoot() == "set") {
-        handleSet(cmd);
-    } else if (cmd.getRoot() == "reset") {
-        handleReset(cmd);
-    } else if (cmd.getRoot() == "blink") {
-        handleAnimation(cmd);
-    } else if (cmd.getRoot() == "rainbow") {
-        handleAnimation(cmd);
-    } else if (cmd.getRoot() == "chase") {
-        handleAnimation(cmd);
-    } else if (cmd.getRoot() == "cycle") {
-        handleAnimation(cmd);
-    } else if (cmd.getRoot() == "wave") {
-        handleAnimation(cmd);
-    } else if (cmd.getRoot() == "config") {
-        handleConfig();
-    } else if (cmd.getRoot() == "setprotocol") {
-        handleSetProtocol();
-    } else {
-        handleHelp();
-    }
+    else handleHelp();
 }
 
 /*
@@ -157,6 +144,18 @@ void LedController::handleSet(const TerminalCommand& cmd) {
     }
 
     uint16_t index = argTransformer.parseHexOrDec(cmd.getSubcommand());
+
+    // want to set index 1 on a single LED strip 
+    if (state.getLedLength() == 1 && index == 1) {
+        terminalView.println("LED: Indexes start at 0. Use index 0 for single LED strip.");
+        auto confirm = userInputManager.readYesNo("Do you want to set index 0 instead?", true);
+        if (confirm) {
+            index = 0;
+        } else {
+            return;
+        }
+    }
+
     CRGB rgb = parseFlexibleColor(args);
 
     ledService.set(index, rgb);
@@ -197,12 +196,20 @@ void LedController::handleConfig() {
     uint16_t defaultLength = state.getLedLength();
 
     // LEDs pins, locked because FastLED needs them at compile time
-    terminalView.println("[⚠️  WARNING] Data pin cannot be changed. Set to : " + std::to_string(defaultDataPin));
-    terminalView.println("[⚠️  WARNING] Clock pin cannot be changed. Set to: " + std::to_string(defaultClockPin));
+    terminalView.println("\n [⚠️  WARNING]");
+    terminalView.println(" Data pin cannot be changed. Set to : " + std::to_string(defaultDataPin));
+    terminalView.println(" Clock pin cannot be changed. Set to: " + std::to_string(defaultClockPin));
+    terminalView.println("");
 
     // LEDs count
     uint16_t length = userInputManager.readValidatedUint32("Number of LEDs", defaultLength);
     if (length <= 0) length = 1;
+    if (length > 16) {
+        terminalView.println("\n [⚠️  WARNING]");
+        terminalView.println(" Large LED count may exceed USB power limits.");
+        terminalView.println(" This can cause brownouts, or USB port shutdown.");
+        terminalView.println(" Use an external 5V supply for safe operation.\n");
+    }
 
     // LED Brightness
     uint8_t defaultBrightness = state.getLedBrightness();
@@ -238,7 +245,7 @@ void LedController::handleAnimation(const TerminalCommand& cmd) {
     }
     
     // Run anim until user ENTER press
-    terminalView.println("LED: Playing animation: " + type + "... Press [ENTER] to stop.");
+    terminalView.println("LED: Playing animation: " + type + " on " + std::to_string(state.getLedLength()) + " LEDs... Press [ENTER] to stop.");
     while (true) {
         char key = terminalInput.readChar();
         if (key == '\r' || key == '\n') {
