@@ -131,7 +131,36 @@ uint32_t ArgTransformer::parseHexOrDec32(const std::string& str) const {
     return static_cast<uint32_t>(value);
 }
 
+uint64_t ArgTransformer::parseHexOrDec64(const std::string& str) const {
+    if (str.empty()) return 0;
 
+    int base = 10;
+    const char* cstr = str.c_str();
+
+    // Hex prefix
+    if (str.size() > 2 && str[0] == '0' && (str[1] == 'x' || str[1] == 'X')) {
+        base = 16;
+        cstr += 2;
+    }
+
+    // Syntax check
+    if (*cstr == '\0') return 0;
+    for (const char* p = cstr; *p; ++p) {
+        char c = *p;
+        if (base == 10 && !isdigit((unsigned char)c)) return 0;
+        if (base == 16 && !isxdigit((unsigned char)c)) return 0;
+    }
+
+    errno = 0;
+    char* end = nullptr;
+    unsigned long long v = strtoull(str.c_str(), &end, base);
+
+    // end check + overflow check
+    if (end == str.c_str() || *end != '\0') return 0;
+    if (errno == ERANGE) return 0;
+
+    return (uint64_t)v;
+}
 
 std::vector<std::string> ArgTransformer::splitArgs(const std::string& input) {
     std::vector<std::string> result;

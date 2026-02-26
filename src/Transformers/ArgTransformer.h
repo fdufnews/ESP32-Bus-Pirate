@@ -19,6 +19,7 @@ public:
     uint8_t parseHexOrDec(const std::string& s) const ;
     uint16_t parseHexOrDec16(const std::string& str) const;
     uint32_t parseHexOrDec32(const std::string& s) const ;
+    uint64_t parseHexOrDec64(const std::string& s) const;
     bool parseInt(const std::string& input, int& output);
     std::vector<std::string> splitArgs(const std::string& input);
     bool isValidNumber(const std::string& input);
