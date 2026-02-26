@@ -7,21 +7,28 @@ extern CFastLED FastLED; // declare FastLED as global
 
 LedService::LedService() {}
 
-void LedService::configure(uint8_t dataPin, uint8_t clockPin, uint16_t length, const std::string& protocol, uint8_t brightness) {
-    if (leds) {
-        FastLED.clear(true);
-        delete[] leds;
-        leds = nullptr;
-        delay(20);
+void LedService::configure(uint8_t dataPin, uint8_t clockPin, uint16_t length,
+                           const std::string& protocol, uint8_t brightness) {
+    if (length > MAX_LEDS) {
+        length = MAX_LEDS;
     }
 
-    if (ledCount > MAX_LEDS) {
-        ledCount = MAX_LEDS;
-    } 
+    // Clear full
+    if (leds) {
+        FastLED.clear(true);
+        delay(20);
+    } else {
+        // Allocate one time
+        leds = new CRGB[MAX_LEDS]();
+    }
 
-    FastLED = CFastLED();  // full reset of FastLED
+    // Reset FastLED 
+    FastLED = CFastLED();
+
     ledCount = length;
-    leds = new CRGB[MAX_LEDS](); // allocate max LEDs to avoid dynamic allocation 
+
+    // Clean leds buffer
+    memset(leds, 0, sizeof(CRGB) * MAX_LEDS);
     FastLED.clear();
     FastLED.clearData();
 
@@ -40,65 +47,65 @@ void LedService::configure(uint8_t dataPin, uint8_t clockPin, uint16_t length, c
     if (proto != LedProtocolEnum::UNKNOWN) {
         switch (proto) {
             case LedProtocolEnum::NEOPIXEL:
-                FastLED.addLeds<NEOPIXEL, LED_DATA_PIN>(leds, ledCount); break;
+                FastLED.addLeds<NEOPIXEL, LED_DATA_PIN>(leds, MAX_LEDS); break;
             case LedProtocolEnum::WS2812:
-                FastLED.addLeds<WS2812, LED_DATA_PIN, GRB>(leds, ledCount); break;
+                FastLED.addLeds<WS2812, LED_DATA_PIN, GRB>(leds, MAX_LEDS); break;
             case LedProtocolEnum::WS2812B:
-                FastLED.addLeds<WS2812B, LED_DATA_PIN, GRB>(leds, ledCount); break;
+                FastLED.addLeds<WS2812B, LED_DATA_PIN, GRB>(leds, MAX_LEDS); break;
             case LedProtocolEnum::WS2811:
-                FastLED.addLeds<WS2811, LED_DATA_PIN, GRB>(leds, ledCount); break;
+                FastLED.addLeds<WS2811, LED_DATA_PIN, GRB>(leds, MAX_LEDS); break;
             case LedProtocolEnum::WS2811_400:
-                FastLED.addLeds<WS2811_400, LED_DATA_PIN, GRB>(leds, ledCount); break;
+                FastLED.addLeds<WS2811_400, LED_DATA_PIN, GRB>(leds, MAX_LEDS); break;
             case LedProtocolEnum::WS2813:
-                FastLED.addLeds<WS2813, LED_DATA_PIN, GRB>(leds, ledCount); break;
+                FastLED.addLeds<WS2813, LED_DATA_PIN, GRB>(leds, MAX_LEDS); break;
             case LedProtocolEnum::WS2815:
-                FastLED.addLeds<WS2815, LED_DATA_PIN, GRB>(leds, ledCount); break;
+                FastLED.addLeds<WS2815, LED_DATA_PIN, GRB>(leds, MAX_LEDS); break;
             case LedProtocolEnum::WS2816:
-                FastLED.addLeds<WS2816, LED_DATA_PIN, GRB>(leds, ledCount); break;
+                FastLED.addLeds<WS2816, LED_DATA_PIN, GRB>(leds, MAX_LEDS); break;
             case LedProtocolEnum::GS1903:
-                FastLED.addLeds<GS1903, LED_DATA_PIN, GRB>(leds, ledCount); break;
+                FastLED.addLeds<GS1903, LED_DATA_PIN, GRB>(leds, MAX_LEDS); break;
             case LedProtocolEnum::SK6812:
-                FastLED.addLeds<SK6812, LED_DATA_PIN, GRB>(leds, ledCount); break;
+                FastLED.addLeds<SK6812, LED_DATA_PIN, GRB>(leds, MAX_LEDS); break;
             case LedProtocolEnum::SK6822:
-                FastLED.addLeds<SK6822, LED_DATA_PIN, GRB>(leds, ledCount); break;
+                FastLED.addLeds<SK6822, LED_DATA_PIN, GRB>(leds, MAX_LEDS); break;
             case LedProtocolEnum::APA104:
-                FastLED.addLeds<APA104, LED_DATA_PIN, GRB>(leds, ledCount); break;
+                FastLED.addLeds<APA104, LED_DATA_PIN, GRB>(leds, MAX_LEDS); break;
             case LedProtocolEnum::APA106:
-                FastLED.addLeds<APA106, LED_DATA_PIN, GRB>(leds, ledCount); break;
+                FastLED.addLeds<APA106, LED_DATA_PIN, GRB>(leds, MAX_LEDS); break;
             case LedProtocolEnum::PL9823:
-                FastLED.addLeds<PL9823, LED_DATA_PIN, GRB>(leds, ledCount); break;
+                FastLED.addLeds<PL9823, LED_DATA_PIN, GRB>(leds, MAX_LEDS); break;
             case LedProtocolEnum::GE8822:
-                FastLED.addLeds<GE8822, LED_DATA_PIN, GRB>(leds, ledCount); break;
+                FastLED.addLeds<GE8822, LED_DATA_PIN, GRB>(leds, MAX_LEDS); break;
             case LedProtocolEnum::GW6205:
-                FastLED.addLeds<GW6205, LED_DATA_PIN, GRB>(leds, ledCount); break;
+                FastLED.addLeds<GW6205, LED_DATA_PIN, GRB>(leds, MAX_LEDS); break;
             case LedProtocolEnum::GW6205_400:
-                FastLED.addLeds<GW6205_400, LED_DATA_PIN, GRB>(leds, ledCount); break;
+                FastLED.addLeds<GW6205_400, LED_DATA_PIN, GRB>(leds, MAX_LEDS); break;
             case LedProtocolEnum::LPD1886:
-                FastLED.addLeds<LPD1886, LED_DATA_PIN, GRB>(leds, ledCount); break;
+                FastLED.addLeds<LPD1886, LED_DATA_PIN, GRB>(leds, MAX_LEDS); break;
             case LedProtocolEnum::LPD1886_8BIT:
-                FastLED.addLeds<LPD1886_8BIT, LED_DATA_PIN, GRB>(leds, ledCount); break;
+                FastLED.addLeds<LPD1886_8BIT, LED_DATA_PIN, GRB>(leds, MAX_LEDS); break;
             case LedProtocolEnum::SM16703:
-                FastLED.addLeds<SM16703, LED_DATA_PIN, GRB>(leds, ledCount); break;
+                FastLED.addLeds<SM16703, LED_DATA_PIN, GRB>(leds, MAX_LEDS); break;
             case LedProtocolEnum::TM1829:
-                FastLED.addLeds<TM1829, LED_DATA_PIN, GRB>(leds, ledCount); break;
+                FastLED.addLeds<TM1829, LED_DATA_PIN, GRB>(leds, MAX_LEDS); break;
             case LedProtocolEnum::TM1812:
-                FastLED.addLeds<TM1812, LED_DATA_PIN, GRB>(leds, ledCount); break;
+                FastLED.addLeds<TM1812, LED_DATA_PIN, GRB>(leds, MAX_LEDS); break;
             case LedProtocolEnum::TM1809:
-                FastLED.addLeds<TM1809, LED_DATA_PIN, GRB>(leds, ledCount); break;
+                FastLED.addLeds<TM1809, LED_DATA_PIN, GRB>(leds, MAX_LEDS); break;
             case LedProtocolEnum::TM1804:
-                FastLED.addLeds<TM1804, LED_DATA_PIN, GRB>(leds, ledCount); break;
+                FastLED.addLeds<TM1804, LED_DATA_PIN, GRB>(leds, MAX_LEDS); break;
             case LedProtocolEnum::TM1803:
-                FastLED.addLeds<TM1803, LED_DATA_PIN, GRB>(leds, ledCount); break;
+                FastLED.addLeds<TM1803, LED_DATA_PIN, GRB>(leds, MAX_LEDS); break;
             case LedProtocolEnum::UCS1903:
-                FastLED.addLeds<UCS1903, LED_DATA_PIN, GRB>(leds, ledCount); break;
+                FastLED.addLeds<UCS1903, LED_DATA_PIN, GRB>(leds, MAX_LEDS); break;
             case LedProtocolEnum::UCS1903B:
-                FastLED.addLeds<UCS1903B, LED_DATA_PIN, GRB>(leds, ledCount); break;
+                FastLED.addLeds<UCS1903B, LED_DATA_PIN, GRB>(leds, MAX_LEDS); break;
             case LedProtocolEnum::UCS1904:
-                FastLED.addLeds<UCS1904, LED_DATA_PIN, GRB>(leds, ledCount); break;
+                FastLED.addLeds<UCS1904, LED_DATA_PIN, GRB>(leds, MAX_LEDS); break;
             case LedProtocolEnum::UCS2903:
-                FastLED.addLeds<UCS2903, LED_DATA_PIN, GRB>(leds, ledCount); break;
+                FastLED.addLeds<UCS2903, LED_DATA_PIN, GRB>(leds, MAX_LEDS); break;
             case LedProtocolEnum::UCS1912:
-                FastLED.addLeds<UCS1912, LED_DATA_PIN, GRB>(leds, ledCount); break;
+                FastLED.addLeds<UCS1912, LED_DATA_PIN, GRB>(leds, MAX_LEDS); break;
             default:
                 delete[] leds;
                 leds = nullptr;
@@ -115,33 +122,33 @@ void LedService::configure(uint8_t dataPin, uint8_t clockPin, uint16_t length, c
     auto chipset = LedChipsetMapper::fromString(protocol);
     switch (chipset) {
         case LPD6803:
-            FastLED.addLeds<LPD6803, LED_DATA_PIN, LED_CLOCK_PIN>(leds, ledCount); break;
+            FastLED.addLeds<LPD6803, LED_DATA_PIN, LED_CLOCK_PIN>(leds, MAX_LEDS); break;
         case LPD8806:
-            FastLED.addLeds<LPD8806, LED_DATA_PIN, LED_CLOCK_PIN>(leds, ledCount); break;
+            FastLED.addLeds<LPD8806, LED_DATA_PIN, LED_CLOCK_PIN>(leds, MAX_LEDS); break;
         case WS2801:
-            FastLED.addLeds<WS2801, LED_DATA_PIN, LED_CLOCK_PIN>(leds, ledCount); break;
+            FastLED.addLeds<WS2801, LED_DATA_PIN, LED_CLOCK_PIN>(leds, MAX_LEDS); break;
         case WS2803:
-            FastLED.addLeds<WS2803, LED_DATA_PIN, LED_CLOCK_PIN>(leds, ledCount); break;
+            FastLED.addLeds<WS2803, LED_DATA_PIN, LED_CLOCK_PIN>(leds, MAX_LEDS); break;
         case SM16716:
-            FastLED.addLeds<SM16716, LED_DATA_PIN, LED_CLOCK_PIN>(leds, ledCount); break;
+            FastLED.addLeds<SM16716, LED_DATA_PIN, LED_CLOCK_PIN>(leds, MAX_LEDS); break;
         case P9813:
-            FastLED.addLeds<P9813, LED_DATA_PIN, LED_CLOCK_PIN>(leds, ledCount); break;
+            FastLED.addLeds<P9813, LED_DATA_PIN, LED_CLOCK_PIN>(leds, MAX_LEDS); break;
         case APA102:
-            FastLED.addLeds<APA102, LED_DATA_PIN, LED_CLOCK_PIN, BGR>(leds, ledCount); break;
+            FastLED.addLeds<APA102, LED_DATA_PIN, LED_CLOCK_PIN, BGR>(leds, MAX_LEDS); break;
         case APA102HD:
-            FastLED.addLeds<APA102, LED_DATA_PIN, LED_CLOCK_PIN, BGR>(leds, ledCount); break;
+            FastLED.addLeds<APA102, LED_DATA_PIN, LED_CLOCK_PIN, BGR>(leds, MAX_LEDS); break;
         case DOTSTAR:
-            FastLED.addLeds<DOTSTAR, LED_DATA_PIN, LED_CLOCK_PIN, BGR>(leds, ledCount); break;
+            FastLED.addLeds<DOTSTAR, LED_DATA_PIN, LED_CLOCK_PIN, BGR>(leds, MAX_LEDS); break;
         case DOTSTARHD:
-            FastLED.addLeds<DOTSTARHD, LED_DATA_PIN, LED_CLOCK_PIN, BGR>(leds, ledCount); break;
+            FastLED.addLeds<DOTSTARHD, LED_DATA_PIN, LED_CLOCK_PIN, BGR>(leds, MAX_LEDS); break;
         case SK9822:
-            FastLED.addLeds<SK9822, LED_DATA_PIN, LED_CLOCK_PIN, BGR>(leds, ledCount); break;
+            FastLED.addLeds<SK9822, LED_DATA_PIN, LED_CLOCK_PIN, BGR>(leds, MAX_LEDS); break;
         case SK9822HD:
-            FastLED.addLeds<SK9822HD, LED_DATA_PIN, LED_CLOCK_PIN, BGR>(leds, ledCount); break;
+            FastLED.addLeds<SK9822HD, LED_DATA_PIN, LED_CLOCK_PIN, BGR>(leds, MAX_LEDS); break;
         case HD107:
-            FastLED.addLeds<HD107, LED_DATA_PIN, LED_CLOCK_PIN, BGR>(leds, ledCount); break;
+            FastLED.addLeds<HD107, LED_DATA_PIN, LED_CLOCK_PIN, BGR>(leds, MAX_LEDS); break;
         case HD107HD:
-            FastLED.addLeds<HD107HD, LED_DATA_PIN, LED_CLOCK_PIN, BGR>(leds, ledCount); break;
+            FastLED.addLeds<HD107HD, LED_DATA_PIN, LED_CLOCK_PIN, BGR>(leds, MAX_LEDS); break;
         default:
             delete[] leds;
             leds = nullptr;
@@ -152,12 +159,23 @@ void LedService::configure(uint8_t dataPin, uint8_t clockPin, uint16_t length, c
         Serial.println("You're likely compiling this project on Windows.");
         Serial.println("The FastLED 'addLeds<>()' switch is not included due to compiler limitations on Windows.");
         Serial.println("To enable full LED support, build this project on Linux and define ENABLE_FASTLED_PROTOCOL_SWITCHES.\n\n");
-        FastLED.addLeds<WS2812, LED_DATA_PIN, GRB>(leds, ledCount);
+        FastLED.addLeds<WS2812, LED_DATA_PIN, GRB>(leds, MAX_LEDS);
     #endif
 
     usesClock = true;
     FastLED.setBrightness(brightness);
     FastLED.show();
+}
+
+void LedService::release() {
+    if (leds) {
+        FastLED.clear(true);
+        delete[] leds;
+        leds = nullptr;
+        ledCount = 0;
+        usesClock = false;
+        animationRunning = false;
+    }
 }
 
 void LedService::fill(const CRGB& color) {
