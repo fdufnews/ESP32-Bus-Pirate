@@ -23,6 +23,7 @@ struct SubGhzDetectResult {
     std::string  protocolGuess;
     float        confidence = 0.f;      // 0..1
     std::string  notes;                 // free text
+    int          pulseCount = 0;        // number of pulses
 };
 
 struct FrequencyActivity {

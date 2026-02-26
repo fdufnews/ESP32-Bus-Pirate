@@ -9,6 +9,7 @@ std::string SubGhzAnalyzeManager::analyzeFrame(const std::vector<rmt_symbol_word
 
     std::vector<uint32_t> highs, lows;
     collectDurations(items, tickPerUs, highs, lows);
+    r.pulseCount = items.size() * 2; // each symbol has 2 levels
 
     float T = estimateBaseT(highs, lows);
     r.baseT_us = T;
@@ -181,6 +182,7 @@ std::string SubGhzAnalyzeManager::formatFrame(const SubGhzDetectResult& r) const
 
     std::ostringstream oss;
     oss << " [Frame received]\r\n"
+        << " Pulse count  : " << std::to_string(r.pulseCount) << "\r\n"
         << " Encoding     : " << encToStr(r.encoding) << "\r\n"
         << " Base T (us)  : " << std::lround(r.baseT_us) << "\r\n"
         << " Bitrate (kb) : " << r.bitrate_kbps << "\r\n"
