@@ -401,7 +401,7 @@ void SubGhzController::handleDecode(const TerminalCommand&) {
         // Read and analyze frame
         frame = subGhzService.readRawFrame();
         if (!frame.empty() && frame.size() >= 5) {
-            auto result = subGhzAnalyzeManager.analyzeFrame(frame);
+            auto result = subGhzAnalyzeManager.analyzeFrame(frame, subGhzService.getRxTickPerUs());
             terminalView.println(result);
         }
     }
@@ -787,12 +787,11 @@ void SubGhzController::handleRecord() {
         }
 
         if (timings.size() < 8) continue; // ignore noise
-
-        terminalView.println("[SUBGHZ RAW frame captured]");
-        terminalView.println("  Freq   : " + argTransformer.toFixed2(mhz) + " MHz");
-        terminalView.println("  Pulses : " + std::to_string((int)timings.size()));
-        terminalView.println("");
-
+        
+        // Analyze for user info
+        auto result = subGhzAnalyzeManager.analyzeFrame(items, tick_per_us);
+        terminalView.println(result);
+    
         // Save or discard
         if (!userInputManager.readYesNo("Save this frame?", true)) {
             subGhzService.readRawFrame(); // clear buffer for next frame

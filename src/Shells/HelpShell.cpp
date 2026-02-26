@@ -410,7 +410,7 @@ void HelpShell::cmdSubGhz() {
     static const char* const lines[] = {
         "scan                 - Search best frequency",
         "sweep                - Analyze frequency band",
-        "send <payload> [te]  - Send raw frame (dec/hex)",
+        "send <payload> [te]  - Send a frame payload",
         "receive              - Receive raw/decoded signals",
         "replay               - Record and replay frames",
         "jam                  - Jam selected frequencies",
