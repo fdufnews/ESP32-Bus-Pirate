@@ -948,10 +948,12 @@ void SubGhzController::handleSend(const TerminalCommand& cmd) {
 
     terminalView.println(
         "\n[SUBGHZ Frame]\n\r"
-        " Key : " + payloadRaw + "\n\r"
-        " Bits: " + std::to_string(bits) + "\n\r"
-        " Freq: " + argTransformer.toFixed2(state.getSubGhzFrequency()) + " MHz\n\r"
-        " TE  : " + std::to_string(te_us) + " us\n\r"
+        " Key    : " + payloadRaw + "\n\r"
+        " Bits   : " + std::to_string(bits) + "\n\r"
+        " Freq   : " + argTransformer.toFixed2(state.getSubGhzFrequency()) + " MHz\n\r"
+        " TE     : " + std::to_string(te_us) + " us\n\r"
+        " Proto  : " + SubGhzProtocolEnumMapper::toString(out.protocol) + "\n\r"
+        " Preset : " + out.preset.substr(out.preset.length() - 12) + "\n"
     );
 
     // Send
