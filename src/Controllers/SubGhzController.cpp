@@ -350,7 +350,7 @@ void SubGhzController::handleRaw(const TerminalCommand&) {
         return;
     }
     
-    terminalView.println("SUBGHZ Sniff: Frequency @ " + std::to_string(f) + " MHz... Press [ENTER] to stop\n");
+    terminalView.println("SUBGHZ Raw: Frequency @ " + std::to_string(f) + " MHz... Press [ENTER] to stop\n");
     
     subGhzService.startRawSniffer(state.getSubGhzGdoPin());
     while (true) {
@@ -367,7 +367,7 @@ void SubGhzController::handleRaw(const TerminalCommand&) {
     }
     subGhzService.stopRawSniffer();
 
-    terminalView.println("\nSUBGHZ Sniff: Stopped by user. " + std::to_string(count) + " pulses\n");
+    terminalView.println("\nSUBGHZ Raw: Stopped by user. " + std::to_string(count) + " pulses\n");
 }
 
 /*
@@ -722,6 +722,9 @@ void SubGhzController::handleRecord() {
         terminalView.println("SUBGHZ Record: LittleFS mounted.");
     }
 
+    // Ask record mode
+    bool recordRaw = userInputManager.readYesNo("Record RAW signals without decoding?", true);
+
     // Ensure radio configured
     const float mhz = state.getSubGhzFrequency();
     if (!subGhzService.applySniffProfile(mhz)) {
@@ -736,7 +739,22 @@ void SubGhzController::handleRecord() {
         return;
     }
 
-    terminalView.println("\nSUBGHZ Record: Waiting for RAW frames... Press [ENTER] to stop.\n");
+    if (recordRaw) {
+        terminalView.println("\nSUBGHZ Record (RAW): Capturing raw signals...\n");
+        terminalView.println(" [ℹ️  INFORMATION]");
+        terminalView.println(" The capture will include all received signals,");
+        terminalView.println(" during a 3 seconds window or until 1024 symbols.\n");
+        auto confirm = userInputManager.readYesNo("Start capture?", true);
+        if (!confirm) {
+            terminalView.println("SUBGHZ Record: Capture cancelled by user.\n");
+            subGhzService.stopRawSniffer();
+            return;
+        }
+
+        terminalView.println("\nSUBGHZ Record: Capturing for 3 seconds...\n");
+    } else {
+        terminalView.println("\nSUBGHZ Record (DECODE): Waiting for frames... Press [ENTER] to stop.\n");
+    }
 
     while (true) {
         // Stop with ENTER
@@ -745,7 +763,7 @@ void SubGhzController::handleRecord() {
             terminalView.println("SUBGHZ Record: Stopped by user.\n");
             break;
         }
-        
+
         // Check free space
         size_t free = littleFsService.freeBytes();
         if (free < MIN_FREE_BYTES) {
@@ -753,49 +771,43 @@ void SubGhzController::handleRecord() {
                 "SUBGHZ Record: Not enough LittleFS space. Need >= 16KB free, have " +
                 std::to_string(free) + " bytes."
             );
-            return;
+            break;
         }
 
-        // Try read one frame
-        auto items = subGhzService.readRawFrame();
-        if (items.size() < 5) continue;
-
-        // Convert ticks to us
         uint32_t tick_per_us = subGhzService.getRxTickPerUs();
         if (!tick_per_us) tick_per_us = 1;
+        std::vector<rmt_symbol_word_t> items;
 
-        std::vector<int32_t> timings;
-        timings.reserve(items.size() * 2);
-
-        for (const auto& s : items) {
-            if (s.duration0) {
-                uint32_t us0 = (s.duration0 + (tick_per_us / 2)) / tick_per_us;
-                if (us0) {
-                    int32_t v = (int32_t)us0;
-                    if (!s.level0) v = -v;
-                    timings.push_back(v);
-                }
-            }
-            if (s.duration1) {
-                uint32_t us1 = (s.duration1 + (tick_per_us / 2)) / tick_per_us;
-                if (us1) {
-                    int32_t v = (int32_t)us1;
-                    if (!s.level1) v = -v;
-                    timings.push_back(v);
-                }
-            }
+        if (recordRaw) {
+            // read up to 1024 symbols or 3s timeout 
+            items = subGhzService.readRawSymbolsUntil(/*numSamples*/1024, /*timeoutMs*/3000);
+            if (items.size() < 7) continue; // ignore noise / too short
+        } else {
+            // try get a splitted frame
+            items = subGhzService.readRawFrame();
+            items = subGhzTransformer.repeatFrameWithGap(items, tick_per_us, 3, 10'000, 256);
+            if (items.size() < 7) continue;
         }
 
-        if (timings.size() < 8) continue; // ignore noise
-        
-        // Analyze for user info
-        auto result = subGhzAnalyzeManager.analyzeFrame(items, tick_per_us);
-        terminalView.println(result);
-    
+        // Convert symbols
+        std::vector<int32_t> timings = subGhzTransformer.symbolsToSignedTimings(items, tick_per_us);
+        if (timings.size() < 7) continue; // ignore noise
+
+        // Display info:
+        if (recordRaw) {
+            terminalView.println(" [RAW Record] ");
+            terminalView.println(" Captured : " + std::to_string(items.size()));
+            terminalView.println("");
+        } else {
+            // existing decode info
+            auto result = subGhzAnalyzeManager.analyzeFrame(items, tick_per_us);
+            terminalView.println(result);
+        }
+
         // Save or discard
         if (!userInputManager.readYesNo("Save this frame?", true)) {
-            subGhzService.readRawFrame(); // clear buffer for next frame
             terminalView.println("Waiting for next frame... Press [ENTER] to stop.\n");
+            subGhzService.readRawFrame(); // clear buffer for next frames
             continue;
         }
 
@@ -807,7 +819,7 @@ void SubGhzController::handleRecord() {
         std::string path = "/" + fileBase;
         if (path.size() < 5 || path.substr(path.size() - 4) != ".sub") path += ".sub";
 
-        // Build cmd
+        // Build cmd as raw in both cases
         SubGhzFileCommand cmd;
         cmd.protocol     = SubGhzProtocolEnum::RAW;
         cmd.preset       = "FuriHalSubGhzPresetOok650Async";
