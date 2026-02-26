@@ -409,9 +409,9 @@ void HelpShell::cmdSubGhz() {
     printHeader("SUBGHZ");
     static const char* const lines[] = {
         "scan                 - Search best frequency",
-        "sniff                - Raw frame sniffing",
         "sweep                - Analyze frequency band",
-        "decode               - Receive and decode frames",
+        "send <payload> [te]  - Send raw frame (dec/hex)",
+        "receive              - Receive raw/decoded signals",
         "replay               - Record and replay frames",
         "jam                  - Jam selected frequencies",
         "bruteforce           - Bruteforce 12 bit keys",
