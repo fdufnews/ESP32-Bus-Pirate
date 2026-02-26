@@ -235,7 +235,7 @@ std::vector<rmt_symbol_word_t> SubGhzService::readRawFrame() {
                       rx_buf_.size() * sizeof(rmt_symbol_word_t), &rcfg);
 
 
-    const uint32_t GAP_US = 2500;
+    const uint32_t GAP_US = 2000;
 
     auto isGap = [&](const rmt_symbol_word_t& s) -> bool {
         if (s.duration0 && s.duration0 >= GAP_US) return true;
