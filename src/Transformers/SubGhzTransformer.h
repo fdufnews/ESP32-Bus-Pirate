@@ -4,6 +4,8 @@
 #include <cstdint>
 #include <sstream>
 #include <cctype>
+#include "driver/rmt_types.h"
+
 #include "Enums/SubGhzProtocolEnum.h"
 #include "Models/SubghzFileCommand.h"
 
@@ -22,6 +24,17 @@ public:
     // Extract readable summaries of commands
     std::vector<std::string> extractSummaries(const std::vector<SubGhzFileCommand>& cmds);
 
+    // Convert RMT symbols to signed timings (for RAW saving)
+    std::vector<int32_t> symbolsToSignedTimings(const std::vector<rmt_symbol_word_t>& items, uint32_t rx_tick_per_us) const;
+
+    // Repeat a frame with a gap, for better reception on some protocols
+    std::vector<rmt_symbol_word_t> repeatFrameWithGap(
+        const std::vector<rmt_symbol_word_t>& frame,
+        uint32_t rx_tick_per_us,
+        int repeatCount = 3,
+        uint32_t gap_us = 10'000,
+        size_t maxFrameSymbolsForRepeat = 256
+    ) const;
 private:
     // Helpers
     static void trim(std::string& s);

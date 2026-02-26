@@ -329,6 +329,80 @@ SubGhzTransformer::extractSummaries(const std::vector<SubGhzFileCommand>& cmds) 
     return out;
 }
 
+std::vector<int32_t> SubGhzTransformer::symbolsToSignedTimings(const std::vector<rmt_symbol_word_t>& items, uint32_t rx_tick_per_us) const {
+    std::vector<int32_t> timings;
+    if (items.empty()) return timings;
+
+    if (!rx_tick_per_us) rx_tick_per_us = 1;
+
+    timings.reserve(items.size() * 2);
+
+    for (const auto& s : items) {
+        if (s.duration0) {
+            uint32_t us0 = (s.duration0 + (rx_tick_per_us / 2)) / rx_tick_per_us;
+            if (us0) timings.push_back(s.level0 ? (int32_t)us0 : -(int32_t)us0);
+        }
+        if (s.duration1) {
+            uint32_t us1 = (s.duration1 + (rx_tick_per_us / 2)) / rx_tick_per_us;
+            if (us1) timings.push_back(s.level1 ? (int32_t)us1 : -(int32_t)us1);
+        }
+    }
+
+    return timings;
+}
+
+std::vector<rmt_symbol_word_t> SubGhzTransformer::repeatFrameWithGap(
+    const std::vector<rmt_symbol_word_t>& frame,
+    uint32_t rx_tick_per_us,
+    int repeatCount,
+    uint32_t gap_us,
+    size_t maxFrameSymbolsForRepeat
+) const {
+    std::vector<rmt_symbol_word_t> out;
+
+    if (frame.empty()) return out;
+    if (repeatCount <= 1) return frame;
+    if (rx_tick_per_us == 0) rx_tick_per_us = 1;
+
+    // Only repeat small frames
+    if (frame.size() >= maxFrameSymbolsForRepeat) {
+        return frame;
+    }
+
+    // Convert gap to ticks
+    uint32_t gap_ticks = gap_us * rx_tick_per_us;
+
+    // RMT duration field limit
+    const uint32_t MAX_TICKS = 32767;
+
+    auto appendLowGap = [&](uint32_t ticks) {
+        while (ticks) {
+            uint32_t chunk = (ticks > MAX_TICKS) ? MAX_TICKS : ticks;
+
+            rmt_symbol_word_t g{};
+            g.level0 = 0;
+            g.duration0 = chunk;
+            g.level1 = 0;
+            g.duration1 = 0;
+
+            out.push_back(g);
+            ticks -= chunk;
+        }
+    };
+
+    // Reserve enough space for repeated frames + gaps
+    out.reserve(frame.size() * repeatCount + 8);
+
+    for (int i = 0; i < repeatCount; ++i) {
+        out.insert(out.end(), frame.begin(), frame.end());
+        if (i != repeatCount - 1) {
+            appendLowGap(gap_ticks);
+        }
+    }
+
+    return out;
+}
+
 std::string SubGhzTransformer::mapPreset(const std::string& presetStr) {
     std::string p; p = presetStr;
     return p;
