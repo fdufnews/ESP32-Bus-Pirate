@@ -56,9 +56,6 @@ public:
     void ensureConfigured();
 
 private:
-    // Sniff for signals
-    void handleSniff(const TerminalCommand& cmd);
-
     // Scan for frequencies
     void handleScan(const TerminalCommand& cmd);
 
@@ -73,9 +70,15 @@ private:
 
     // Band Jam
     void handleBandJam();
-
-    // Decode signals
+    
+    // Decoded signals reception
     void handleDecode(const TerminalCommand& cmd);
+    
+    // Raw signals reception 
+    void handleRaw(const TerminalCommand& cmd);
+
+    // Decode signals or receive raw symbols
+    void handleReceive(const TerminalCommand& cmd);
 
     // Show signal trace
     void handleTrace();
@@ -97,6 +100,9 @@ private:
 
     // Convert RSSI to audio
     void handleEar();
+    
+    // Send payload
+    void handleSend(const TerminalCommand& cmd);
 
     // Configure CC1101
     void handleConfig();

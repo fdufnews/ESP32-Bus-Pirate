@@ -6,54 +6,24 @@ Entry point for commands
 void SubGhzController::handleCommand(const TerminalCommand& cmd) {
     const std::string root = cmd.getRoot();
 
-    if (root == "sniff")             handleSniff(cmd);
-    else if (root == "scan")         handleScan(cmd);
+    if (root == "scan")         handleScan(cmd);
     else if (root == "sweep")        handleSweep();
     else if (root == "setfrequency") handleSetFrequency();
     else if (root == "setfreq")      handleSetFrequency();
     else if (root == "replay")       handleReplay(cmd);
     else if (root == "jam")          handleJam(cmd);
     else if (root == "bruteforce")   handleBruteforce();
-    else if (root == "decode")       handleDecode(cmd);
+    else if (root == "decode")       handleDecode(cmd); // for legacy
+    else if (root == "raw")          handleRaw(cmd); // in case for script usage
+    else if (root == "receive")      handleReceive(cmd); // regroup decode/raw
     else if (root == "trace")        handleTrace();
     else if (root == "waterfall")    handleWaterfall();
     else if (root == "ear")          handleEar();
     else if (root == "record")       handleRecord();
     else if (root == "load")         handleLoad();
+    else if (root == "send")         handleSend(cmd);
     else if (root == "config")       handleConfig();
     else                             handleHelp();
-}
-
-/*
-Sniff for signals
-*/
-void SubGhzController::handleSniff(const TerminalCommand&) {
-    float f = state.getSubGhzFrequency();
-    uint32_t count = 0;
-
-    if (!subGhzService.applySniffProfile(f)) {
-        terminalView.println("SUBGHZ: Not detected. Run 'config' first.");
-        return;
-    }
-    
-    terminalView.println("SUBGHZ Sniff: Frequency @ " + std::to_string(f) + " MHz... Press [ENTER] to stop\n");
-    
-    subGhzService.startRawSniffer(state.getSubGhzGdoPin());
-    while (true) {
-        char c = terminalInput.readChar();
-        if (c == '\n' || c == '\r') {
-            break;
-        }
-
-        auto [line, pulseCount] = subGhzService.readRawPulses();
-        if (pulseCount > 8) { // ignore too short frames, likely noise
-            count += pulseCount;
-            terminalView.println(line);
-        }
-    }
-    subGhzService.stopRawSniffer();
-
-    terminalView.println("\nSUBGHZ Sniff: Stopped by user. " + std::to_string(count) + " pulses\n");
 }
 
 /*
@@ -367,8 +337,41 @@ void SubGhzController::handleBandJam() {
     terminalView.println("SUBGHZ Jam: Stopped by user.\n");
 }
 
+
 /*
-Decode
+Raw signals reception
+*/
+void SubGhzController::handleRaw(const TerminalCommand&) {
+    float f = state.getSubGhzFrequency();
+    uint32_t count = 0;
+
+    if (!subGhzService.applySniffProfile(f)) {
+        terminalView.println("SUBGHZ: Not detected. Run 'config' first.");
+        return;
+    }
+    
+    terminalView.println("SUBGHZ Sniff: Frequency @ " + std::to_string(f) + " MHz... Press [ENTER] to stop\n");
+    
+    subGhzService.startRawSniffer(state.getSubGhzGdoPin());
+    while (true) {
+        char c = terminalInput.readChar();
+        if (c == '\n' || c == '\r') {
+            break;
+        }
+
+        auto [line, pulseCount] = subGhzService.readRawPulses();
+        if (pulseCount > 8) { // ignore too short frames, likely noise
+            count += pulseCount;
+            terminalView.println(line);
+        }
+    }
+    subGhzService.stopRawSniffer();
+
+    terminalView.println("\nSUBGHZ Sniff: Stopped by user. " + std::to_string(count) + " pulses\n");
+}
+
+/*
+Decoded signals reception
 */
 void SubGhzController::handleDecode(const TerminalCommand&) {
     float f = state.getSubGhzFrequency();
@@ -408,6 +411,19 @@ void SubGhzController::handleDecode(const TerminalCommand&) {
 }
 
 /*
+Receive
+*/
+void SubGhzController::handleReceive(const TerminalCommand& cmd) {
+    // Ask for raw or decoded
+    auto confirm = userInputManager.readYesNo("Decode received signals to frames ?", true);
+    if (confirm) {
+        handleDecode(cmd);
+    } else {
+        handleRaw(cmd);
+    }
+}
+
+/*
 Trace
 */
 void SubGhzController::handleTrace() {
@@ -426,7 +442,7 @@ void SubGhzController::handleTrace() {
 
     // Update device view
     deviceView.clear();
-    deviceView.topBar("SubGHz Trace", false, false);
+    deviceView.topBar(argTransformer.toFixed2(f) + " MHz", false, false);
 
     std::vector<uint8_t> buffer;
     buffer.reserve(240); // screen width default
@@ -879,6 +895,75 @@ void SubGhzController::handleEar() {
 }
 
 /*
+Send
+*/
+void SubGhzController::handleSend(const TerminalCommand& cmd) {
+    // send <payload> [te]
+    // TE is the base time unit from which all RF bits, syncs, and gaps are built
+    std::string payloadRaw = cmd.getSubcommand();
+    std::string te = cmd.getArgs();
+
+    if (payloadRaw.empty() || !argTransformer.isValidNumber(payloadRaw)) {
+        terminalView.println("Usage: send <payload> [te]");
+        return;
+    }
+
+    // parse payload
+    uint64_t key64 = argTransformer.parseHexOrDec64(payloadRaw);
+    
+    // parse TE
+    uint32_t te_us = 350; // default TE in microseconds, common for many protocols
+    if (!te.empty() && argTransformer.isValidNumber(te)) {
+        te_us = argTransformer.parseHexOrDec32(te);
+        if (te_us > 10000) te_us = 10000; // limit 
+    }
+
+    // bits count
+    uint16_t bits = 0;
+    if (key64 == 0) {
+        bits = 1;
+    } else {
+        uint64_t t = key64;
+        while (t) { bits++; t >>= 1; }
+    }
+
+    // Normalize bits to common lengths
+    if      (bits <= 8)   bits = 8;
+    else if (bits <= 12)  bits = 12;
+    else if (bits <= 20)  bits = 20;
+    else if (bits <= 24)  bits = 24;
+    else if (bits <= 32)  bits = 32;
+    else if (bits <= 36)  bits = 36;
+    else if (bits <= 40)  bits = 40;
+    else if (bits <= 48)  bits = 48;
+    else                  bits = 64;   // max
+
+    // Build command
+    SubGhzFileCommand out;
+    out.protocol     = SubGhzProtocolEnum::Princeton; // most generic
+    out.preset       = "FuriHalSubGhzPresetOok650Async"; // most generic
+    out.frequency_hz = (uint32_t)(state.getSubGhzFrequency() * 1000000.0f + 0.5f);
+    out.te_us        = te_us;
+    out.key          = key64;
+    out.bits         = bits;
+
+    terminalView.println(
+        "\n[SUBGHZ Frame]\n\r"
+        " Key : " + payloadRaw + "\n\r"
+        " Bits: " + std::to_string(bits) + "\n\r"
+        " Freq: " + argTransformer.toFixed2(state.getSubGhzFrequency()) + " MHz\n\r"
+        " TE  : " + std::to_string(te_us) + " us\n\r"
+    );
+
+    // Send
+    if (subGhzService.send(out)) {
+        terminalView.println("✅ SUBGHZ: Sent.\n");
+    } else {
+        terminalView.println("❌ SUBGHZ: Send failed.\n");
+    }
+}
+
+/*
 Config CC1101
 */
 void SubGhzController::handleConfig() {
@@ -920,7 +1005,7 @@ void SubGhzController::handleConfig() {
             terminalView.println("\n [ℹ️  INFORMATION] ");
             terminalView.println(" For SubGHz features, use **USB** connection.");
             terminalView.println(" It offers lower latency and reliable logging.");
-            terminalView.println(" TheWeb UI can introduce delays and miss pulses.\n");
+            terminalView.println(" The Web UI can introduce delays and miss pulses.\n");
         }
         
         // Apply settings
