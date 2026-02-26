@@ -7,7 +7,7 @@
 #include "freertos/ringbuf.h"
 #include "ELECHOUSE_CC1101_SRC_DRV.h"
 #include "Data/SugGhzFreqs.h"
-#include "Transformers/SubGhzTransformer.h"
+#include "Models/SubghzFileCommand.h"
 #include "driver/rmt_rx.h"
 #include "driver/rmt_tx.h"
 #include "driver/rmt_types.h"
@@ -84,8 +84,8 @@ private:
 
     rmt_channel_handle_t rx_chan_ = nullptr;
     std::vector<rmt_symbol_word_t> rx_buf_;
-    volatile size_t last_symbols_ = 0;
-    volatile bool rx_done_ = false;
+    size_t last_symbols_ = 0;
+    bool rx_done_ = false;
     uint32_t rx_resolution_hz_ = 0;
     uint32_t rx_tick_per_us_   = 0;
 

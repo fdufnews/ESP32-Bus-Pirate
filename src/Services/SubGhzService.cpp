@@ -172,7 +172,7 @@ bool SubGhzService::startRawSniffer(int pin) {
     // --- receive config
     rmt_receive_config_t rcfg{};
     rcfg.signal_range_min_ns = 1'000;        // 1 us glitch filter
-    rcfg.signal_range_max_ns = 20'000'000;   // 20 ms max same-level (20ms)
+    rcfg.signal_range_max_ns = 20'000'000;   // 20 ms max same-level
     rcfg.flags.en_partial_rx = 1;            // allow piece-by-piece for long streams
 
     rx_done_ = false;
@@ -202,6 +202,108 @@ void SubGhzService::stopRawSniffer() {
     last_symbols_ = 0;
 }
 
+std::vector<rmt_symbol_word_t> SubGhzService::readRawFrame() {
+
+    // This function attempts to extract a clean frame
+    // from the raw RMT symbol reception buffer
+    // based on the estimation of the interframe gap.
+    // Min symbols for a valid frame
+    const size_t MIN_SYMS = 16;
+
+    std::vector<rmt_symbol_word_t> out;
+    if (!rx_chan_ || !rx_done_) return out;
+
+    // Snapshot
+    size_t symCount = (size_t)last_symbols_;
+    if (symCount > rx_buf_.size()) symCount = rx_buf_.size();
+    
+    // Restart RX for next frame
+    rx_done_ = false;
+    last_symbols_ = 0;
+    rmt_receive_config_t rcfg{};
+    rcfg.signal_range_min_ns = 1000;
+    rcfg.signal_range_max_ns = 20'000'000;
+    rcfg.flags.en_partial_rx = 1;
+    (void)rmt_receive(rx_chan_, rx_buf_.data(),
+                      rx_buf_.size() * sizeof(rmt_symbol_word_t), &rcfg);
+
+    if (symCount < MIN_SYMS) return out;
+
+    // For estimation of interframe gap
+    uint32_t lows[256];
+    size_t low_cnt = 0;
+    const uint32_t LOW_FLOOR_US = 1500;  // data byte signal floor
+    const uint32_t LOW_CEIL_US  = 20'000'000; // just in case
+
+    // Collect some low durations
+    for (size_t i = 0; i < symCount; ++i) {
+        const auto& s = rx_buf_[i];
+
+        if (!s.level0 && s.duration0 >= LOW_FLOOR_US && s.duration0 <= LOW_CEIL_US) {
+            if (low_cnt < 256) lows[low_cnt++] = s.duration0;
+        }
+        if (!s.level1 && s.duration1 >= LOW_FLOOR_US && s.duration1 <= LOW_CEIL_US) {
+            if (low_cnt < 256) lows[low_cnt++] = s.duration1;
+        }
+    }
+
+    // Too few lows, probably no gap
+    if (low_cnt < 3) return out;
+
+    // Insertion sort lows
+    for (size_t i = 1; i < low_cnt; ++i) {
+        uint32_t key = lows[i];
+        size_t j = i;
+        while (j > 0 && lows[j - 1] > key) {
+            lows[j] = lows[j - 1];
+            --j;
+        }
+        lows[j] = key;
+    }
+
+    // Median
+    uint32_t med = lows[low_cnt / 2];
+
+    // if median is too small, it's probably not an interframe gap
+    // We can try to take the high tail
+    if (med < 3000 && low_cnt >= 8) {
+        med = lows[(low_cnt * 3) / 4]; // 75e percentile
+    }
+
+    // Threshold for gap detection
+    uint32_t gap_thr = (med * 7) / 10; // 0.7 * med
+    if (gap_thr < 3000) gap_thr = 3000; // min 3ms gap
+    if (gap_thr > 25'000'000) gap_thr = 25'000'000;
+
+    auto isGap = [&](const rmt_symbol_word_t& s) -> bool {
+        if (!s.level0 && s.duration0 >= gap_thr) return true;
+        if (!s.level1 && s.duration1 >= gap_thr) return true;
+        return false;
+    };
+
+    // Find first gap (start delimiter)
+    size_t start = 0;
+    for (size_t i = 0; i < symCount; ++i) {
+        if (isGap(rx_buf_[i])) { start = i + 1; break; }
+    }
+    if (start >= symCount) start = 0;
+
+    // Find next gap (end delimiter)
+    size_t end = symCount;
+    for (size_t i = start + 1; i < symCount; ++i) {
+        if (isGap(rx_buf_[i])) { end = i; break; }
+    }
+
+    if (end <= start || (end - start) < MIN_SYMS) return out;
+
+    // Recalage
+    while (start < end && !rx_buf_[start].level0) start++;
+    if (end <= start || (end - start) < MIN_SYMS) return out;
+
+    out.insert(out.end(), rx_buf_.begin() + start, rx_buf_.begin() + end);
+    return out;
+}
+
 std::pair<std::string, size_t> SubGhzService::readRawPulses() {
     if (!rx_done_) return {"", 0};
 
@@ -226,49 +328,12 @@ std::pair<std::string, size_t> SubGhzService::readRawPulses() {
     last_symbols_ = 0;
     rmt_receive_config_t rcfg{};
     rcfg.signal_range_min_ns = 1000;
-    rcfg.signal_range_max_ns = 3000000;
+    rcfg.signal_range_max_ns = 20000000;
     rmt_receive(rx_chan_, rx_buf_.data(),
                 rx_buf_.size() * sizeof(rmt_symbol_word_t),
                 &rcfg);
 
     return {oss.str(), n};
-}
-
-std::vector<rmt_symbol_word_t> SubGhzService::readRawFrame() {
-    std::vector<rmt_symbol_word_t> frame;
-
-    // Pas de channel actif ou pas encore de réception terminée
-    if (!rx_chan_) return frame;
-    if (!rx_done_) return frame;
-
-    size_t n = last_symbols_;
-    if (n > rx_buf_.size()) {
-        n = rx_buf_.size();
-    }
-
-    if (n == 0) {
-        rx_done_ = false;
-        return frame;
-    }
-
-    // Copier les symbols reçus
-    frame.assign(rx_buf_.begin(), rx_buf_.begin() + n);
-
-    // Préparer prochaine capture
-    rx_done_ = false;
-    last_symbols_ = 0;
-
-    rmt_receive_config_t rcfg{};
-    rcfg.signal_range_min_ns = 1000;        // 1 us
-    rcfg.signal_range_max_ns = 20'000'000;  // 20 ms
-    rcfg.flags.en_partial_rx = 1;
-
-    rmt_receive(rx_chan_,
-                rx_buf_.data(),
-                rx_buf_.size() * sizeof(rmt_symbol_word_t),
-                &rcfg);
-
-    return frame;
 }
 
 bool SubGhzService::sendRawFrame(int pin, const std::vector<rmt_symbol_word_t>& items, uint32_t tick_per_us) {
