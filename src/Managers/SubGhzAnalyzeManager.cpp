@@ -9,7 +9,7 @@ std::string SubGhzAnalyzeManager::analyzeFrame(const std::vector<rmt_symbol_word
 
     std::vector<uint32_t> highs, lows;
     collectDurations(items, tickPerUs, highs, lows);
-    r.pulseCount = items.size() * 2; // each symbol has 2 levels
+    r.pulseCount = items.size() * 2;
 
     float T = estimateBaseT(highs, lows);
     r.baseT_us = T;
@@ -24,34 +24,79 @@ std::string SubGhzAnalyzeManager::analyzeFrame(const std::vector<rmt_symbol_word
     else if (pwm) r.encoding = RfEncoding::PWM;
     else r.encoding = RfEncoding::Unknown;
 
-    // Bitrate
-    if (r.encoding == RfEncoding::Manchester && T > 0.f) {
-        r.bitrate_kbps = 1000.f / (2.f * T);
-    } else if (T > 0.f) {
-        r.bitrate_kbps = 1000.f / T;
+    // Bitrate estimate
+    if (r.encoding == RfEncoding::PulseLength) {
+        std::vector<float> ds;
+        ds.reserve(items.size() * 2);
+        for (const auto& it : items) {
+            float h = it.duration0 / tickPerUs;
+            float l = it.duration1 / tickPerUs;
+            if (h >= 2.f) ds.push_back(h);
+            if (l >= 2.f) ds.push_back(l);
+        }
+
+        float S = (T > 0.f) ? T : 0.f;
+        float L = 0.f;
+
+        if (ds.size() >= 16) {
+            float vmin = ds[0], vmax = ds[0];
+            for (float d : ds) { if (d < vmin) vmin = d; if (d > vmax) vmax = d; }
+
+            float c1 = vmin, c2 = vmax;
+            for (int it = 0; it < 8; ++it) {
+                float s1 = 0.f, s2 = 0.f; int n1 = 0, n2 = 0;
+                for (float d : ds) {
+                    if (std::fabs(d - c1) <= std::fabs(d - c2)) { s1 += d; ++n1; }
+                    else                                        { s2 += d; ++n2; }
+                }
+                if (n1 > 0) c1 = s1 / n1;
+                if (n2 > 0) c2 = s2 / n2;
+            }
+
+            S = (c1 < c2) ? c1 : c2;
+            L = (c1 < c2) ? c2 : c1;
+        }
+
+        if (S > 0.f) {
+            float sym = (L > 0.f) ? (S + L) : (3.f * S);
+            if (sym > 0.f) r.bitrate_kbps = 1000.f / sym;
+            r.baseT_us = S;
+        }
+    } else {
+        if (r.encoding == RfEncoding::Manchester && T > 0.f) r.bitrate_kbps = 1000.f / (2.f * T);
+        else if (T > 0.f) r.bitrate_kbps = 1000.f / T;
     }
 
-    // Attempt decoding
+    // Attempt decode
     if (r.encoding == RfEncoding::PulseLength) {
-        std::string hex;
-        int bits = 0;
-        if (decodePT2262Like(T, items, tickPerUs, hex, bits)) {
-            r.payloadHex = hex;
-            r.bitCount   = bits;
+        std::string payload;
+        int symbols = 0;
+        if (decodePT2262Like(T, items, tickPerUs, payload, symbols)) {
+            r.payloadHex = payload;
+            r.bitCount   = symbols;
 
-            // Guess protocol
-            if (bits >= 20 && bits <= 36 && ratio > 2.f) {
-                r.protocolGuess = "EV1527/PT2262-like";
+            // - If payload contains F => tri-state family (PT2262/SC2262/etc).
+            // - If pure hex (only 0-9A-F) => binary code; often EV1527-ish or fixed-code remotes.
+            bool hasF = (payload.find('F') != std::string::npos);
+
+            if (hasF) {
+                // Common tri-state lengths: 12, 24, 28 (varies by encoder + framing)
+                if (symbols == 12 || symbols == 24 || symbols == 28) r.protocolGuess = "PT2262/SC2262-like";
+                else r.protocolGuess = "Tri-state OOK";
             } else {
-                r.protocolGuess = "Pulse-length (generic)";
+                r.protocolGuess = "PT2262/EV1527-like";
             }
-            r.confidence = clamp01(0.6f + 0.2f * (ratio > 2.5f));
+
+            // Confidence: base on ratio + presence of a sane symbol count
+            float c = 0.55f + 0.20f * (ratio > 1.9f);
+            if (symbols >= 12 && symbols <= 40) c += 0.10f;
+            r.confidence = clamp01(c);
         } else {
-            r.protocolGuess = "Pulse-length (undecoded)";
-            r.confidence = 0.35f;
+            r.protocolGuess = "Pulse-length";
+            r.confidence = 0.30f;
         }
     } else if (r.encoding == RfEncoding::Manchester) {
-        r.protocolGuess = "Manchester (generic)";
+        r.protocolGuess = "Manchester";
         r.confidence = 0.5f;
     } else if (r.encoding == RfEncoding::PWM) {
         r.protocolGuess = "PWM (generic)";
@@ -187,7 +232,7 @@ std::string SubGhzAnalyzeManager::formatFrame(const SubGhzDetectResult& r) const
         << " Base T (us)  : " << std::lround(r.baseT_us) << "\r\n"
         << " Bitrate (kb) : " << r.bitrate_kbps << "\r\n"
         << " Bit count    : " << r.bitCount << "\r\n"
-        << " Payload (hex): " << (r.payloadHex.empty() ? "-" : r.payloadHex) << "\r\n"
+        << " Payload      : " << (r.payloadHex.empty() ? "-" : r.payloadHex) << "\r\n"
         << " Protocol     : " << r.protocolGuess << "\r\n"
         << " Confidence   : " << r.confidence << "\r\n";
     if (!r.notes.empty()) oss << "Notes        : " << r.notes << "\r\n";
@@ -241,26 +286,58 @@ bool SubGhzAnalyzeManager::looksManchester(float T, const std::vector<uint32_t>&
     return total >= 8 && (float)ok / total > 0.6f;
 }
 
-bool SubGhzAnalyzeManager::looksPulseLength(float T, const std::vector<uint32_t>& highs, const std::vector<uint32_t>& lows, float& ratioOut) {
-    if (T <= 0.f || highs.size() < 8) { ratioOut = 0.f; return false; }
+bool SubGhzAnalyzeManager::looksPulseLength(float T,
+                                            const std::vector<uint32_t>& highs,
+                                            const std::vector<uint32_t>& lows,
+                                            float& ratioOut)
+{
+    ratioOut = 0.f;
+    if (highs.size() < 8 || lows.size() < 8) return false;
 
-    std::vector<float> r1, r2;
-    r1.reserve(highs.size()); r2.reserve(highs.size());
-    for (size_t i = 0; i < highs.size(); ++i) {
-        float h = (float)highs[i];
-        float l = (float)lows[i];
-        if (h < 1.f || l < 1.f) continue;
-        r1.push_back(h / l);
-        r2.push_back(l / h);
+    // Build a duration pool
+    std::vector<float> ds;
+    ds.reserve(highs.size() + lows.size());
+    for (auto d : highs) if (d >= 2) ds.push_back((float)d);
+    for (auto d : lows)  if (d >= 2) ds.push_back((float)d);
+    if (ds.size() < 16) return false;
+
+    // 1D k-means (k=2) to find short/long clusters
+    float vmin = ds[0], vmax = ds[0];
+    for (float d : ds) { if (d < vmin) vmin = d; if (d > vmax) vmax = d; }
+
+    float c1 = vmin, c2 = vmax;
+    for (int it = 0; it < 8; ++it) {
+        float s1 = 0.f, s2 = 0.f; int n1 = 0, n2 = 0;
+        for (float d : ds) {
+            if (std::fabs(d - c1) <= std::fabs(d - c2)) { s1 += d; ++n1; }
+            else                                        { s2 += d; ++n2; }
+        }
+        if (n1 > 0) c1 = s1 / n1;
+        if (n2 > 0) c2 = s2 / n2;
     }
-    if (r1.empty() || r2.empty()) { ratioOut = 0.f; return false; }
-    std::sort(r1.begin(), r1.end());
-    std::sort(r2.begin(), r2.end());
-    float m1 = r1[r1.size()/2];
-    float m2 = r2[r2.size()/2];
-    ratioOut = (m1 > m2) ? m1 : m2;
 
-    return ratioOut > 1.8f && ratioOut < 4.2f;
+    float S = (c1 < c2) ? c1 : c2;
+    float L = (c1 < c2) ? c2 : c1;
+    if (S <= 0.f || L <= 0.f) return false;
+
+    float ratio = L / S;
+    ratioOut = ratio;
+
+    // Typical OOK pulse length: long 2*short (sometimes 3*short)
+    if (ratio < 1.45f || ratio > 3.60f) return false;
+
+    // Check classification coverage
+    const float tolS = 0.30f * S;  // 30%
+    const float tolL = 0.30f * L;  // 30%
+    int ok = 0;
+    for (float d : ds) {
+        bool nearS = (std::fabs(d - S) <= tolS);
+        bool nearL = (std::fabs(d - L) <= tolL);
+        if (nearS || nearL) ok++;
+    }
+
+    float coverage = (ds.empty() ? 0.f : (float)ok / (float)ds.size());
+    return coverage >= 0.70f;
 }
 
 bool SubGhzAnalyzeManager::looksPWM(float T, const std::vector<uint32_t>& highs, const std::vector<uint32_t>& lows) {
@@ -277,46 +354,137 @@ bool SubGhzAnalyzeManager::looksPWM(float T, const std::vector<uint32_t>& highs,
     return (varH < 0.25f * varL) || (varL < 0.25f * varH);
 }
 
-static inline bool isShortT(float d, float T)  { return std::fabs(d - T) <= (T * 0.6f); }
-static inline bool isLong3T(float d, float T)  { return std::fabs(d - 3*T) <= (T * 0.8f); }
+bool SubGhzAnalyzeManager::decodePT2262Like(float /*T*/,
+                                            const std::vector<rmt_symbol_word_t>& items,
+                                            float tickPerUs,
+                                            std::string& hexOut,
+                                            int& bitCountOut)
+{
+    hexOut.clear();
+    bitCountOut = 0;
+    if (items.size() < 8) return false;
 
-bool SubGhzAnalyzeManager::decodePT2262Like(float T, const std::vector<rmt_symbol_word_t>& items, float tickPerUs,
-                                            std::string& hexOut, int& bitCountOut) {
-    if (T <= 0.f || items.size() < 8) return false;
+    // Estimate Short/Long via 1D k-means (k=2)
+    std::vector<float> ds;
+    ds.reserve(items.size() * 2);
 
-    std::string bits;
-    bits.reserve(items.size());
+    float maxLow = 0.f;
+    for (const auto& it : items) {
+        float h = it.duration0 / tickPerUs;
+        float l = it.duration1 / tickPerUs;
+        if (h >= 2.f) ds.push_back(h);
+        if (l >= 2.f) ds.push_back(l);
+        if (l > maxLow) maxLow = l;
+    }
+    if (ds.size() < 16) return false;
+
+    float vmin = ds[0], vmax = ds[0];
+    for (float d : ds) { if (d < vmin) vmin = d; if (d > vmax) vmax = d; }
+
+    float c1 = vmin, c2 = vmax;
+    for (int it = 0; it < 8; ++it) {
+        float s1 = 0.f, s2 = 0.f; int n1 = 0, n2 = 0;
+        for (float d : ds) {
+            if (std::fabs(d - c1) <= std::fabs(d - c2)) { s1 += d; ++n1; }
+            else                                        { s2 += d; ++n2; }
+        }
+        if (n1 > 0) c1 = s1 / n1;
+        if (n2 > 0) c2 = s2 / n2;
+    }
+
+    float S = (c1 < c2) ? c1 : c2;
+    float L = (c1 < c2) ? c2 : c1;
+    if (S <= 0.f || L <= 0.f) return false;
+
+    // Classifiers
+    const float tolS = 0.30f * S;
+    const float tolL = 0.30f * L;
+
+    auto isS = [&](float d){ return std::fabs(d - S) <= tolS; };
+    auto isL = [&](float d){ return std::fabs(d - L) <= tolL; };
+    // Baseline: 8*S
+    float syncMin = 8.f * S;
+
+    // If there's a clear huge low gap (outlier), use it to set threshold
+    // Condition: maxLow much larger than typical long low.
+    if (maxLow > 4.f * L) {
+        float candidate = 0.40f * maxLow;
+        if (candidate > syncMin) syncMin = candidate;
+    }
+
+    // Decode to raw trits/bits, stop at first sync after data
+    std::string raw;
+    raw.reserve(items.size());
+
+    int total = 0;
+    int good  = 0;
 
     for (const auto& it : items) {
         float h = it.duration0 / tickPerUs;
         float l = it.duration1 / tickPerUs;
+        if (h < 2.f || l < 2.f) continue;
 
-        // Ignore
-        if (h < 2 || l < 2) continue;
+        // Stop at sync AFTER we started collecting (avoid concatenation of repeats)
+        if (l >= syncMin) {
+            if (!raw.empty()) break;   // end of frame
+            continue;                  // ignore leading gap / preamble
+        }
 
-        bool hS = isShortT(h, T), hL = isLong3T(h, T);
-        bool lS = isShortT(l, T), lL = isLong3T(l, T);
+        bool hS = isS(h), hL = isL(h);
+        bool lS = isS(l), lL = isL(l);
 
-        if (hS && lL)      bits.push_back('0');
-        else if (hL && lS) bits.push_back('1');
+        total++;
+
+        // Classified cleanly?
+        if ((hS || hL) && (lS || lL)) good++;
+
+        // Tri-state mapping:
+        // 0 = S+L, 1 = L+S, F = S+S
+        if (hS && lL)      raw.push_back('0');
+        else if (hL && lS) raw.push_back('1');
+        else if (hS && lS) raw.push_back('F');
+        else if (hL && lL) raw.push_back('F');
         else {
-            float ehS = std::fabs(h - T),   ehL = std::fabs(h - 3*T);
-            float elS = std::fabs(l - T),   elL = std::fabs(l - 3*T);
-            if (ehS+elL < ehL+elS) bits.push_back('0');
-            else                   bits.push_back('1');
+            // fallback nearest (counts as low-quality)
+            float dhS = std::fabs(h - S), dhL = std::fabs(h - L);
+            float dlS = std::fabs(l - S), dlL = std::fabs(l - L);
+            bool hhS = (dhS <= dhL);
+            bool llS = (dlS <= dlL);
+
+            if (hhS && !llS)      raw.push_back('0');
+            else if (!hhS && llS) raw.push_back('1');
+            else                  raw.push_back('F');
         }
     }
 
-    // Too short
-    if ((int)bits.size() < 16) return false;
+    if ((int)raw.size() < 12) return false;
 
-    // Truncate to multiple of 4
-    bitCountOut = (int)(bits.size() & ~0x3);
-    if (bitCountOut == 0) return false;
+    // Reject if too many fallbacks / poor clustering fit
+    float quality = (total > 0) ? ((float)good / (float)total) : 0.f;
+    if (quality < 0.55f) return false;
 
-    bits.resize((size_t)bitCountOut);
-    hexOut = bitsToHex(bits);
-    return true;
+    // If purely binary => HEX, else keep raw "01F..."
+    bool isBinary = true;
+    for (char c : raw) {
+        if (c != '0' && c != '1') { isBinary = false; break; }
+    }
+
+    if (isBinary) {
+        int n = (int)(raw.size() & ~0x3);
+        if (n < 4) {
+            bitCountOut = (int)raw.size();
+            hexOut = raw;
+            return true;
+        }
+        raw.resize((size_t)n);
+        bitCountOut = n;
+        hexOut = bitsToHex(raw);
+        return true;
+    } else {
+        bitCountOut = (int)raw.size();
+        hexOut = raw;
+        return true;
+    }
 }
 
 bool SubGhzAnalyzeManager::nearf(float a, float b, float tol) { return std::fabs(a - b) <= tol; }
