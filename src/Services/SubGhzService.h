@@ -40,6 +40,7 @@ public:
     // RMT raw sniffer
     bool startRawSniffer(int pin);
     std::pair<std::string, size_t> readRawPulses();
+    std::vector<rmt_symbol_word_t> readRawSymbolsUntil(size_t numSamples, uint32_t timeoutMs);
     std::vector<rmt_symbol_word_t> readRawFrame();
     void stopRawSniffer();
 

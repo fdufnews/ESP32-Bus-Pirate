@@ -295,6 +295,54 @@ std::pair<std::string, size_t> SubGhzService::readRawPulses() {
     return {oss.str(), n};
 }
 
+std::vector<rmt_symbol_word_t> SubGhzService::readRawSymbolsUntil(size_t numSamples, uint32_t timeoutMs)
+{
+    std::vector<rmt_symbol_word_t> out;
+
+    if (!rx_chan_ || numSamples == 0)
+        return out;
+
+    if (timeoutMs == 0)
+        timeoutMs = 1;
+
+    out.reserve(numSamples);
+
+    const unsigned long t0 = millis();
+
+    while (out.size() < numSamples && (millis() - t0) < timeoutMs)
+    {
+        if (!rx_done_) {
+            delay(1);
+            continue;
+        }
+
+        size_t n = (size_t)last_symbols_;
+        if (n > rx_buf_.size())
+            n = rx_buf_.size();
+
+        if (n > 0) {
+            size_t canTake = std::min(n, numSamples - out.size());
+            out.insert(out.end(), rx_buf_.begin(), rx_buf_.begin() + canTake);
+        }
+
+        // restart RX 
+        rx_done_ = false;
+        last_symbols_ = 0;
+
+        rmt_receive_config_t rcfg{};
+        rcfg.signal_range_min_ns = 1000;
+        rcfg.signal_range_max_ns = 20'000'000;
+        rcfg.flags.en_partial_rx = 1;
+
+        (void)rmt_receive(rx_chan_,
+                          rx_buf_.data(),
+                          rx_buf_.size() * sizeof(rmt_symbol_word_t),
+                          &rcfg);
+    }
+
+    return out;
+}
+
 bool SubGhzService::sendRawFrame(int pin, const std::vector<rmt_symbol_word_t>& items, uint32_t tick_per_us) {
     if (!isConfigured_ || items.empty()) return false;
 
