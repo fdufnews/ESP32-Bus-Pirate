@@ -39,8 +39,8 @@ void SubGhzController::handleScan(const TerminalCommand& cmd) {
     std::vector<float> freqs = subGhzService.getSupportedFreq(bands[bandIndex]);
 
     // RSSI threshold / hold time selection
-    int holdMs = userInputManager.readValidatedInt("Enter hold time per frequency (ms):", 4, 1, 5000);
-    int rssiThr = userInputManager.readValidatedInt("Enter RSSI threshold detection (dBm):", -67, -127, 0);
+    int holdMs = userInputManager.readValidatedInt("Hold time per frequency (ms):", 4, 1, 5000);
+    int rssiThr = userInputManager.readValidatedInt("RSSI threshold detection (dBm):", -67, -127, 0);
 
     // Prepare the scan
     if (!subGhzService.applyScanProfile(4.8f, 200.0f, 2 /* OOK */, true)) {
@@ -118,7 +118,7 @@ void SubGhzController::handleSetFrequency() {
 
     // Custom frequency
     if (bandIndex == 0) {
-        float mhz = userInputManager.readValidatedFloat("Enter custom frequency (MHz):", state.getSubGhzFrequency(), 0.0f, 1000.0f);
+        float mhz = userInputManager.readValidatedFloat("Custom frequency (MHz):", state.getSubGhzFrequency(), 0.0f, 1000.0f);
         state.setSubGhzFrequency(mhz);
         subGhzService.tune(mhz);
         terminalView.println("SUBGHZ: Frequency changed to " + argTransformer.toFixed2(mhz) + " MHz\n");
@@ -165,7 +165,7 @@ void SubGhzController::handleReplayRaw(const TerminalCommand&) {
         return;
     }
     
-    terminalView.println("\nSUBGHZ Replay (RAW): Starting on " + argTransformer.toFixed2(f) + " MHz for 3 seconds...\n");
+    terminalView.println("\nSUBGHZ Replay: Starting on " + argTransformer.toFixed2(f) + " MHz for 3 seconds...\n");
 
     // Capture 3 seconds window or 1024 symbols
     std::vector<rmt_symbol_word_t> frame = subGhzService.readRawSymbolsUntil(
@@ -176,7 +176,7 @@ void SubGhzController::handleReplayRaw(const TerminalCommand&) {
     subGhzService.stopRawSniffer();
 
     if (frame.size() < 7) {
-        terminalView.println("SUBGHZ Replay (RAW): Nothing captured (too short / noise).\n");
+        terminalView.println("SUBGHZ Replay: Nothing captured (too short / noise).\n");
         return;
     }
 
@@ -185,7 +185,7 @@ void SubGhzController::handleReplayRaw(const TerminalCommand&) {
 
     // Ask to replay
     if (!userInputManager.readYesNo("Replay this RAW window now?", true)) {
-        terminalView.println("SUBGHZ Replay (RAW): Discarded.\n");
+        terminalView.println("SUBGHZ Replay: Discarded. Capture complete.\n");
         return;
     }
 
@@ -195,7 +195,7 @@ void SubGhzController::handleReplayRaw(const TerminalCommand&) {
         return;
     }
 
-    terminalView.println("\nSUBGHZ Replay (RAW): Sending captured signals...");
+    terminalView.println("\nSUBGHZ Replay: Sending captured signals...");
     while (true) {            
         if (!subGhzService.sendRawFrame(gdo0, frame)) {
             terminalView.println("\n❌ RAW send failed.\n");
@@ -205,7 +205,7 @@ void SubGhzController::handleReplayRaw(const TerminalCommand&) {
     
     }
 
-    terminalView.println("\nSUBGHZ Replay : Capture complete.");
+    terminalView.println("SUBGHZ Replay : Capture complete.\n");
 }
 
 /*
@@ -295,7 +295,7 @@ void SubGhzController::handleJam(const TerminalCommand&) {
         return;
     }
 
-    float f = userInputManager.readValidatedFloat("Enter frequency to jam (MHz)", state.getSubGhzFrequency(), 0.0f, 1000.0f);
+    float f = userInputManager.readValidatedFloat("Frequency to jam (MHz)", state.getSubGhzFrequency(), 0.0f, 1000.0f);
     
     // Apply TX profile with freq
     if (!subGhzService.applyRawSendProfile(f)) {
@@ -851,14 +851,14 @@ void SubGhzController::handleRecord() {
 
         // Save or discard
         if (!userInputManager.readYesNo("Save this frame?", true)) {
-            terminalView.println("\nSUBGHZ Record: Capturing for 3 seconds...\n");
+            terminalView.println("SUBGHZ Record: Stopped by user.\n");
             subGhzService.readRawFrame(); // clear buffer for next frames
-            continue;
+            break;
         }
 
         // Ask filename
         std::string defName = "sub_" + std::to_string(millis() % 1000000);
-        std::string fileBase = userInputManager.readSanitizedString("Enter file name", defName, false);
+        std::string fileBase = userInputManager.readSanitizedString("File name", defName, false);
         if (fileBase.empty()) fileBase = defName;
 
         std::string path = "/" + fileBase;
@@ -878,7 +878,7 @@ void SubGhzController::handleRecord() {
 
         // Write
         if (!littleFsService.write(path, text)) {
-            terminalView.println("SUBGHZ Record: Failed to write: " + path);
+            terminalView.println("❌ SUBGHZ Record: Failed to write: " + path);
         } else {
             terminalView.println("✅ SUBGHZ Record: Saved file: " + path);
             terminalView.println("You can use 'load' command to replay it.\n");
@@ -895,7 +895,7 @@ Ear
 */
 void SubGhzController::handleEar() {
     // Params
-    float mhz = userInputManager.readValidatedFloat("Enter frequency (MHz):", state.getSubGhzFrequency(), 0.0f, 1000.0f);
+    float mhz = userInputManager.readValidatedFloat("Frequency (MHz):", state.getSubGhzFrequency(), 0.0f, 1000.0f);
     int   rssiGate = userInputManager.readValidatedInt("RSSI gate (dBm):", -65, -127, 0);
     state.setSubGhzFrequency(mhz);
 
@@ -1069,8 +1069,8 @@ void SubGhzController::handleConfig() {
         // Apply settings
         subGhzService.tune(freq);
         subGhzService.applyScanProfile();
-        terminalView.println(" ✅ CC1101 module detected and configured with default frequency.");
-        terminalView.println(" Use 'setfrequency' or 'scan' to change the frequency.\n");
+        terminalView.println(" ✅ CC1101 module detected and configured.");
+        terminalView.println(" Use 'setfrequency' or 'scan' to change frequency.\n");
         configured = true;
     }
 }
@@ -1090,7 +1090,7 @@ void SubGhzController::handleBruteforce() {
     auto bruteProtocol = protocolNames[protocolIndex];
 
     // Freq
-    float mhz = userInputManager.readValidatedFloat("Enter frequency (MHz):", 433.92f, 0.0f, 1000.0f);
+    float mhz = userInputManager.readValidatedFloat("Frequency (MHz):", 433.92f, 0.0f, 1000.0f);
     state.setSubGhzFrequency(mhz);
 
     // Profil TX + sender
@@ -1127,7 +1127,7 @@ void SubGhzController::handleBruteforce() {
     }
 
     // Repeat
-    auto bruteRepeats = userInputManager.readValidatedUint8("Enter number of repeats per code:", 1);
+    auto bruteRepeats = userInputManager.readValidatedUint8("Number of repeats per code:", 1);
     subGhzService.startTxBitBang();
 
     // Send all codes
