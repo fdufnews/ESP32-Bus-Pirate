@@ -157,7 +157,6 @@ void SubGhzController::handleReplayRaw(const TerminalCommand&) {
         terminalView.println("SUBGHZ: Not detected. Run 'config' first.");
         return;
     }
-
     
     // Start sniffer
     const uint8_t gdo0 = state.getSubGhzGdoPin();
@@ -481,7 +480,7 @@ Receive
 */
 void SubGhzController::handleReceive(const TerminalCommand& cmd) {
     // Ask for raw or decoded
-    auto confirm = userInputManager.readYesNo("Decode received signals to frames ?", true);
+    auto confirm = userInputManager.readYesNo("Decode received signals to frames?", true);
     if (confirm) {
         handleDecode(cmd);
     } else {
@@ -850,10 +849,9 @@ void SubGhzController::handleRecord() {
         terminalView.println(" Captured : " + std::to_string(items.size()));
         terminalView.println("");
 
-
         // Save or discard
         if (!userInputManager.readYesNo("Save this frame?", true)) {
-            terminalView.println("Waiting for next frame... Press [ENTER] to stop.\n");
+            terminalView.println("\nSUBGHZ Record: Capturing for 3 seconds...\n");
             subGhzService.readRawFrame(); // clear buffer for next frames
             continue;
         }
@@ -875,7 +873,7 @@ void SubGhzController::handleRecord() {
         cmd.raw_timings  = std::move(timings);
         cmd.source_file  = path;
 
-        // Serialize
+        // Serialize to .sub file format
         std::string text = subGhzTransformer.transformToFileFormat(cmd);
 
         // Write
@@ -883,10 +881,10 @@ void SubGhzController::handleRecord() {
             terminalView.println("SUBGHZ Record: Failed to write: " + path);
         } else {
             terminalView.println("✅ SUBGHZ Record: Saved file: " + path);
-            terminalView.println("Waiting for next frame... Press [ENTER] to stop.\n");
+            terminalView.println("You can use 'load' command to replay it.\n");
         }
 
-        subGhzService.readRawFrame(); // clear buffer for next frame
+        break; // only one capture in this mode
     }
 
     subGhzService.stopRawSniffer();
@@ -1012,7 +1010,7 @@ void SubGhzController::handleSend(const TerminalCommand& cmd) {
         " Freq   : " + argTransformer.toFixed2(state.getSubGhzFrequency()) + " MHz\n\r"
         " TE     : " + std::to_string(te_us) + " us\n\r"
         " Proto  : " + SubGhzProtocolEnumMapper::toString(out.protocol) + "\n\r"
-        " Preset : " + out.preset.substr(out.preset.length() - 12) + "\n"
+        " Preset : " + out.preset.substr(out.preset.length() - 11) + "\n"
     );
 
     // Send
