@@ -10,7 +10,7 @@ void SubGhzController::handleCommand(const TerminalCommand& cmd) {
     else if (root == "sweep")        handleSweep();
     else if (root == "setfrequency") handleSetFrequency();
     else if (root == "setfreq")      handleSetFrequency();
-    else if (root == "replay")       handleReplay(cmd);
+    else if (root == "replay")       handleReplayRaw(cmd);
     else if (root == "jam")          handleJam(cmd);
     else if (root == "bruteforce")   handleBruteforce();
     else if (root == "decode")       handleDecode(cmd); // for legacy
@@ -139,13 +139,81 @@ void SubGhzController::handleSetFrequency() {
 }
 
 /*
-Replay
+Replay raw
 */
-void SubGhzController::handleReplay(const TerminalCommand&) {
+void SubGhzController::handleReplayRaw(const TerminalCommand&) {
     const float f = state.getSubGhzFrequency();
 
-    // Gap between each frame for emmitting
-    auto gap = userInputManager.readValidatedInt("Inter-frame gap (ms):", 100, 0, 10000);
+    terminalView.println("SUBGHZ Replay: Starting on " + argTransformer.toFixed2(f) + " MHz...\n");
+
+    terminalView.println(" [ℹ️  INFORMATION]");
+    terminalView.println(" The capture will include all received signals,");
+    terminalView.println(" during a 3 seconds window or until 1024 symbols.\n");
+    auto confirm = userInputManager.readYesNo("Start capture?", true);
+    if (!confirm) return;
+
+    // Ensure RX profile
+    if (!subGhzService.applySniffProfile(f)) {
+        terminalView.println("SUBGHZ: Not detected. Run 'config' first.");
+        return;
+    }
+
+    
+    // Start sniffer
+    const uint8_t gdo0 = state.getSubGhzGdoPin();
+    if (!subGhzService.startRawSniffer(gdo0)) {
+        terminalView.println("SUBGHZ: Failed to start raw sniffer.");
+        return;
+    }
+    
+    terminalView.println("\nSUBGHZ Replay (RAW): Starting on " + argTransformer.toFixed2(f) + " MHz for 3 seconds...\n");
+
+    // Capture 3 seconds window or 1024 symbols
+    std::vector<rmt_symbol_word_t> frame = subGhzService.readRawSymbolsUntil(
+        /*numSamples*/1024,
+        /*timeoutMs*/3000
+    );
+
+    subGhzService.stopRawSniffer();
+
+    if (frame.size() < 7) {
+        terminalView.println("SUBGHZ Replay (RAW): Nothing captured (too short / noise).\n");
+        return;
+    }
+
+    terminalView.println(" [Raw Replay]");
+    terminalView.println(" Captured " + std::to_string(frame.size()) + " symbols.\n");
+
+    // Ask to replay
+    if (!userInputManager.readYesNo("Replay this RAW window now?", true)) {
+        terminalView.println("SUBGHZ Replay (RAW): Discarded.\n");
+        return;
+    }
+
+    // TX profile
+    if (!subGhzService.applyRawSendProfile(f)) {
+        terminalView.println("SUBGHZ: Failed to apply TX profile.");
+        return;
+    }
+
+    terminalView.println("\nSUBGHZ Replay (RAW): Sending captured signals...");
+    while (true) {            
+        if (!subGhzService.sendRawFrame(gdo0, frame)) {
+            terminalView.println("\n❌ RAW send failed.\n");
+        }
+        terminalView.println("\n✅ RAW window sent.\n");
+        if (!userInputManager.readYesNo("Send the RAW window again?", true)) break;
+    
+    }
+
+    terminalView.println("\nSUBGHZ Replay : Capture complete.");
+}
+
+/*
+Replay decoded
+*/
+void SubGhzController::handleReplayDecoded(const TerminalCommand&) {
+    const float f = state.getSubGhzFrequency();
 
     // Set profile to read frames
     if (!subGhzService.applySniffProfile(f)) {
@@ -181,7 +249,6 @@ void SubGhzController::handleReplay(const TerminalCommand&) {
     }
 
     subGhzService.stopRawSniffer();
-    terminalView.println("\nSUBGHZ: Captured " + std::to_string(frames.size()) + " frame(s).");
 
     if (frames.empty()) {
         terminalView.println("SUBGHZ: Nothing to replay.\n");
@@ -195,25 +262,24 @@ void SubGhzController::handleReplay(const TerminalCommand&) {
     }
 
     // Start sending frames
-    terminalView.print("SUBGHZ: Replay in progress...\r\n");
-    bool okAll = true;
+    terminalView.print("Captured " + std::to_string(frames.size()) + " frame(s). Replay in progress...\r\n");
     auto gdo = state.getSubGhzGdoPin();
     bool confirm = true;
+    const uint16_t interFrameGapMs = 150;
     while (confirm) {
         for (size_t i = 0; i < frames.size(); ++i) {
             if (!subGhzService.sendRawFrame(gdo, frames[i])) {
                 terminalView.println(" ❌ Failed at frame " + std::to_string(i + 1));
-                okAll = false;
                 break;
             } else {
-                terminalView.println(" ✅ Sent frame " + std::to_string(i + 1) + " ... (" + std::to_string(gap) + "ms gap) ");
+                terminalView.println(" ✅ Sent frame " + std::to_string(i + 1) + " ... (" + std::to_string(interFrameGapMs) + "ms gap) ");
             }
-            delay(gap); // inter frame gap
+            delay(interFrameGapMs);
         }
-        confirm = userInputManager.readYesNo("SUBGHZ: Replay done. Run again?", true);
+        confirm = userInputManager.readYesNo("\nReplay done. Send all the frames again?", true);
     }
 
-    terminalView.println(okAll ? "SUBGHZ: Replay done without error.\n" : "SUBGHZ: Replay done with errors.\n");
+    terminalView.println("SUBGHZ: Replay complete.\n");
     subGhzService.stopTxBitBang(); // ensure stopped
 }
 
@@ -722,9 +788,6 @@ void SubGhzController::handleRecord() {
         terminalView.println("SUBGHZ Record: LittleFS mounted.");
     }
 
-    // Ask record mode
-    bool recordRaw = userInputManager.readYesNo("Record RAW signals without decoding?", true);
-
     // Ensure radio configured
     const float mhz = state.getSubGhzFrequency();
     if (!subGhzService.applySniffProfile(mhz)) {
@@ -739,22 +802,18 @@ void SubGhzController::handleRecord() {
         return;
     }
 
-    if (recordRaw) {
-        terminalView.println("\nSUBGHZ Record (RAW): Capturing raw signals...\n");
-        terminalView.println(" [ℹ️  INFORMATION]");
-        terminalView.println(" The capture will include all received signals,");
-        terminalView.println(" during a 3 seconds window or until 1024 symbols.\n");
-        auto confirm = userInputManager.readYesNo("Start capture?", true);
-        if (!confirm) {
-            terminalView.println("SUBGHZ Record: Capture cancelled by user.\n");
-            subGhzService.stopRawSniffer();
-            return;
-        }
-
-        terminalView.println("\nSUBGHZ Record: Capturing for 3 seconds...\n");
-    } else {
-        terminalView.println("\nSUBGHZ Record (DECODE): Waiting for frames... Press [ENTER] to stop.\n");
+    terminalView.println("\nSUBGHZ Record (RAW): Capturing raw signals...\n");
+    terminalView.println(" [ℹ️  INFORMATION]");
+    terminalView.println(" The capture will include all received signals,");
+    terminalView.println(" during a 3 seconds window or until 1024 symbols.\n");
+    auto confirm = userInputManager.readYesNo("Start capture?", true);
+    if (!confirm) {
+        terminalView.println("SUBGHZ Record: Capture cancelled by user.\n");
+        subGhzService.stopRawSniffer();
+        return;
     }
+
+    terminalView.println("\nSUBGHZ Record: Capturing for 3 seconds...\n");
 
     while (true) {
         // Stop with ENTER
@@ -778,31 +837,19 @@ void SubGhzController::handleRecord() {
         if (!tick_per_us) tick_per_us = 1;
         std::vector<rmt_symbol_word_t> items;
 
-        if (recordRaw) {
-            // read up to 1024 symbols or 3s timeout 
-            items = subGhzService.readRawSymbolsUntil(/*numSamples*/1024, /*timeoutMs*/3000);
-            if (items.size() < 7) continue; // ignore noise / too short
-        } else {
-            // try get a splitted frame
-            items = subGhzService.readRawFrame();
-            items = subGhzTransformer.repeatFrameWithGap(items, tick_per_us, 3, 10'000, 256);
-            if (items.size() < 7) continue;
-        }
+        // read up to 1024 symbols or 3s timeout 
+        items = subGhzService.readRawSymbolsUntil(/*numSamples*/1024, /*timeoutMs*/3000);
+        if (items.size() < 7) continue; // ignore noise / too short
 
         // Convert symbols
         std::vector<int32_t> timings = subGhzTransformer.symbolsToSignedTimings(items, tick_per_us);
         if (timings.size() < 7) continue; // ignore noise
 
-        // Display info:
-        if (recordRaw) {
-            terminalView.println(" [RAW Record] ");
-            terminalView.println(" Captured : " + std::to_string(items.size()));
-            terminalView.println("");
-        } else {
-            // existing decode info
-            auto result = subGhzAnalyzeManager.analyzeFrame(items, tick_per_us);
-            terminalView.println(result);
-        }
+        // Display info
+        terminalView.println(" [RAW Record] ");
+        terminalView.println(" Captured : " + std::to_string(items.size()));
+        terminalView.println("");
+
 
         // Save or discard
         if (!userInputManager.readYesNo("Save this frame?", true)) {

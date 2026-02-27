@@ -62,8 +62,11 @@ private:
     // Set current frequency
     void handleSetFrequency();
 
-    // Replay captured frames
-    void handleReplay(const TerminalCommand& cmd);
+    // Replay raw frames with a dedicated window
+    void handleReplayRaw(const TerminalCommand& cmd);
+
+    // Replay decoded frames 
+    void handleReplayDecoded(const TerminalCommand& cmd);
 
     // Jam signals
     void handleJam(const TerminalCommand& cmd);
