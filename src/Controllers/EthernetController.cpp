@@ -25,8 +25,7 @@ void EthernetController::handleCommand(const TerminalCommand& cmd) {
 /*
 Connect using DHCP
 */
-void EthernetController::handleConnect() {
-
+void EthernetController::handleConnect() {    
     unsigned long timeoutMs = 5000;
 
     terminalView.println("Ethernet: DHCP…");
@@ -86,7 +85,7 @@ void EthernetController::handleConfig() {
         .readValidatedUint8("SPI frequency (MHz)", defMhz, 1, 80)
         * 1000000;
 
-    // MAC addr (optional)
+    // MAC addr optional
     std::string macStr;
     std::array<uint8_t,6> mac = state.getEthernetMac();
 
@@ -172,7 +171,7 @@ Reset
 void EthernetController::handleReset()
 {
     ethernetService.hardReset();
-    terminalView.println("Ethernet: Interface reset. Disconnected. [NYI].");
+    terminalView.println("Ethernet: Interface reset via RST pin.");
 }
 
 /*
@@ -198,10 +197,12 @@ void EthernetController::ensureConfigured() {
     auto sck = state.getEthernetSckPin();
     auto miso = state.getEthernetMisoPin();
     auto mosi = state.getEthernetMosiPin();
-    auto rst = state.getEthernetRstPin();
+    auto rst_u8 = state.getEthernetRstPin();
     auto irq = state.getEthernetIrqPin();
     auto frequency = state.getEthernetFrequency();
     auto mac = state.getEthernetMac();
 
-    ethernetService.configure(cs, rst, sck, miso, mosi, irq, frequency, mac);
+    int8_t rst = (rst_u8 == 255) ? -1 : (int8_t)rst_u8;
+
+    ethernetService.configure(cs, rst, sck, miso, mosi, irq, frequency, mac, &deviceView.getSharedSpiInstance());
 }
