@@ -35,6 +35,90 @@ void Rf24Service::initRx() {
     radio_->setAddressWidth(2);
 }
 
+bool Rf24Service::initRx(const Rf24Config& cfg) {
+    if (!isInitialized || radio_ == nullptr) return false;
+
+    // Channel
+    radio_->setChannel(cfg.channel);
+
+    // Address len
+    radio_->setAddressWidth(cfg.addrLen);
+
+    // CRC
+    if (cfg.crcBits == 0) {
+        radio_->disableCRC();
+    } else if (cfg.crcBits == 8) {
+        radio_->setCRCLength(RF24_CRC_8);
+    } else {
+        radio_->setCRCLength(RF24_CRC_16);
+    }
+
+    // Data rate
+    if (cfg.dataRate == 0) radio_->setDataRate(RF24_250KBPS);
+    else if (cfg.dataRate == 2) radio_->setDataRate(RF24_2MBPS);
+    else radio_->setDataRate(RF24_1MBPS);
+
+    // Payload mode
+    if (cfg.dynamicPayloads) {
+        radio_->enableDynamicPayloads();
+        dynamicPayloadEnabled = true;
+    } else {
+        radio_->disableDynamicPayloads();
+        radio_->setPayloadSize(cfg.fixedPayloadSize);
+        dynamicPayloadEnabled = false;
+    }
+
+    // Pipes
+    radio_->stopListening();
+    radio_->flush_rx();
+
+    radio_->openReadingPipe(cfg.pipe, cfg.addr);
+
+    // radio_->setAutoAck(false);
+
+    return true;
+}
+
+bool Rf24Service::initTx(const Rf24Config& cfg) {
+    if (!isInitialized || radio_ == nullptr) return false;
+
+    radio_->stopListening();
+    radio_->stopConstCarrier();
+    radio_->powerUp();
+    delay(5);
+    radio_->flush_tx();
+    radio_->flush_rx();
+    radio_->setChannel(cfg.channel);
+    radio_->setAddressWidth(cfg.addrLen); 
+
+    // CRC
+    if (cfg.crcBits == 0) radio_->disableCRC();
+    else if (cfg.crcBits == 8) radio_->setCRCLength(RF24_CRC_8);
+    else radio_->setCRCLength(RF24_CRC_16);
+
+    // Data rate
+    if (cfg.dataRate == 0) radio_->setDataRate(RF24_250KBPS);
+    else if (cfg.dataRate == 2) radio_->setDataRate(RF24_2MBPS);
+    else radio_->setDataRate(RF24_1MBPS);
+
+    // Payload
+    if (cfg.dynamicPayloads) {
+        radio_->enableDynamicPayloads();
+        dynamicPayloadEnabled = true;
+    } else {
+        radio_->disableDynamicPayloads();
+        radio_->setPayloadSize(cfg.fixedPayloadSize);
+        dynamicPayloadEnabled = false;
+    }
+
+    radio_->stopListening();
+    radio_->flush_tx();
+
+    radio_->openWritingPipe(cfg.addr);
+
+    return true;
+}
+
 void Rf24Service::setChannel(uint8_t channel) {
     if (isInitialized) {
         radio_->setChannel(channel);
@@ -92,6 +176,16 @@ void Rf24Service::stopListening() {
     }
 }
 
+bool Rf24Service::availablePipe(uint8_t* pipe) {
+    if (!isInitialized) return false;
+    return radio_->available(pipe);
+}
+
+int Rf24Service::getRxPayloadLen() {
+    if (dynamicPayloadEnabled) return radio_->getDynamicPayloadSize();
+    return radio_->getPayloadSize();
+}
+
 void Rf24Service::setDataRate(rf24_datarate_e rate) {
     if (isInitialized) {
         radio_->setDataRate(rate);
@@ -129,12 +223,36 @@ bool Rf24Service::available() {
 
 bool Rf24Service::receive(void* buf, uint8_t len) {
     if (!isInitialized) return false;
-    if (radio_->available()) {
+    radio_->read(buf, len);
+    return true;
+}
+
+bool Rf24Service::receive(uint8_t* out, size_t outMax, uint8_t& outLen) {
+    outLen = 0;
+    if (!isInitialized || !radio_ || !out || outMax == 0) return false;
+
+    uint8_t len = 0;
+
+    // Try DPL first if enabled
+    if (dynamicPayloadEnabled) {
         len = radio_->getDynamicPayloadSize();
-        radio_->read(buf, len);
-        return true;
     }
-    return false;
+
+    // Fallback if invalid
+    if (len < 1 || len > 32) {
+        len = radio_->getPayloadSize();      // fixed payload size from radio
+    }
+
+    if (len < 1 || len > 32) {
+        radio_->flush_rx();
+        return false;
+    }
+
+    if (len > outMax) len = (uint8_t)outMax;
+
+    radio_->read(out, len);
+    outLen = len;
+    return true;
 }
 
 bool Rf24Service::isChipConnected() {
