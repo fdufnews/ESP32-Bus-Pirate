@@ -311,7 +311,7 @@ void WifiController::handleApSpam()
     terminalView.println("WiFi: Starting beacon spam... Press [ENTER] to stop.");
     while (true)
     {
-        beaconCreate("", 0); // func from Vendors/wifi_atks.h
+        beaconCreate("", 0, 0); // func from Vendors/wifi_atks.h
 
         // Enter press to stop
         char key = terminalInput.readChar();
@@ -658,7 +658,7 @@ void WifiController::handleFlood(const TerminalCommand& cmd)
     while (true) {
         char c = terminalInput.readChar();
         if (c == '\r' || c == '\n') break;
-        beaconCreate("", channel); // func from Vendors/wifi_atks.h
+        beaconCreate("", channel, 0); // func from Vendors/wifi_atks.h
      }
 
     terminalView.println("WiFi Flood: Stopped by user.\n");
