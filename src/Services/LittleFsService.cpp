@@ -297,30 +297,54 @@ bool LittleFsService::isSafeRootFileName(const std::string& name) const {
     return true;
 }
 
-std::vector<std::string> LittleFsService::listFiles(const std::string& userDir, const std::string& extension) const {
+std::vector<std::string> LittleFsService::listFiles(const std::string& userDir,
+                                                    const std::string& extension) const {
     std::vector<std::string> files;
     if (!_mounted) return files;
 
     fs::File dir = LittleFS.open(userDir.c_str());
     if (!dir || !dir.isDirectory()) return files;
 
-    for (fs::File f = dir.openNextFile(); f; f = dir.openNextFile()) {
-        if (!f.isDirectory()) {
-            std::string name = f.name();
-            if (!name.empty() && name[0] == '/') name.erase(0, 1);
+    // Normalize extension filter
+    std::string extFilter = extension;
+    for (auto& c : extFilter) c = static_cast<char>(tolower((unsigned char)c));
+    const bool matchAll = extFilter.empty() || extFilter == "*";
 
-            auto pos = name.rfind('.');
-            if (pos != std::string::npos) {
-                std::string ext = name.substr(pos);
-                for (auto& c : ext) c = static_cast<char>(tolower(c));
-                if (ext == extension) {
-                    files.push_back(name);
-                }
-            }
-        }
-        f.close();
+    // support "ir" as ".ir"
+    if (!matchAll && !extFilter.empty() && extFilter[0] != '.') {
+        extFilter = "." + extFilter;
     }
-    dir.close();
 
+    // Ensure iteration from start
+    dir.seekDir(0);
+
+    while (true) {
+        bool isDir = false;
+        String s = dir.getNextFileName(&isDir);
+        if (s.length() == 0) break;
+
+        if (isDir) continue;
+
+        std::string name = s.c_str();
+        if (!name.empty() && name[0] == '/') name.erase(0, 1);
+
+        if (matchAll) {
+            files.push_back(name);
+            continue;
+        }
+
+        // Extension compare (lowercase)
+        auto pos = name.rfind('.');
+        if (pos == std::string::npos) continue;
+
+        std::string ext = name.substr(pos);
+        for (auto& c : ext) c = static_cast<char>(tolower((unsigned char)c));
+
+        if (ext == extFilter) {
+            files.push_back(name);
+        }
+    }
+
+    dir.close();
     return files;
 }
