@@ -9,6 +9,7 @@ SysInfoShell::SysInfoShell(ITerminalView& tv,
                            UserInputManager& uim,
                            ArgTransformer& at,
                            SystemService& sys,
+                           LittleFsService& littleFsService,
                            WifiService& wifi)
     : terminalView(tv)
     , terminalInput(in)
@@ -16,6 +17,7 @@ SysInfoShell::SysInfoShell(ITerminalView& tv,
     , userInputManager(uim)
     , argTransformer(at)
     , systemService(sys)
+    , littleFsService(littleFsService)  
     , wifiService(wifi) {}
 
 void SysInfoShell::run() {
@@ -23,7 +25,7 @@ void SysInfoShell::run() {
     while (loop) {
         terminalView.println("\n=== System Shell ===");
 
-        int choice = userInputManager.readValidatedChoiceIndex("Select action", actions, actions.size() - 1);
+        int choice = userInputManager.readValidatedChoiceIndex("Select action", actions, actionCount, actionCount - 1);
 
         switch (choice) {
             case 0: cmdSummary(); break;
@@ -62,9 +64,9 @@ void SysInfoShell::cmdSummary() {
 
     terminalView.println("Firmware      : " + std::string("version " + state.getVersion()));
     terminalView.println("Build date    : " + std::string(__DATE__) + " " + std::string(__TIME__));
+    terminalView.println("Infrared      : " + systemService.getInfraredBackend());
     terminalView.println("IDF version   : " + systemService.getIdfVersion());
     terminalView.println("Arduino core  : " + systemService.getArduinoCore());
-    terminalView.println("Infrared      : " + systemService.getInfraredBackend());
 }
 
 void SysInfoShell::cmdHardwareInfo() {
@@ -183,20 +185,69 @@ void SysInfoShell::cmdPartitions() {
 
 void SysInfoShell::cmdFS() {
     terminalView.println("\n=== LittleFS ===");
-    if (systemService.littlefsBegin(true)) { // autoformat if failed mounted
-        const size_t total = systemService.littlefsTotalBytes();
-        const size_t used  = systemService.littlefsUsedBytes();
+    
+    if (littleFsService.begin()) { // autoformat if failed mounted
+        size_t total, used;
+        if (!littleFsService.getSpace(total, used)) {
+            terminalView.println("Failed to get LittleFS space info.");
+            return;
+        }
         const size_t freeB = (total >= used) ? (total - used) : 0;
+        const size_t fileCount = littleFsService.listFiles("/", "*").size();
 
         terminalView.println("LittleFS mounted successfully.");
         terminalView.println("Total  : " + std::to_string(total / 1024) + " KB");
         terminalView.println("Used   : " + std::to_string(used  / 1024) + " KB");
         terminalView.println("Free   : " + std::to_string(freeB / 1024) + " KB");
+        terminalView.println("Files  : " + std::to_string(fileCount));
+        terminalView.println("");
+        
+        if (fileCount == 0) {
+            return;
+        }
 
+        auto confirm = userInputManager.readYesNo("Enter LittleFS manager?", false);
+        if (confirm) {
+            cmdFSShell();
+        }
+
+        // webui will continue using it
         // systemService.littlefsEnd();
     } else {
         terminalView.println("LittleFS not mounted.");
     }
+}
+
+void SysInfoShell::cmdFSShell() {
+    if (!littleFsService.mounted()) {
+        terminalView.println("LittleFS not mounted.");
+        return;
+    }
+
+    std::vector<std::string> actions = {
+        " 📁 List files",
+        " 🧹 Delete file",
+        " 💣 Delete ALL",
+        " 🚪 Exit"
+    };
+
+    bool loop = true;
+    while (loop) {
+        terminalView.println("\n=== LittleFS Manager ===");
+        int choice = userInputManager.readValidatedChoiceIndex("Select action", actions, actions.size() - 1);
+
+        switch (choice) {
+            case 0: fsListFiles();  break;
+            case 1: fsDeleteFile(); break;
+            case 2: fsDeleteAll();  break;
+            case 3: // Exit
+            default:
+                loop = false;
+                break;
+        }
+    }
+
+    terminalView.println("Exiting LittleFS...");
 }
 
 void SysInfoShell::cmdNVS() {
@@ -244,5 +295,137 @@ void SysInfoShell::cmdReboot(bool hard) {
     if (confirmation) {
         terminalView.println("\nRebooting, your session will be lost...");
         systemService.reboot(hard);
+    }
+}
+
+void SysInfoShell::fsListFiles() {
+    const auto entries = littleFsService.list("/");
+
+    std::vector<LittleFsService::Entry> files;
+    files.reserve(entries.size());
+    for (const auto& e : entries) {
+        if (!e.isDir) files.push_back(e);
+    }
+
+    if (files.empty()) {
+        terminalView.println("No files in LittleFS.");
+        return;
+    }
+
+    terminalView.println("\n=== LittleFS Files ===");
+    for (size_t i = 0; i < files.size(); ++i) {
+        auto sizeStr = files[i].size > 1024
+            ? (std::to_string(files[i].size / 1024) + " KB")
+            : (std::to_string(files[i].size) + " B");
+
+        terminalView.println(" - " + files[i].name + " (" + sizeStr + ")");
+    }
+}
+
+void SysInfoShell::fsDeleteFile() {
+    const auto entries = littleFsService.list("/");
+
+    std::vector<LittleFsService::Entry> files;
+    files.reserve(entries.size());
+    for (const auto& e : entries) {
+        if (!e.isDir) files.push_back(e);
+    }
+
+    if (files.empty()) {
+        terminalView.println("No files to delete.");
+        return;
+    }
+
+    std::vector<std::string> choices;
+    choices.reserve(files.size() + 1);
+
+    terminalView.println("\n=== LittleFS Delete ===");
+    for (size_t i = 0; i < files.size(); ++i) {
+        auto sizeStr = files[i].size > 1024
+            ? (std::to_string(files[i].size / 1024) + " KB")
+            : (std::to_string(files[i].size) + " B");
+
+        choices.emplace_back(" " + files[i].name + " (" + sizeStr + ")");
+    }
+    choices.emplace_back(" Exit");
+
+    int idx = userInputManager.readValidatedChoiceIndex("Select file to delete", choices, choices.size() - 1);
+
+    if (idx == (int)choices.size() - 1) {
+        terminalView.println("LittleFS: Exiting delete menu...");
+        return;
+    }
+
+    // Path normalize
+    std::string path = files[(size_t)idx].name;
+    if (!path.empty() && path[0] != '/') {
+        path.insert(path.begin(), '/');
+    }
+
+    const std::string prompt = "Delete '" + path + "' ?";
+    bool ok = userInputManager.readYesNo(prompt.c_str(), false);
+    if (!ok) {
+        terminalView.println("Delete cancelled.");
+        return;
+    }
+
+    if (!littleFsService.exists(path)) {
+        terminalView.println("File does not exist anymore.");
+        return;
+    }
+
+    if (!littleFsService.removeFile(path)) {
+        terminalView.println("Delete failed.");
+        return;
+    }
+
+    terminalView.println("Deleted: " + path);
+}
+
+void SysInfoShell::fsDeleteAll() {
+    const auto entries = littleFsService.list("/");
+
+    std::vector<LittleFsService::Entry> files;
+    files.reserve(entries.size());
+    for (const auto& e : entries) {
+        if (!e.isDir) files.push_back(e);
+    }
+
+    if (files.empty()) {
+        terminalView.println("No files to delete.");
+        return;
+    }
+
+    terminalView.println("\n[⚠️  WARNING]");
+    terminalView.println(" This will delete ALL files in LittleFS.");
+    terminalView.println(" Type 'DELETE ALL' to confirm.\n");
+
+    std::string confirm = userInputManager.readString("Confirm", "");
+    if (confirm != "DELETE ALL") {
+        terminalView.println("Delete cancelled.");
+        return;
+    }
+
+    size_t deleted = 0;
+    size_t failed  = 0;
+
+    terminalView.println("Deleting files...");
+    for (auto& f : files) {
+        std::string path = f.name;
+        if (!path.empty() && path[0] != '/') {
+            path.insert(path.begin(), '/');
+        }
+
+        if (littleFsService.exists(path) && littleFsService.removeFile(path)) {
+            deleted++;
+        } else {
+            failed++;
+        }
+    }
+
+    terminalView.println("Delete ALL complete.");
+    terminalView.println("Deleted: " + std::to_string(deleted));
+    if (failed > 0) {
+        terminalView.println("Failed : " + std::to_string(failed));
     }
 }

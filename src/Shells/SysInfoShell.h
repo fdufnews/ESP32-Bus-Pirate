@@ -8,6 +8,7 @@
 #include "Managers/UserInputManager.h"
 #include "Transformers/ArgTransformer.h"
 #include "Services/SystemService.h"
+#include "Services/LittleFsService.h"
 #include "Services/WifiService.h"
 #include "States/GlobalState.h"
 
@@ -19,12 +20,13 @@ public:
                  UserInputManager& userInputManager,
                  ArgTransformer& argTransformer,
                  SystemService& systemService,
+                 LittleFsService& littleFsService,
                  WifiService& wifiService);
 
     void run();
 
 private:
-    std::vector<std::string> actions = {
+    inline static constexpr const char* actions[] = {
         " 📊 System summary",
         " 📟 Hardware info",
         " 📦 Memory",
@@ -36,6 +38,8 @@ private:
         " 🔄 Reboot",
         "🚪 Exit"
     };
+
+    inline static constexpr size_t actionCount = sizeof(actions) / sizeof(actions[0]);
 
     const char* resetReasonToStr(int r) {
         switch (static_cast<esp_reset_reason_t>(r)) {
@@ -72,9 +76,14 @@ private:
     void cmdPartitions();
     void cmdScreen();   
     void cmdFS();
+    void cmdFSShell();
     void cmdNVS();
     void cmdNet();
     void cmdReboot(bool hard = false);
+
+    void fsListFiles();
+    void fsDeleteFile();
+    void fsDeleteAll();
 
     ITerminalView&     terminalView;
     IInput&            terminalInput;
@@ -82,6 +91,7 @@ private:
     UserInputManager&  userInputManager;
     ArgTransformer&    argTransformer;
     SystemService&     systemService;
+    LittleFsService&   littleFsService;
     WifiService&       wifiService;
     GlobalState&       state = GlobalState::getInstance();
 };
