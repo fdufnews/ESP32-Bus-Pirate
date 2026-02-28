@@ -22,7 +22,7 @@ void OneWireEepromShell::run() {
 
     while (true) {
         terminalView.println("\n=== DS24/28 EEPROM Shell ===");
-        int index = userInputManager.readValidatedChoiceIndex("Select EEPROM action", actions, 0);
+        int index = userInputManager.readValidatedChoiceIndex("Select EEPROM action", actions, actionCount, 0);
         if (index == -1 || actions[index] == " 🚪 Exit Shell") break;
 
         switch (index) {

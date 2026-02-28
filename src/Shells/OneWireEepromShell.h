@@ -35,7 +35,7 @@ private:
     UserInputManager& userInputManager;
     BinaryAnalyzeManager& binaryAnalyzeManager;
 
-    const std::vector<std::string> actions = {
+    inline static constexpr const char* actions[] = {
         " 🔍 Probe",
         " 📊 Analyze",
         " 📖 Read",
@@ -44,6 +44,7 @@ private:
         " 💣 Erase",
         " 🚪 Exit Shell"
     };
+    inline static constexpr size_t actionCount = sizeof(actions) / sizeof(actions[0]);
 
     std::string eepromModel = "DS2431"; // default
     uint8_t eepromPageSize = 8;

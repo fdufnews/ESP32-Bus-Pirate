@@ -23,7 +23,7 @@ public:
     void run();
 
 private:
-    const std::vector<std::string> actions = {
+    inline static constexpr const char* actions[] = {
         " 🔍 Probe Flash",
         " 📊 Analyze Flash",
         " 🔎 Search string",
@@ -35,7 +35,8 @@ private:
         " 💣 Erase Flash",
         "🚪 Exit Shell"
     };
-
+    inline static constexpr size_t actionCount = sizeof(actions) / sizeof(actions[0]);
+    
     SpiService& spiService;
     ITerminalView& terminalView;
     IInput& terminalInput;
