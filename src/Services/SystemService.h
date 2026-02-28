@@ -43,12 +43,6 @@ public:
     // Network 
     std::string getBaseMac() const;
 
-    // Filesystems
-    bool   littlefsBegin(bool autoFormat) const;
-    void   littlefsEnd() const;
-    size_t littlefsTotalBytes() const;
-    size_t littlefsUsedBytes() const;
-
     // Formatted output
     std::string getPartitions() const;
     std::string getNvsStats() const;

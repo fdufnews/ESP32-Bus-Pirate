@@ -233,30 +233,6 @@ std::string SystemService::getBaseMac() const
 }
 
 // -----------------------------
-// Filesystems (LittleFS / SPIFFS)
-// -----------------------------
-
-bool SystemService::littlefsBegin(bool autoFormat) const
-{
-    return LittleFS.begin(autoFormat);
-}
-
-void SystemService::littlefsEnd() const
-{
-    LittleFS.end();
-}
-
-size_t SystemService::littlefsTotalBytes() const
-{
-    return LittleFS.totalBytes();
-}
-
-size_t SystemService::littlefsUsedBytes() const
-{
-    return LittleFS.usedBytes();
-}
-
-// -----------------------------
 // Partitions (formatted output)
 // -----------------------------
 
