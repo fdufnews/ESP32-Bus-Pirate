@@ -704,14 +704,23 @@ void SubGhzController::handleLoad() {
 
     // List .sub files
     auto files = littleFsService.listFiles(/*root*/ "/", ".sub");
+    
     if (files.empty()) {
         terminalView.println("SUBGHZ: No .sub files found in LittleFS root ('/').\n");
         return;
     }
-
+    
     // Select file
+    files.emplace_back("Exit"); // for exit option
     terminalView.println("\n=== '.sub' files in LittleFS ===");
-    int fileIndex = userInputManager.readValidatedChoiceIndex("File number", files, 0);
+    int fileIndex = userInputManager.readValidatedChoiceIndex("File number", files, files.size() - 1);
+
+    // Exit
+    if (fileIndex == files.size() - 1) {
+        terminalView.println("Exiting file load...\n");
+        return;
+    }
+
     std::string filename = files[fileIndex];
 
     // Check size
