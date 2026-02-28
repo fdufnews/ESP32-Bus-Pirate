@@ -442,7 +442,8 @@ void HelpShell::cmdRf24() {
     printHeader("RF24");
     static const char* const lines[] = {
         "scan                 - Search best active channel",
-        "sniff                - Sniff raw frames",
+        "send                 - Send a frame payload",
+        "receive              - Receive frames",
         "sweep                - Analyze channels activity",
         "jam                  - Jam selected channels group",
         "waterfall            - Show channel peaks",

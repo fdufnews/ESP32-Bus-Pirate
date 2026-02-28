@@ -43,7 +43,8 @@ public:
 private:
     // Command handlers
     void handleConfig();
-    void handleSniff(); 
+    void handleReceive();
+    void handleSend();
     void handleScan();
     void handleJam();
     void handleSweep();
