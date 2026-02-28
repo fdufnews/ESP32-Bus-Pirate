@@ -545,9 +545,16 @@ void InfraredController::handleLoad(TerminalCommand const& command) {
     }
 
     // Select file
+    files.emplace_back("Exit"); // for exit option
     terminalView.println("\n=== '.ir' files in LittleFS ===");
-    uint16_t idxFile = userInputManager.readValidatedChoiceIndex("File number", files, 0);
+    uint16_t idxFile = userInputManager.readValidatedChoiceIndex("File number", files, files.size() - 1);
     const std::string& chosen = files[idxFile];
+
+    // Exit option
+    if (chosen == "Exit") {
+        terminalView.println("Exiting load command...\n");
+        return;
+    }
 
     // Check size
     int MAX_FILE_SIZE = 32 * 1024; // 32 KB
