@@ -35,6 +35,7 @@ private:
         {"ir",        "infrared"},
         {"sub",       "subghz"},
         {"rf",        "rf24"},
+        {"nrf",      "rf24"},
         {"nfc",       "rfid"},
 
         {nullptr, nullptr}
