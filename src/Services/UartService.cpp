@@ -1,8 +1,42 @@
 #include "UartService.h"
 
 void UartService::configure(unsigned long baud, uint32_t config, uint8_t rx, uint8_t tx, bool inverted) {
-    Serial1.end(); // stop before reconfigure
+    Serial1.end();
     Serial1.begin(baud, config, rx, tx, inverted);
+
+    if (!buffersAllocated) {
+
+        edgeIntervals = (uint32_t*) heap_caps_malloc(
+            sizeof(uint32_t) * 50,
+            MALLOC_CAP_INTERNAL
+        );
+
+        edgeCounts = (uint32_t*) heap_caps_malloc(
+            sizeof(uint32_t) * 64,
+            MALLOC_CAP_INTERNAL
+        );
+
+        if (!edgeIntervals || !edgeCounts) {
+            buffersAllocated = false;
+            return;
+        }
+
+        memset((void*)edgeCounts, 0, sizeof(uint32_t) * 64);
+
+        buffersAllocated = true;
+    }
+}
+
+void UartService::release() {
+    Serial1.end();
+
+    if (buffersAllocated) {
+        heap_caps_free((void*)edgeIntervals);
+        heap_caps_free((void*)edgeCounts);
+        edgeIntervals = nullptr;
+        edgeCounts = nullptr;
+        buffersAllocated = false;
+    }
 }
 
 void UartService::end() {

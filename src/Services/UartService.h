@@ -24,6 +24,7 @@ public:
     };
 
     void configure(unsigned long baud, uint32_t config, uint8_t rx, uint8_t tx, bool inverted);
+    void release();
     void print(const std::string& msg);
     void println(const std::string& msg);
     char read();
@@ -66,11 +67,12 @@ private:
     XModem::ProtocolType xmodemProtocol = XModem::ProtocolType::CRC_XMODEM;
 
     static void IRAM_ATTR onGpioEdge(void* arg);
-    inline static volatile uint32_t edgeCounts[50] = {0};
+    inline static volatile uint32_t* edgeCounts = nullptr;
+    inline static volatile uint32_t* edgeIntervals = nullptr;
     inline static volatile uint32_t lastEdgeTimeUs = 0;
-    inline static volatile uint32_t edgeIntervals[64] = {0};
     inline static volatile uint8_t intervalCount = 0;
     inline static volatile bool isrInstalled = false;
+    inline static bool buffersAllocated = false;
     inline static constexpr uint32_t kBaudRates[] = {
         // Legacy 
         110, 300, 600, 1200, 1800, 2000, 2400, 3600, 4800, 7200,
