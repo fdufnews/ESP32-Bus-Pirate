@@ -10,6 +10,7 @@ class RfidService {
 public:
     // Base, I2C only
     void configure(uint8_t sda, uint8_t scl);
+    void release();
     bool begin();
 
     // Operations
@@ -49,5 +50,5 @@ private:
     bool     _configured = false;
     bool     _begun      = false;
 
-    PN532 _rfid { PN532::CONNECTION_TYPE::I2C };
+    PN532* _rfid = nullptr;
 };
