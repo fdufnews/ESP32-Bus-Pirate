@@ -88,7 +88,7 @@ void setChannel(uint8_t ch) {
     esp_wifi_set_channel(ch, WIFI_SECOND_CHAN_NONE);
 }
 
-void beaconCreate(const char* ssid, uint8_t channel) {
+void beaconCreate(const char* ssid, uint8_t channel, int spam) {
 
     // beacon frame definition
     uint8_t beaconPacket[109] = {/*  0 - 3  */ 0x80,
@@ -260,6 +260,6 @@ void beaconCreate(const char* ssid, uint8_t channel) {
     // send packet
     for (int k = 0; k < 3; k++) {
         esp_wifi_80211_tx(WIFI_IF_STA, beaconPacket, sizeof(beaconPacket), 0);
-        vTaskDelay(1 / portTICK_RATE_MS);
+        if (!spam) vTaskDelay(1 / portTICK_RATE_MS);
     }
 }
