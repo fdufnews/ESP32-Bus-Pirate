@@ -698,14 +698,25 @@ clb4[1]=e;
 ****************************************************************/
 bool ELECHOUSE_CC1101::getCC1101(void){
   setSpi();
-  byte val=SpiReadStatus(0x31);
-  if (val>0){
-    DEBUG_CC1101("getCC1101 result: 0x" + String(val,HEX) + " -> Ok");
-    return 1;
-  }else{
-    DEBUG_CC1101("getCC1101 result: 0x" + String(val,HEX) + " -> Not Found");
+
+  // Read VERSION a couple times to avoid false positives
+  byte v1 = SpiReadStatus(0x31);
+  byte v2 = SpiReadStatus(0x31);
+
+  // If unstable, not a real chip
+  if (v1 != v2) {
+    DEBUG_CC1101("getCC1101 result: unstable -> Not Found");
     return 0;
-}
+  }
+
+  // Reject typical floating values when no device is present
+  if (v1 == 0x00 || v1 == 0xFF) {
+    DEBUG_CC1101("getCC1101 result: 0x" + String(v1,HEX) + " -> Not Found");
+    return 0;
+  }
+
+  DEBUG_CC1101("getCC1101 result: 0x" + String(v1,HEX) + " -> Ok");
+  return 1;
 }
 /****************************************************************
 *FUNCTION NAME:getMode
