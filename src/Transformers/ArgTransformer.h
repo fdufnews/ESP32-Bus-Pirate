@@ -20,6 +20,7 @@ public:
     uint16_t parseHexOrDec16(const std::string& str) const;
     uint32_t parseHexOrDec32(const std::string& s) const ;
     uint64_t parseHexOrDec64(const std::string& s) const;
+    bool parseHexBytes(const std::string& s, uint8_t* out, uint8_t expectedLen);
     bool parseInt(const std::string& input, int& output);
     std::vector<std::string> splitArgs(const std::string& input);
     bool isValidNumber(const std::string& input);
@@ -35,6 +36,7 @@ public:
     std::string formatFloat(double value, int decimals);
     std::string toAsciiLine(uint32_t address, const std::vector<uint8_t>& line);
     std::string toAsciiLine(uint32_t startAddr, const std::vector<uint16_t>& words);
+    std::string formatHexAscii(const uint8_t* data, size_t len, bool withAscii = true, size_t bytesPerRow = 16);
     std::string toBinString(uint32_t value);
     std::string toAsciiString(uint32_t value);
     bool parseMac(const std::string& s, std::array<uint8_t,6>& out);

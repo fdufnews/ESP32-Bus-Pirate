@@ -162,6 +162,37 @@ uint64_t ArgTransformer::parseHexOrDec64(const std::string& str) const {
     return (uint64_t)v;
 }
 
+bool ArgTransformer::parseHexBytes(const std::string& s, uint8_t* out, uint8_t expectedLen) {
+    if (!out || expectedLen == 0) return false;
+
+    std::string hex;
+    hex.reserve(expectedLen * 2);
+
+    for (char c : s) {
+        if (isxdigit((unsigned char)c)) {
+            hex.push_back(c);
+        }
+    }
+
+    if (hex.size() != expectedLen * 2) return false;
+
+    auto nib = [](char c) -> int {
+        if (c >= '0' && c <= '9') return c - '0';
+        if (c >= 'a' && c <= 'f') return 10 + (c - 'a');
+        if (c >= 'A' && c <= 'F') return 10 + (c - 'A');
+        return -1;
+    };
+
+    for (int i = 0; i < expectedLen; i++) {
+        int hi = nib(hex[i * 2]);
+        int lo = nib(hex[i * 2 + 1]);
+        if (hi < 0 || lo < 0) return false;
+        out[i] = (uint8_t)((hi << 4) | lo);
+    }
+
+    return true;
+}
+
 std::vector<std::string> ArgTransformer::splitArgs(const std::string& input) {
     std::vector<std::string> result;
     std::istringstream iss(input);
@@ -386,6 +417,38 @@ std::string ArgTransformer::toAsciiLine(uint32_t startAddr, const std::vector<ui
     }
 
     return line.str();
+}
+
+std::string ArgTransformer::formatHexAscii(const uint8_t* data, size_t len, bool withAscii, size_t bytesPerRow) {
+    std::stringstream out;
+
+    if (!data || len == 0) return "";
+
+    for (size_t row = 0; row < len; row += bytesPerRow) {
+        const size_t lineLen = std::min(bytesPerRow, len - row);
+
+        // HEX column
+        for (size_t i = 0; i < bytesPerRow; ++i) {
+            if (i < lineLen) {
+                out << toHex(data[row + i], 2) << " ";
+            } else {
+                out << "   ";
+            }
+        }
+
+        if (withAscii) {
+            out << " | ";
+            for (size_t i = 0; i < lineLen; ++i) {
+                uint8_t b = data[row + i];
+                char c = (b >= 32 && b <= 126) ? (char)b : '.';
+                out << c;
+            }
+        }
+
+        if (row + bytesPerRow < len) out << "\n\r";
+    }
+
+    return out.str();
 }
 
 std::string ArgTransformer::toBinString(uint32_t value) {
