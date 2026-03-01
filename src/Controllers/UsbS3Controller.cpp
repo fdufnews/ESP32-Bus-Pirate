@@ -56,7 +56,8 @@ void UsbS3Controller::handleKeyboardSend(const TerminalCommand& cmd) {
     usbService.keyboardBegin();
     terminalView.println("USB Keyboard: Initialize...");
     auto full = cmd.getArgs().empty() ? cmd.getSubcommand() : cmd.getSubcommand() + " " + cmd.getArgs();
-    usbService.keyboardSendString(full);
+    auto decoded = argTransformer.decodeEscapes(full);
+    usbService.keyboardSendString(decoded);
     // usbService.reset();
     terminalView.println("USB Keyboard: String sent.");
 }
