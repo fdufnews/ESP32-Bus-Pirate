@@ -175,7 +175,9 @@ void BluetoothController::handleKeyboard(const TerminalCommand& cmd) {
                         cmd.getSubcommand() : 
                         cmd.getSubcommand() + " " + cmd.getArgs();
 
-    bluetoothService.sendKeyboardText(full);
+    auto decoded = argTransformer.decodeEscapes(full);
+
+    bluetoothService.sendKeyboardText(decoded);
     terminalView.println("Bluetooth Keyboard: String sent.");
 }
 
