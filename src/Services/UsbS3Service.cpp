@@ -5,6 +5,15 @@
 UsbS3Service::UsbS3Service()
   : keyboardActive(false), storageActive(false), initialized(false) {}
 
+void UsbS3Service::configure(const std::string& productStr, const std::string& manufacturerStr, const std::string& serialStr, uint16_t vid, uint16_t pid, const std::string& webUSBString) {
+    USB.productName(productStr.c_str());
+    USB.manufacturerName(manufacturerStr.c_str());
+    USB.serialNumber(serialStr.c_str());
+    USB.VID(vid);
+    USB.PID(pid);
+    USB.webUSBURL(webUSBString.c_str());
+}
+
 void UsbS3Service::keyboardBegin() {
     if (keyboardActive) return;
 
@@ -12,36 +21,6 @@ void UsbS3Service::keyboardBegin() {
     keyboard.begin();
     hidInitTime = millis();
     keyboardActive = true;
-}
-
-void UsbS3Service::storageBegin(uint8_t cs, uint8_t clk, uint8_t miso, uint8_t mosi) {
-    if (initialized) return;
-
-    sdSPI.begin(clk, miso, mosi, cs);
-    if (!SD.begin(cs, sdSPI)) {
-        storageActive = false;
-        return;
-    }
-
-    // Setup MSC
-    uint32_t secSize = SD.sectorSize();
-    uint32_t numSectors = SD.numSectors();
-
-    msc.vendorID("ESP32");
-    msc.productID("USB_MSC");
-    msc.productRevision("1.0");
-    msc.onRead(storageReadCallback);
-    msc.onWrite(storageWriteCallback);
-    msc.onStartStop(usbStartStopCallback);
-    msc.mediaPresent(true);
-    msc.begin(numSectors, secSize);
-
-    // Setup USB events
-    setupStorageEvent();
-
-    USB.begin();
-    storageActive = true;
-    initialized = true;
 }
 
 void UsbS3Service::keyboardSendString(const std::string& text) {
@@ -142,6 +121,10 @@ void UsbS3Service::gamepadPress(const std::string& name) {
         gamepad.pressButton(BUTTON_A);
     } else if (name == "b") {
         gamepad.pressButton(BUTTON_B);
+    } else if (name == "start") {
+        gamepad.pressButton(BUTTON_START);
+    } else if (name == "select") {
+        gamepad.pressButton(BUTTON_SELECT);
     } else {
         return; // unknow
     }
@@ -173,6 +156,37 @@ bool UsbS3Service::isGamepadActive() const {
 
 bool UsbS3Service::isHostActive() const {
     return hostInstalled;
+}
+
+
+void UsbS3Service::storageBegin(uint8_t cs, uint8_t clk, uint8_t miso, uint8_t mosi) {
+    if (initialized) return;
+
+    sdSPI.begin(clk, miso, mosi, cs);
+    if (!SD.begin(cs, sdSPI)) {
+        storageActive = false;
+        return;
+    }
+
+    // Setup MSC
+    uint32_t secSize = SD.sectorSize();
+    uint32_t numSectors = SD.numSectors();
+
+    msc.vendorID("ESP32");
+    msc.productID("USB_MSC");
+    msc.productRevision("1.0");
+    msc.onRead(storageReadCallback);
+    msc.onWrite(storageWriteCallback);
+    msc.onStartStop(usbStartStopCallback);
+    msc.mediaPresent(true);
+    msc.begin(numSectors, secSize);
+
+    // Setup USB events
+    setupStorageEvent();
+
+    USB.begin();
+    storageActive = true;
+    initialized = true;
 }
 
 int32_t UsbS3Service::storageReadCallback(uint32_t lba, uint32_t offset, void* buffer, uint32_t bufsize) {
@@ -337,22 +351,85 @@ void UsbS3Service::usbHostEnd() {
     dumpedThisAttach = false;
 }
 
+void UsbS3Service::systemControlBegin() {
+    if (systemControlActive) return;
+
+    USB.begin();
+    sysCtrl.begin();
+    systemControlActive = true;
+    hidInitTime = millis();
+}
+
+void UsbS3Service::systemControlEnd() {
+    if (!systemControlActive) return;
+    sysCtrl.end();
+    systemControlActive = false;
+}
+
+bool UsbS3Service::isSystemControlActive() const {
+    return systemControlActive;
+}
+
+void UsbS3Service::systemSleep() {
+    if (!systemControlActive) systemControlBegin();
+
+    // Wait HID init
+    while (millis() - hidInitTime < 1500) {
+        delay(10);
+    }
+
+    sysCtrl.press(SYSTEM_CONTROL_STANDBY);
+    sysCtrl.release();
+}
+
+void UsbS3Service::systemWake() {
+    if (!systemControlActive) systemControlBegin();
+
+    // Wait HID init
+    while (millis() - hidInitTime < 1500) {
+        delay(10);
+    }
+
+    sysCtrl.press(SYSTEM_CONTROL_WAKE_HOST);
+    sysCtrl.release();
+}
+
+void UsbS3Service::systemPowerOff(uint32_t holdMs) {
+    if (!systemControlActive) systemControlBegin();
+
+    // Wait HID init 
+    while (millis() - hidInitTime < 1500) {
+        delay(10);
+    }
+
+    sysCtrl.press(SYSTEM_CONTROL_POWER_OFF);
+
+    if (holdMs > 0) {
+        // simulate long press
+        delay(holdMs);
+    }
+
+    sysCtrl.release();
+}
+
 void UsbS3Service::reset() {
     if (initialized) {
-        keyboard.releaseAll(); // si clavier actif
-        msc.end();             // si stockage actif
+        keyboard.releaseAll();
+        sysCtrl.release(); 
+        msc.end(); 
         keyboard.end();
         gamepad.end();
         mouse.end();
+        sysCtrl.end();
         initialized = false;
         keyboardActive = false;
         storageActive = false;
         mouseActive = false;
+        systemControlActive = false;
         gamepadActive = false;
         hostInstalled = false;
     }
 }
-
 
 // TODO: Rework this func to something more manageable
 // Extract the parsing from this function to another obj
@@ -613,15 +690,6 @@ std::string UsbS3Service::usbHostTick() {
     }
 
     return "";
-}
-
-void UsbS3Service::configure(const std::string& productStr, const std::string& manufacturerStr, const std::string& serialStr, uint16_t vid, uint16_t pid, const std::string& webUSBString) {
-    USB.productName(productStr.c_str());
-    USB.manufacturerName(manufacturerStr.c_str());
-    USB.serialNumber(serialStr.c_str());
-    USB.VID(vid);
-    USB.PID(pid);
-    USB.webUSBURL(webUSBString.c_str());
 }
 
 std::string UsbS3Service::getUsbSerialFromEfuseMac() {

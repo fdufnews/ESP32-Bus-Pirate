@@ -9,6 +9,7 @@
 #include <USBHIDMouse.h>
 #include <USBHIDKeyboard.h>
 #include <USBHIDGamepad.h>
+#include <USBHIDSystemControl.h>
 #include "usb/usb_host.h"
 #include "usb/usb_types_ch9.h"
 #include "usb/usb_types_stack.h"
@@ -27,12 +28,20 @@ class UsbS3Service {
 public:
     UsbS3Service();
 
-    // Begin USB HID keyboard mode
+    // Status
+    bool isKeyboardActive() const;
+    bool isStorageActive() const;
+    bool isMouseActive() const;
+    bool isGamepadActive() const;
+    bool isHostActive() const;
+    bool isSystemControlActive() const;
+
+    // Keyboard actions
     void keyboardBegin();
     void keyboardSendString(const std::string& text);
     void keyboardSendChunkedString(const std::string& data, size_t chunkSize, unsigned long delayBetweenChunks);
 
-    // Begin USB Mass Storage mode
+    // Mass Storage mode
     void storageBegin(uint8_t cs, uint8_t clk, uint8_t miso, uint8_t mosi);
 
     // Mouse actions
@@ -41,16 +50,9 @@ public:
     void mouseClick(int button);
     void mouseRelease(int button);
 
-    // Gamepad Actions
+    // Gamepad actions
     void gamepadBegin();
     void gamepadPress(const std::string& name);
-    
-    // Status
-    bool isKeyboardActive() const;
-    bool isStorageActive() const;
-    bool isMouseActive() const;
-    bool isGamepadActive() const;
-    bool isHostActive() const;
 
     // Host 
     bool usbHostBegin();
@@ -58,6 +60,12 @@ public:
     void usbHostEnd();
     static void hostClientEventCb(const usb_host_client_event_msg_t *event_msg, void *arg);
 
+    // System control
+    void systemControlBegin();
+    void systemControlEnd();
+    void systemSleep();
+    void systemWake();
+    void systemPowerOff(uint32_t holdMs = 10);
 
     // Config
     void configure(const std::string& productStr, const std::string& manufacturerStr, const std::string& serialStr, uint16_t vid, uint16_t pid, const std::string& webUSBString);
@@ -71,9 +79,11 @@ private:
     USBHIDKeyboard keyboard;
     USBHIDMouse mouse;
     USBHIDGamepad gamepad;
+    USBHIDSystemControl sysCtrl;
     bool gamepadActive = false;
     bool keyboardActive = false;
     bool mouseActive = false;
+    bool systemControlActive = false;
     unsigned long hidInitTime;
 
     // Mass Storage
@@ -93,5 +103,4 @@ private:
     bool detachPending = false;
     bool dumpedThisAttach = false;
     inline static const char* TAG_USBHOST = "UsbHost";
-
 };
