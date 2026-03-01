@@ -287,11 +287,11 @@ void HelpShell::cmdUsb() {
     printHeader("USB");
     static const char* const lines[] = {
         "stick                - Mount SD as USB",
-        "keyboard             - Start keyboard bridge",
-        "mouse <x> <y>        - Move mouse cursor",
-        "mouse click          - Left click",
+        "keyboard [text]      - Start keyboard bridge",
+        "mouse [action]       - Mouse move and click",
         "mouse jiggle [ms]    - Random mouse moves",
-        "gamepad <key>        - Press button",
+        "gamepad [key]        - Gamepad button press",
+        "sysctrl [action]     - Hardware control actions",
         "host                 - Connect device to ESP32",
         "reset                - Reset interface",
         "config               - Configure settings"
@@ -308,9 +308,9 @@ void HelpShell::cmdBluetooth() {
         "spoof <mac>          - Spoof mac address",
         "status               - Show current status",
         "server               - Create an HID server",
-        "keyboard             - Start keyboard bridge",
+        "keyboard [text]      - Start keyboard bridge",
         "mouse <x> <y>        - Move mouse cursor",
-        "mouse click          - Mouse click",
+        "mouse click          - Mouse left click",
         "mouse jiggle [ms]    - Random mouse moves",
         "reset                - Reset interface"
     };

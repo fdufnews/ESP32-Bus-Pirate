@@ -29,6 +29,7 @@ void UsbS3Controller::handleCommand(const TerminalCommand& cmd) {
     else if (cmd.getRoot() == "keyboard") handleKeyboard(cmd);
     else if (cmd.getRoot() == "mouse") handleMouse(cmd);
     else if (cmd.getRoot() == "gamepad") handleGamepad(cmd);
+    else if (cmd.getRoot() == "sysctrl") handleSysCtrl(cmd);
     else if (cmd.getRoot() == "host") handleHost();
     else if (cmd.getRoot() == "reset") handleReset();
     else if (cmd.getRoot() == "config") handleConfig();
@@ -152,23 +153,85 @@ void UsbS3Controller::handleMouseClick() {
 Mouse
 */
 void UsbS3Controller::handleMouse(const TerminalCommand& cmd)  {
-    
-    if (cmd.getSubcommand().empty()) {
-        terminalView.println("Usage: mouse <x> <y>");
-        terminalView.println("       mouse click");
-        terminalView.println("       mouse jiggle [ms]");
-        return;
-    }
-
-    usbService.configure(state.getUSBProductString(), state.getUSBManufacturerString(), state.getUSBSerialString(), state.getUSBVid(), state.getUSBPid(), state.getWebUSBString());
+    // Configure descriptors
+    usbService.configure(
+        state.getUSBProductString(),
+        state.getUSBManufacturerString(),
+        state.getUSBSerialString(),
+        state.getUSBVid(),
+        state.getUSBPid(),
+        state.getWebUSBString()
+    );
 
     terminalView.println("USB Mouse: Configuring HID...");
     usbService.mouseBegin();
     terminalView.println("USB Mouse: Initialize HID...");
 
-    if (cmd.getSubcommand() == "click") handleMouseClick();
-    else if (cmd.getSubcommand() == "jiggle") handleMouseJiggle(cmd);
-    else handleMouseMove(cmd);
+    // Interactive menu if no subcommand
+    if (cmd.getSubcommand().empty()) {
+        std::vector<std::string> actions = {
+            " ↑ Move up",
+            " ↓ Move down",
+            " ← Move left",
+            " → Move right",
+            " ◀ Left click",
+            " ▶ Right click",
+            " ⚙ Configure move",
+            " ⏹ Exit"
+        };
+
+        
+        bool loop = true;
+        int lastIndex = actions.size() - 1; // keeps selection between inputs
+        uint8_t step = 50; // default step for moves
+        while (loop) {
+            terminalView.println("\n=== USB Mouse ===");
+            int choice = userInputManager.readValidatedChoiceIndex("Select action", actions, lastIndex);
+
+            // keep last index only for real actions (not exit)
+            if (choice >= 0 && choice <= 5) lastIndex = choice;
+
+            switch (choice) {
+                case 0: usbService.mouseMove(0, step * -1); terminalView.println("\nUSB Mouse: Up."); break;
+                case 1: usbService.mouseMove(0,  step); terminalView.println("\nUSB Mouse: Down."); break;
+                case 2: usbService.mouseMove(step * -1, 0); terminalView.println("\nUSB Mouse: Left."); break;
+                case 3: usbService.mouseMove(step, 0); terminalView.println("\nUSB Mouse: Right."); break;
+
+                case 4:
+                    usbService.mouseClick(1);
+                    terminalView.println("\nUSB Mouse: Left click.");
+                    break;
+
+                case 5:
+                    usbService.mouseClick(2);
+                    terminalView.println("\nUSB Mouse: Right click.");
+                    break;
+
+                case 6:
+                    step = userInputManager.readValidatedUint8("Configure step for moves", step, 1, 127);
+                    terminalView.println("\nUSB Mouse: Step configured to " + std::to_string(step) + ".");
+                    break;
+
+                default:
+                    loop = false;
+                    break;
+            }
+        }
+
+        terminalView.println("Exiting USB Mouse...\n");
+        return;
+    }
+
+    // Existing non-interactive usage
+    if (cmd.getSubcommand() == "click") {
+        handleMouseClick();
+    }
+    else if (cmd.getSubcommand() == "jiggle") {
+        handleMouseJiggle(cmd);
+    }
+    else {
+        handleMouseMove(cmd); // supports "mouse move x y" and "mouse x y"
+    }
 }
 
 /*
@@ -210,19 +273,167 @@ Gamepad
 void UsbS3Controller::handleGamepad(const TerminalCommand& cmd) {
     terminalView.println("USB Gamepad: Configuring HID...");
 
-    usbService.configure(state.getUSBProductString(), state.getUSBManufacturerString(), state.getUSBSerialString(), state.getUSBVid(), state.getUSBPid(), state.getWebUSBString());
+    usbService.configure(
+        state.getUSBProductString(),
+        state.getUSBManufacturerString(),
+        state.getUSBSerialString(),
+        state.getUSBVid(),
+        state.getUSBPid(),
+        state.getWebUSBString()
+    );
 
-    std::string subcmd = cmd.getSubcommand();
-    std::transform(subcmd.begin(), subcmd.end(), subcmd.begin(), ::tolower);
+    usbService.gamepadBegin();
 
-    if (subcmd == "up" || subcmd == "down" || subcmd == "left" || subcmd == "right" ||
-        subcmd == "a" || subcmd == "b") {
-        
-        usbService.gamepadPress(subcmd);
+    std::string sub = cmd.getSubcommand();
+    std::transform(sub.begin(), sub.end(), sub.begin(), ::tolower);
+
+    // Interactive menu
+    if (sub.empty()) {
+        std::vector<std::string> actions = {
+            " ⬆ Up",
+            " ⬇ Down",
+            " ⬅ Left",
+            " ➡ Right",
+            " Ⓐ A",
+            " Ⓑ B",
+            " ▶ Start",
+            " ◀ Select",
+            " ⏹ Exit"
+        };
+
+        bool loop = true;
+        uint8_t lastButton = actions.size() - 1;
+        while (loop) {
+            terminalView.println("\n=== USB Gamepad ===");
+            int choice = userInputManager.readValidatedChoiceIndex("Select action", actions, lastButton);
+            
+            switch (choice) {
+                case 0: usbService.gamepadPress("up");     terminalView.println("\nUSB Gamepad: Up sent."); break;
+                case 1: usbService.gamepadPress("down");   terminalView.println("\nUSB Gamepad: Down sent."); break;
+                case 2: usbService.gamepadPress("left");   terminalView.println("\nUSB Gamepad: Left sent."); break;
+                case 3: usbService.gamepadPress("right");  terminalView.println("\nUSB Gamepad: Right sent."); break;
+                case 4: usbService.gamepadPress("a");      terminalView.println("\nUSB Gamepad: A sent."); break;
+                case 5: usbService.gamepadPress("b");      terminalView.println("\nUSB Gamepad: B sent."); break;
+                case 6: usbService.gamepadPress("start");  terminalView.println("\nUSB Gamepad: Start sent."); break;
+                case 7: usbService.gamepadPress("select"); terminalView.println("\nUSB Gamepad: Select sent."); break;
+                case 8:
+                default:
+                    loop = false;
+                    break;
+            }
+            lastButton = choice;
+
+        }
+
+        terminalView.println("Exiting USB Gamepad...\n");
+        return;
+    }
+
+    // Non-interactive
+    if (sub == "up" || sub == "down" || sub == "left" || sub == "right" ||
+        sub == "a" || sub == "b" || sub == "start" || sub == "select") {
+        usbService.gamepadPress(sub);
         terminalView.println("USB Gamepad: Key sent.");
+        return;
+    }
 
-    } else {
-        terminalView.println("USB Gamepad: Unknown input. Try up, down, left, right, a, b");
+    terminalView.println("Usage: gamepad");
+    terminalView.println("       gamepad up|down|left|right|a|b");
+    terminalView.println("       gamepad start|select");
+}
+
+/*
+SysCtrl
+*/
+void UsbS3Controller::handleSysCtrl(const TerminalCommand& cmd) {
+
+    // Configure descriptors
+    usbService.configure(
+        state.getUSBProductString(),
+        state.getUSBManufacturerString(),
+        state.getUSBSerialString(),
+        state.getUSBVid(),
+        state.getUSBPid(),
+        state.getWebUSBString()
+    );
+
+    // Get subcommand and lowercase it
+    std::string sub = cmd.getSubcommand();
+    std::transform(sub.begin(), sub.end(), sub.begin(), ::tolower);
+
+    // Ensure SystemControl interface is ready
+    usbService.systemControlBegin();
+
+    // If no subcommand, interactive menu
+    if (sub.empty()) {
+        std::vector<std::string> actions = {
+            " 💤 Sleep (Standby)",
+            " 🔔 Wake host",
+            " 🔌 Power off",
+            " 🚪 Exit"
+        };
+
+        bool loop = true;
+        while (loop) {
+            terminalView.println("\n=== USB System Control ===");
+            int choice = userInputManager.readValidatedChoiceIndex("Select action", actions, actions.size() - 1);
+
+            switch (choice) {
+                case 0:
+                    terminalView.println("\nUSB System: Sending SLEEP...");
+                    usbService.systemSleep();
+                    terminalView.println("USB System: Done.");
+                    break;
+
+                case 1:
+                    terminalView.println("\nUSB System: Sending WAKE...");
+                    usbService.systemWake();
+                    terminalView.println("USB System: Done.");
+                    break;
+
+                case 2:
+                    terminalView.println("\nUSB System: Sending POWER OFF...");
+                    terminalView.println("\n [⚠️  WARNING] ");
+                    terminalView.println(" OS may ignore it or ask confirmation.\n");
+
+                    usbService.systemPowerOff();
+                    terminalView.println("USB System: Done.");
+                    break;
+
+                case 3: // Exit
+                default:
+                    loop = false;
+                    break;
+            }
+        }
+
+        terminalView.println("Exiting USB System Control...\n");
+        return;
+    }
+
+    // Non interactive mode
+    if (sub == "sleep" || sub == "standby" || sub == "suspend") {
+        terminalView.println("USB System: Sending SLEEP...");
+        usbService.systemSleep();
+        terminalView.println("USB System: Done.");
+    }
+    else if (sub == "wake" || sub == "wakeup" || sub == "resume") {
+        terminalView.println("USB System: Sending WAKE...");
+        usbService.systemWake();
+        terminalView.println("USB System: Done.");
+    }
+    else if (sub == "off" || sub == "poweroff" || sub == "power off") {
+        terminalView.println("\nUSB System: Sending POWER OFF...");
+        terminalView.println("\n [⚠️  WARNING] ");
+        terminalView.println(" OS may ignore it or ask confirmation.\n");
+        usbService.systemPowerOff();
+        terminalView.println("USB System: Done.");
+    }
+    else {
+        terminalView.println("Usage: sysctrl");
+        terminalView.println("       sysctrl sleep");
+        terminalView.println("       sysctrl wake");
+        terminalView.println("       sysctrl off");
     }
 }
 
@@ -302,7 +513,8 @@ void UsbS3Controller::handleConfig() {
 Host
 */
 void UsbS3Controller::handleHost() {
-    if (usbService.isKeyboardActive() || usbService.isMouseActive() || usbService.isGamepadActive()) {
+    if (usbService.isKeyboardActive() || usbService.isMouseActive() 
+        || usbService.isGamepadActive() || usbService.isSystemControlActive()) {
         terminalView.println("USB Host: HID is active. Please restart to use host.\n");
         return;
     }
@@ -356,6 +568,7 @@ void UsbS3Controller::handleReset() {
 Help
 */
 void UsbS3Controller::handleHelp() {
+    terminalView.println("\nUnknown command. Available USB commands:");
     helpShell.run(state.getCurrentMode(), false);
 }
 

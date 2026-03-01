@@ -62,6 +62,9 @@ private:
     // Handle USB host mode with infos and device dump
     void handleHost();
 
+    // Handle system control (sleep/wake/poweroff)
+    void handleSysCtrl(const TerminalCommand& cmd);
+
     // Reset all USB states
     void handleReset();
 
