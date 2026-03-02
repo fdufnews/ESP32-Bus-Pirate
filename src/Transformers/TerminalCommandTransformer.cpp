@@ -98,6 +98,20 @@ bool TerminalCommandTransformer::isMacroCommand(const std::string& raw) const {
     return raw[start] == '(';
 }
 
+bool TerminalCommandTransformer::isBuiltinCommand(const std::string& raw) const {
+    // normalize 
+    std::string normalized = normalizeRaw(raw);
+    if (normalized.empty()) return false;
+
+    // compare
+    for (size_t i = 0; autoCompleteWords[i] != nullptr; ++i) {
+        if (normalized == autoCompleteWords[i]) {
+            return true;
+        }
+    }
+    return false;
+}
+
 bool TerminalCommandTransformer::isGlobalCommand(const TerminalCommand& cmd) const {
     std::string root = cmd.getRoot();
 
@@ -105,7 +119,7 @@ bool TerminalCommandTransformer::isGlobalCommand(const TerminalCommand& cmd) con
             root == "logic" || root == "analogic" || root == "P" || root == "p" || 
             root == "system" || root == "sys" || root == "guide" || root == "man" || root == "wizard" ||
             root == "help" || root == "h" || root == "?" || root == "hex" || root == "dec" ||
-            root == "profile" || root == "delay" || root == "listen";
+            root == "profile" || root == "delay" || root == "listen" || root == "alias";
 }
 
 bool TerminalCommandTransformer::isScreenCommand(const TerminalCommand& cmd) const {
