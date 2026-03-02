@@ -78,9 +78,10 @@ void FmController::handleConfig() {
     uint8_t sclPin = (uint8_t)userInputManager.readValidatedPinNumber("SI4713 SCL pin", state.getTwoWireClkPin(), forbidden);
 
     // RST
-    terminalView.println("\nReset pin is required, or you can");
-    terminalView.println("briefly connect SI4713 RST to GND");
-    terminalView.println("to activate the device.\n");
+    terminalView.println("\n [ℹ️  INFORMATIONS]");
+    terminalView.println(" Reset pin is required, or you can");
+    terminalView.println(" briefly connect SI4713 RST to GND");
+    terminalView.println(" to activate the device.\n");
     int8_t resetPin = (int8_t)userInputManager.readValidatedPinNumber("SI4713 RESET pin", state.getTwoWireRstPin(), forbidden); // -1 = none
 
     // Freq
