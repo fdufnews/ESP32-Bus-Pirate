@@ -28,6 +28,31 @@ std::string UserInputManager::getLine(bool onlyNumber /* = false */) {
             continue;
         }
 
+        // Arrow keys (ESC sequence)
+        if (c == '\x1B') {
+            if (terminalInput.handler() == '[') {
+                char next = terminalInput.handler();
+
+                // LEFT
+                if (next == 'D') {
+                    if (cursorIndex > 0) {
+                        cursorIndex--;
+                        terminalView.print("\x1B[D");
+                    }
+                    continue;
+                }
+
+                // RIGHT
+                if (next == 'C') {
+                    if (cursorIndex < result.size()) {
+                        cursorIndex++;
+                        terminalView.print("\x1B[C");
+                    }
+                    continue;
+                }
+            }
+        }
+
         if (result.size() >= MAX_ALLOWED_INPUT_LENGTH) {
             continue;
         }
