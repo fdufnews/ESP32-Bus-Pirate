@@ -148,87 +148,113 @@ Test Speaker
 */
 void I2sController::handleTestSpeaker() {
     switchOutputInput(true);
-    terminalView.println("I2S Speaker Test: Running full tests...\n");
+    terminalView.println("I2S Speaker Test: Running ... Press [ENTER] to stop\n");
 
-    // Show pin config
+    bool stop = false;
+
+    // Helper to wait with check for stop on enter
+    auto waitOrStop = [&](uint32_t ms) {
+        for (uint32_t i = 0; i < ms; ++i) {
+            char ch = terminalInput.readChar();
+            if (ch == '\n' || ch == '\r') {
+                stop = true;
+                return;
+            }
+            delay(1);
+        }
+    };
+
+    auto rate = state.getI2sSampleRate();
+
     terminalView.println("Using pins:");
     terminalView.println("  BCLK : " + std::to_string(state.getI2sBclkPin()));
     terminalView.println("  LRCK : " + std::to_string(state.getI2sLrckPin()));
     terminalView.println("  DATA : " + std::to_string(state.getI2sDataPin()));
     terminalView.println("");
 
-    auto rate = state.getI2sSampleRate();
-
     // Melody
     terminalView.println("  Melody...");
-    const uint16_t melody[] = {262, 294, 330, 349, 392, 440, 494, 523}; // C major
+    const uint16_t melody[] = {262, 294, 330, 349, 392, 440, 494, 523};
     for (uint16_t f : melody) {
+        if (stop) break;
         i2sService.playTone(rate, f, 200);
-        delay(50);
+        waitOrStop(50);
     }
-    delay(1000);
 
-    // Frequency Sweep
-    terminalView.println("  Frequency Sweep...");
-    for (uint16_t f = 100; f <= 3000; f += 300) {
-        i2sService.playTone(rate, f, 100);
+    if (!stop) {
+        waitOrStop(1000);
     }
-    delay(800);
 
-    // Low Freq
-    terminalView.println("  Low Frequency...");
-    for (uint16_t f : {50, 100, 150, 200, 250, 300, 350, 400, 450, 500}) {
-        i2sService.playTone(rate, f, 400);
-        delay(100);
+    // Sweep
+    if (!stop) {
+        terminalView.println("  Frequency Sweep...");
+        for (uint16_t f = 100; f <= 3000 && !stop; f += 300) {
+            i2sService.playTone(rate, f, 100);
+        }
+        waitOrStop(800);
     }
-    delay(800);
 
-    // High Freq
-    terminalView.println("  High Frequency...");
-    for (uint16_t f = 10000; f <= 16000; f += 1000) {
-        i2sService.playTone(rate, f, 300);
-        delay(100);
+    // Low
+    if (!stop) {
+        terminalView.println("  Low Frequency...");
+        for (uint16_t f : {50,100,150,200,250,300,350,400,450,500}) {
+            if (stop) break;
+            i2sService.playTone(rate, f, 400);
+            waitOrStop(100);
+        }
+        waitOrStop(800);
     }
-    delay(800);
 
-    // Beep Pattern
-    terminalView.println("  Beep Pattern (short/long)...");
-    i2sService.playTone(rate, 800, 100);
-    delay(100);
-    i2sService.playTone(rate, 800, 100);
-    delay(100);
-    i2sService.playTone(rate, 800, 100);
-    delay(100);
-    i2sService.playTone(rate, 800, 400);
-    delay(100);
-    i2sService.playTone(rate, 800, 400);
-    delay(100);
-    i2sService.playTone(rate, 800, 400);
-    delay(800);
-
-    // Binary pattern (square wave)
-    terminalView.println("  Binary tone pattern...");
-    for (int i = 0; i < 15; ++i) {
-        i2sService.playTone(rate, 1000, 50);
-        delay(50);
+    // High
+    if (!stop) {
+        terminalView.println("  High Frequency...");
+        for (uint16_t f = 10000; f <= 16000 && !stop; f += 1000) {
+            i2sService.playTone(rate, f, 300);
+            waitOrStop(100);
+        }
+        waitOrStop(800);
     }
-    delay(800);
 
-    // Config for PCM playback
-    i2sService.configureOutput(
-        state.getI2sBclkPin(),
-        state.getI2sLrckPin(),
-        state.getI2sDataPin(),
-        24000,
-        16,
-        state.getI2sPercentLevel()
-    );
-    
-    // PCM Playback test
-    terminalView.println("  PCM playback...");
-    i2sService.playPcm(PcmSoundtestComplete, sizeof(PcmSoundtestComplete));
-    
-    // Restaure config
+    // Beep
+    if (!stop) {
+        terminalView.println("  Beep Pattern...");
+        for (int i = 0; i < 3 && !stop; ++i) {
+            i2sService.playTone(rate, 800, 100);
+            waitOrStop(100);
+        }
+        for (int i = 0; i < 3 && !stop; ++i) {
+            i2sService.playTone(rate, 800, 400);
+            waitOrStop(100);
+        }
+        waitOrStop(800);
+    }
+
+    // Binary
+    if (!stop) {
+        terminalView.println("  Binary tone pattern...");
+        for (int i = 0; i < 15 && !stop; ++i) {
+            i2sService.playTone(rate, 1000, 50);
+            waitOrStop(50);
+        }
+        waitOrStop(800);
+    }
+
+    // PCM
+    if (!stop) {
+        i2sService.configureOutput(
+            state.getI2sBclkPin(),
+            state.getI2sLrckPin(),
+            state.getI2sDataPin(),
+            24000,
+            16,
+            state.getI2sPercentLevel()
+        );
+
+        terminalView.println("  PCM playback...");
+        i2sService.playPcm(PcmSoundtestComplete, sizeof(PcmSoundtestComplete));
+    }
+
+    // Restore config
     i2sService.configureOutput(
         state.getI2sBclkPin(),
         state.getI2sLrckPin(),
@@ -237,8 +263,11 @@ void I2sController::handleTestSpeaker() {
         state.getI2sBitsPerSample(),
         state.getI2sPercentLevel()
     );
-    
-    terminalView.println("\nI2S Speaker Test: Done.");
+
+    if (stop)
+        terminalView.println("\nI2S Speaker Test: Stopped by user.\n");
+    else
+        terminalView.println("\nI2S Speaker Test: Done.");
 }
 
 /*
