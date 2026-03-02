@@ -46,22 +46,25 @@ Dispatch
 void ActionDispatcher::dispatch(const std::string& raw) {
     if (raw.empty()) return;
 
+    // Alias (or return raw if no alias)
+    const std::string& finalRaw = provider.getAliasManager().expand(raw);
+
     // Instructions
-    if (provider.getInstructionTransformer().isInstructionCommand(raw)) {
-        auto instructions = provider.getInstructionTransformer().transform(raw);
+    if (provider.getInstructionTransformer().isInstructionCommand(finalRaw)) {
+        auto instructions = provider.getInstructionTransformer().transform(finalRaw);
         dispatchInstructions(instructions);
         return;
     }
 
     // Macros
-    if (provider.getCommandTransformer().isMacroCommand(raw)) {
+    if (provider.getCommandTransformer().isMacroCommand(finalRaw)) {
         provider.getTerminalView().println("Macros Not Yet Implemented.");
         return;
     }
 
     // Pipeline terminal commands
-    if (provider.getCommandTransformer().isPipelineCommand(raw)) {
-        auto cmds = provider.getCommandTransformer().transformMany(raw);
+    if (provider.getCommandTransformer().isPipelineCommand(finalRaw)) {
+        auto cmds = provider.getCommandTransformer().transformMany(finalRaw);
         for (auto& cmd : cmds) {
             dispatchCommand(cmd);
         }
@@ -69,7 +72,7 @@ void ActionDispatcher::dispatch(const std::string& raw) {
     }
 
     // Single terminal command
-    TerminalCommand cmd = provider.getCommandTransformer().transform(raw);
+    TerminalCommand cmd = provider.getCommandTransformer().transform(finalRaw);
     dispatchCommand(cmd);
 }
 
