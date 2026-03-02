@@ -159,8 +159,8 @@ void FmBroadcastShell::cmdAutoFreq_()
 void FmBroadcastShell::cmdSetPower_()
 {
     int p = userInputManager.readValidatedInt("TX power (0..115)", (int)fmService.getTxPower(), 0, 115);
-    int antCap = userInputManager.readValidatedInt("Antenna cap (0..15)", 0, 0, 15);
-    bool ok = fmService.setTxPower((uint8_t)p, (uint8_t)antCap);
+    // int antCap = userInputManager.readValidatedInt("Antenna cap (0..15)", 0, 0, 15); // can make the Si4713 irresponsive, so skip for now
+    bool ok = fmService.setTxPower((uint8_t)p);
     terminalView.println(ok ? "\n✅ Power updated." : "\n❌ Power set failed.");
 }
 
