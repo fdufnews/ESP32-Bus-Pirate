@@ -57,6 +57,7 @@ DependencyProvider::DependencyProvider(ITerminalView &terminalView, IDeviceView 
       userInputManager(terminalView, terminalInput, argTransformer),
       subGhzAnalyzeManager(),
       pinAnalyzeManager(pinService),
+      aliasManager(),
 
       // Shells
       sdCardShell(sdService, terminalView, terminalInput, argTransformer, userInputManager),
@@ -90,7 +91,7 @@ DependencyProvider::DependencyProvider(ITerminalView &terminalView, IDeviceView 
       i2cController(terminalView, terminalInput, i2cService, argTransformer, userInputManager, i2cEepromShell, helpShell),
       oneWireController(terminalView, terminalInput, oneWireService, argTransformer, userInputManager, ibuttonShell, oneWireEepromShell, helpShell),
       infraredController(terminalView, terminalInput, deviceView, infraredService, littleFsService, i2cService, argTransformer, infraredTransformer, userInputManager, universalRemoteShell, helpShell),
-      utilityController(terminalView, deviceView, terminalInput, pinService, i2sService, userInputManager, pinAnalyzeManager, argTransformer, sysInfoShell, guideShell, helpShell, profileShell),
+      utilityController(terminalView, deviceView, terminalInput, pinService, i2sService, userInputManager, pinAnalyzeManager, aliasManager, argTransformer, commandTransformer, sysInfoShell, guideShell, helpShell, profileShell),
       hdUartController(terminalView, terminalInput, deviceInput, hdUartService, uartService, argTransformer, userInputManager, helpShell),
       spiController(terminalView, terminalInput, spiService, sdService, argTransformer, userInputManager, binaryAnalyzeManager, sdCardShell, spiFlashShell, spiEepromShell, helpShell),
       jtagController(terminalView, terminalInput, jtagService, userInputManager, helpShell),
@@ -191,6 +192,7 @@ UserInputManager &DependencyProvider::getUserInputManager() { return userInputMa
 BinaryAnalyzeManager &DependencyProvider::getBinaryAnalyzeManager() { return binaryAnalyzeManager; }
 SubGhzAnalyzeManager &DependencyProvider::getSubGhzAnalyzeManager() { return subGhzAnalyzeManager; }
 PinAnalyzeManager &DependencyProvider::getPinAnalyzeManager() { return pinAnalyzeManager; }
+AliasManager &DependencyProvider::getAliasManager() { return aliasManager; }
 
 // Shells
 SdCardShell &DependencyProvider::getSdCardShell() { return sdCardShell; }

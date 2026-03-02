@@ -78,6 +78,7 @@ and injecting shared instances of core components
 #include "Managers/UserInputManager.h"
 #include "Managers/PinAnalyzeManager.h"
 #include "Managers/SubGhzAnalyzeManager.h"
+#include "Managers/AliasManager.h"
 #include "Shells/SdCardShell.h"
 #include "Shells/UniversalRemoteShell.h"
 #include "Shells/I2cEepromShell.h"
@@ -192,6 +193,7 @@ public:
     BinaryAnalyzeManager &getBinaryAnalyzeManager();
     SubGhzAnalyzeManager &getSubGhzAnalyzeManager();
     PinAnalyzeManager &getPinAnalyzeManager();
+    AliasManager &getAliasManager();
 
     // Shells
     SdCardShell &getSdCardShell();
@@ -309,6 +311,7 @@ private:
     BinaryAnalyzeManager binaryAnalyzeManager;
     SubGhzAnalyzeManager subGhzAnalyzeManager;
     PinAnalyzeManager pinAnalyzeManager;
+    AliasManager aliasManager;
 
     // Shells
     SdCardShell sdCardShell;
