@@ -66,10 +66,13 @@ void GuideShell::cmdQuickStart() {
     terminalView.println("    mode i2c || ping 0x63 || health 0x63");
     terminalView.println("");
 
-    terminalView.println("Shell menus:");
-    terminalView.println("  Some commands open a sub-menu.");
-    terminalView.println("  Pick an action by index number.");
-    terminalView.println("  Use Exit to return.");
+    terminalView.println("Alias:");
+    terminalView.println("  Create shortcuts for commands.");
+    terminalView.println("  Multiple commands can be chained.");
+    terminalView.println("");
+    terminalView.println("  Example:");
+    terminalView.println("     Type 'alias' to create an alias.");
+    terminalView.println("     ping 0x63 || health 0x63 => check63");
     terminalView.println("");
 
     terminalView.println("Tip:");

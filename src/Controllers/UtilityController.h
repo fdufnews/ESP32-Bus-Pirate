@@ -15,7 +15,9 @@
 #include "Services/I2sService.h"
 #include "Managers/UserInputManager.h"
 #include "Managers/PinAnalyzeManager.h"
+#include "Managers/AliasManager.h"
 #include "Transformers/ArgTransformer.h"
+#include "Transformers/TerminalCommandTransformer.h"
 #include "Shells/SysInfoShell.h"
 #include "Shells/GuideShell.h"
 #include "Shells/HelpShell.h"
@@ -32,7 +34,9 @@ public:
         I2sService& i2sService,
         UserInputManager& userInputManager,
         PinAnalyzeManager& pinAnalyzeManager,
+        AliasManager& aliasManager,
         ArgTransformer& argTransformer,
+        TerminalCommandTransformer& terminalCommandTransformer,
         SysInfoShell& sysInfoShell,
         GuideShell& guideShell,
         HelpShell& helpShell,
@@ -85,6 +89,9 @@ private:
     // Delay command (used for cmd pipeline)
     void handleDelay(const TerminalCommand& cmd);
 
+    // Alias command to create custom shortcuts for commands
+    void handleAlias();
+
     ITerminalView& terminalView;
     IDeviceView& deviceView;
     IInput& terminalInput;
@@ -92,7 +99,9 @@ private:
     I2sService& i2sService;
     UserInputManager& userInputManager;
     PinAnalyzeManager& pinAnalyzeManager;
+    AliasManager& aliasManager;
     ArgTransformer& argTransformer;
+    TerminalCommandTransformer& commandTransformer;
     SysInfoShell& sysInfoShell;
     GuideShell& guideShell;
     HelpShell& helpShell;

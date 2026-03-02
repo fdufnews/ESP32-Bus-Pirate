@@ -2,6 +2,7 @@ static const char* const autoCompleteWords[] = {
 
     // --- General ---
     "help","mode","man","system","logic","analogic","wizard", "hex", "profile",
+    "alias", "listen"
 
     // --- 1WIRE ---
     "scan","ping","sniff","read","write","temp","ibutton","eeprom","config",
@@ -47,8 +48,8 @@ static const char* const autoCompleteWords[] = {
     "play","test",
 
     // --- SUBGHZ ---
-    "sweep","decode","bruteforce","trace","listen","setfrequency",
-    "waterfall",
+    "sweep","decode","bruteforce","trace","setfrequency",
+    "waterfall", "ear",
 
     // --- RFID ---
     "clone","erase",

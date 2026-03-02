@@ -11,7 +11,9 @@ UtilityController::UtilityController(
     I2sService& i2sService,
     UserInputManager& userInputManager,
     PinAnalyzeManager& pinAnalyzeManager,
+    AliasManager& aliasManager,
     ArgTransformer& argTransformer,
+    TerminalCommandTransformer& commandTransformer,
     SysInfoShell& sysInfoShell,
     GuideShell& guideShell,
     HelpShell& helpShell,
@@ -24,6 +26,8 @@ UtilityController::UtilityController(
       i2sService(i2sService),
       userInputManager(userInputManager),
       pinAnalyzeManager(pinAnalyzeManager),
+      aliasManager(aliasManager),
+      commandTransformer(commandTransformer),
       argTransformer(argTransformer),
       sysInfoShell(sysInfoShell),
       guideShell(guideShell),
@@ -48,6 +52,7 @@ void UtilityController::handleCommand(const TerminalCommand& cmd) {
     else if (cmd.getRoot() == "profile")                                         handleProfile();
     else if (cmd.getRoot() == "listen")                                          handleListen(cmd);
     else if (cmd.getRoot() == "delay")                                           handleDelay(cmd);
+    else if (cmd.getRoot() == "alias")                                           handleAlias();
     else {
         // just display commands for the mode without prompting
         helpShell.run(state.getCurrentMode(), false);
@@ -650,6 +655,47 @@ void UtilityController::handleDelay(const TerminalCommand& cmd) {
         remaining -= chunk;
         delay(0); // yield to allow other tasks to run
     }
+}
+
+/*
+Alias
+*/
+void UtilityController::handleAlias() {
+    terminalView.println("");
+    terminalView.println("=== Alias ===");
+    terminalView.println("Create custom shortcuts.");
+    terminalView.println("Simplify frequent commands.");
+    terminalView.println("Group multiple commands to one.\n");
+
+    // Command to alias
+    std::string cmdLine = userInputManager.readString("Command to alias", "");
+    if (cmdLine.empty()) {
+        terminalView.println("Alias: Cancelled, empty command.\n");
+        return;
+    }
+
+    // Name of the alias
+    std::string aliasName = userInputManager.readString("Alias name (single word)", "");
+    if (aliasName.empty()) {
+        terminalView.println("Alias: Cancelled, empty name.\n");
+        return;
+    }
+
+    // Validate alias name
+    if (commandTransformer.isBuiltinCommand(aliasName)) {
+        terminalView.println("\nAlias: Failed, name cannot be a built-in command.\n");
+        return;
+    }
+
+    // Store the alias
+    bool ok = aliasManager.add(aliasName, cmdLine);
+    if (!ok) {
+        size_t limit = aliasManager.sizeMax();
+        terminalView.println("\nAlias: Failed, limited to " + std::to_string(limit) + " aliases.\n");
+        return;
+    }
+
+    terminalView.println("\nAlias: Set, type '" + aliasName + "' to execute it.\n");
 }
 
 /*

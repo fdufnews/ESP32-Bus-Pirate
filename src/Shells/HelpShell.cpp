@@ -104,6 +104,7 @@ void HelpShell::cmdGeneral() {
         "man                  - Show firmware guide",
         "system               - Show system infos",
         "profile              - Save/load pins config",
+        "alias                - Create shortcut",
         "hex [number]         - Convert dec/hex/bin",
         "logic <pin>          - Logic analyzer",
         "analogic <pin>       - Analogic plotter",
