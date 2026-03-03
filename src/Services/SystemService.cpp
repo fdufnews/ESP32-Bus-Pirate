@@ -363,6 +363,18 @@ void SystemService::reboot(bool hard) const {
 }
 
 // -----------------------------
+// Debug
+// -----------------------------
+void SystemService::setDebugOutput(bool enabled) const {
+    Serial.setDebugOutput(enabled);
+    if (enabled) {
+        Serial.setDebugOutput(true);
+    } else {
+        Serial.setDebugOutput(false);
+    }
+}
+
+// -----------------------------
 // Others
 // -----------------------------
 

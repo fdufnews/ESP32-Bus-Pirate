@@ -51,6 +51,9 @@ public:
     // Boot
     void reboot(bool hard = false) const;
 
+    // Debug
+    void setDebugOutput(bool enabled) const;
+
     // Others
     std::string getInfraredBackend() const;
     float getInternalTemperatureC() const;
