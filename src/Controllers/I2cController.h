@@ -119,6 +119,9 @@ private:
     // Discover devices and identify them
     void handleDiscover();
 
+    // Test register read/write
+    void handleRegs(const TerminalCommand& cmd);
+
     // Dump I2C registers content
     void handleDump(const TerminalCommand& cmd);
     void performRegisterRead(uint8_t addr, uint16_t, uint16_t len,

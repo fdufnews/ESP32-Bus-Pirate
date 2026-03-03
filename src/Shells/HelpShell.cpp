@@ -181,6 +181,7 @@ void HelpShell::cmdI2c() {
         "read <addr> [reg]    - Read register",
         "write <a> [r] [val]  - Write register",
         "dump <addr> [len]    - Read all registers",
+        "regs <addr> [len]    - Probe register R/W",
         "glitch <addr>        - Run attack sequence",
         "flood <addr>         - Saturate target I/O",
         "health <addr>        - Perform timing test",
