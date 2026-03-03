@@ -6,6 +6,16 @@
 #include "Models/ByteCode.h"
 #include <SparkFun_External_EEPROM.h>
 
+struct I2cRegProbeResult {
+    bool readable = false;   // readReg(old) ok
+    bool writeOk  = false;   // write(reg,test) ok
+    bool readback = false;   // readReg(new) ok after write
+    bool rwHit    = false;   // (newVal == testVal)
+
+    uint8_t oldVal = 0;
+    uint8_t newVal = 0;
+};
+
 class I2cService {
 public:
     // Base
@@ -20,6 +30,8 @@ public:
     bool isReadableDevice(uint8_t addr, uint8_t startReg);
     bool ping(uint8_t addr, bool sendStop = true, uint32_t* outDtUs = nullptr);
     bool readReg(uint8_t addr, uint8_t reg, uint8_t* outVal, uint32_t* outDtUs = nullptr);
+    bool writeReg(uint8_t addr, uint8_t reg, uint8_t val);
+    bool probeRegRW(uint8_t addr, uint8_t reg, I2cRegProbeResult& out);
 
     // I2C Bit bang
     void i2cBitBangDelay(uint32_t delayUs);

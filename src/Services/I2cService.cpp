@@ -627,6 +627,53 @@ bool I2cService::readReg(uint8_t addr, uint8_t reg, uint8_t* outVal, uint32_t* o
     return ok;
 }
 
+bool I2cService::writeReg(uint8_t addr, uint8_t reg, uint8_t val) {
+    beginTransmission(addr);
+    write(reg);
+    write(val);
+    return (endTransmission(true) == 0);
+}
+
+bool I2cService::probeRegRW(uint8_t addr,
+                            uint8_t reg,
+                            I2cRegProbeResult& out)
+{
+    out = {};
+
+    // Read old value
+    if (!readReg(addr, reg, &out.oldVal, nullptr)) {
+        return false;   // unreadable
+    }
+    out.readable = true;
+
+    // "Random" test value 
+    uint8_t testVal = (uint8_t)(out.oldVal ^ (0xA5u ^ reg));
+    if (testVal == out.oldVal) {
+        testVal ^= 0xFF; // ensure different value
+    }
+
+    // Write test
+    if (!writeReg(addr, reg, testVal)) {
+        return true;    // readable only
+    }
+    out.writeOk = true;
+
+    // Read back
+    if (!readReg(addr, reg, &out.newVal, nullptr)) {
+        (void)writeReg(addr, reg, out.oldVal);
+        return true;
+    }
+    out.readback = true;
+
+    // Restore
+    (void)writeReg(addr, reg, out.oldVal);
+
+    // Writable?
+    out.rwHit = (out.newVal == testVal);
+
+    return true;
+}
+
 bool I2cService::probeReadableReg(uint8_t addr, uint8_t reg) {
     beginTransmission(addr);
     write(reg);
