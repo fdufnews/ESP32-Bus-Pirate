@@ -36,8 +36,9 @@ void SysInfoShell::run() {
             case 5: cmdFS(); break;
             case 6: cmdNVS(); break;
             case 7: cmdNet(); break;
-            case 8: cmdReboot(); break;
-            case 9: // Exit
+            case 8: cmdDebugLogs(); break;
+            case 9: cmdReboot(); break;
+            case 10: // Exit
             default:
                 loop = false;
                 break;
@@ -296,6 +297,12 @@ void SysInfoShell::cmdReboot(bool hard) {
         terminalView.println("\nRebooting, your session will be lost...");
         systemService.reboot(hard);
     }
+}
+
+void SysInfoShell::cmdDebugLogs() {
+    terminalView.println("\n=== Debug Logs ===");
+    systemService.setDebugOutput(true);
+    terminalView.println("Debug output enabled. Logs will now be printed to serial.");
 }
 
 void SysInfoShell::fsListFiles() {

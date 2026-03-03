@@ -27,16 +27,17 @@ public:
 
 private:
     inline static constexpr const char* actions[] = {
-        " 📊 System summary",
-        " 📟 Hardware info",
-        " 📦 Memory",
-        " 📺 Screen",
-        " 🧩 Partitions",
-        " 📁 LittleFS",
-        " 🧰 NVS",
-        " 🌐 Network",
+        "  📊 System summary",
+        "  📟 Hardware info",
+        "  📦 Memory",
+        "  📺 Screen",
+        "  🧩 Partitions",
+        "  📁 LittleFS",
+        "  🧰 NVS",
+        "  🌐 Network",
+        "  🐞 Debug Logs",
         " 🔄 Reboot",
-        "🚪 Exit"
+        " 🚪 Exit"
     };
 
     inline static constexpr size_t actionCount = sizeof(actions) / sizeof(actions[0]);
@@ -79,6 +80,7 @@ private:
     void cmdFSShell();
     void cmdNVS();
     void cmdNet();
+    void cmdDebugLogs();
     void cmdReboot(bool hard = false);
 
     void fsListFiles();
