@@ -212,6 +212,8 @@ void UartController::handleScan() {
         terminalView.println("Too many pins selected, limiting to first 8.");
         selectedPins.resize(8);
     }
+
+    state.setJtagScanPins(selectedPins); //save for later use
     
     // Accumulateur for activity
     std::map<uint8_t, UartService::PinActivity> accum;
