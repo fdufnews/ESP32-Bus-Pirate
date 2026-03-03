@@ -26,10 +26,11 @@ DioController::DioController(
 Entry point to handle a DIO command
 */
 void DioController::handleCommand(const TerminalCommand& cmd) {
-    if (cmd.getRoot() == "sniff") handleSniff(cmd);
+    if (cmd.getRoot() == "sniff" || cmd.getRoot() == "monitor") handleSniff(cmd);
     else if (cmd.getRoot() == "read")   handleReadPin(cmd); 
     else if (cmd.getRoot() == "set")    handleSetPin(cmd);
     else if (cmd.getRoot() == "scan")   handleScan(cmd);
+    else if (cmd.getRoot() == "pins" || cmd.getRoot() == "status")   handlePins(cmd);
     else if (cmd.getRoot() == "pullup") handlePullup(cmd);
     else if (cmd.getRoot() == "pulldown") handlePulldown(cmd);
     else if (cmd.getRoot() == "pwm")    handlePwm(cmd);
@@ -128,6 +129,7 @@ void DioController::handleScan(const TerminalCommand& cmd) {
         pins.resize(8);
     }
 
+
     // Validate
     std::vector<uint8_t> validPins;
     for (uint8_t pin : pins) {
@@ -140,6 +142,8 @@ void DioController::handleScan(const TerminalCommand& cmd) {
         terminalView.println("DIO Scan: No valid pins selected.");
         return;
     }
+
+    state.setJtagScanPins(validPins); //save for later use 
 
     terminalView.println("\nDIO Scan: Detecting activity... Press [ENTER] to stop.\n");
 
@@ -284,6 +288,55 @@ void DioController::handleScan(const TerminalCommand& cmd) {
             }
         }
     }
+}
+
+void DioController::handlePins(const TerminalCommand& cmd) {
+
+    const std::vector<uint8_t> protectedPins = state.getProtectedPins();
+
+    // All GPIO 0 to 48 except protected
+    std::vector<uint8_t> validPins;
+    validPins.reserve(49);
+
+    for (uint8_t pin = 0; pin <= 48; ++pin) {
+        if (std::find(protectedPins.begin(), protectedPins.end(), pin) != protectedPins.end()) {
+            continue;
+        }
+        validPins.push_back(pin);
+    }
+
+    if (validPins.empty()) {
+        terminalView.println("\nDIO Pins: No usable pins (all protected?).\n");
+        return;
+    }
+
+    terminalView.println("\nDIO Pins: Reading state of available GPIOs...\n");
+    terminalView.println("GPIO | PULL   | STATE");
+    terminalView.println("-----+--------+------");
+
+    for (uint8_t pin : validPins) {
+
+        auto pull = pinService.getPullType(pin);
+
+        // PULL 
+        std::string pullStr;
+        if (pull == PinService::PULL_UP)        pullStr = "PULLUP";
+        else if (pull == PinService::PULL_DOWN) pullStr = "PDOWN ";
+        else                                    pullStr = "NOPULL";
+
+        // STATE 
+        int v = pinService.read(pin);
+        std::string stateStr = v ? "HIGH" : "LOW ";
+
+        // GPIO padded
+        std::string gpioStr = std::to_string(pin);
+        if (gpioStr.length() == 1) gpioStr = "  " + gpioStr;
+        else if (gpioStr.length() == 2) gpioStr = " " + gpioStr;
+
+        terminalView.println(" " + gpioStr + " | " + pullStr + " | " + stateStr);
+    }
+
+    terminalView.println("");
 }
 
 /*

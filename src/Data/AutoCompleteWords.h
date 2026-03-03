@@ -23,6 +23,7 @@ static const char* const autoCompleteWords[] = {
 
     // --- DIO ---
     "set","pullup","pulldown","pulse","servo","pwm","toggle","measure","reset",
+    "pins",
 
     // --- LED ---
     "fill","blink","rainbow","chase","cycle","wave","setprotocol",

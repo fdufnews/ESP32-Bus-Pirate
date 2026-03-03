@@ -43,6 +43,9 @@ private:
     // Scan fo rpin changfes and display edge count and rate
     void handleScan(const TerminalCommand& cmd);
 
+    // Display pin configuration and status
+    void handlePins(const TerminalCommand& cmd);
+
     // Enable internal pull-up resistor
     void handlePullup(const TerminalCommand& cmd);
 

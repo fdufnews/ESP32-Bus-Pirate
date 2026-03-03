@@ -234,6 +234,7 @@ void HelpShell::cmdDio() {
     printHeader("DIO");
     static const char* const lines[] = {
         "scan                 - Detect pins activity",
+        "pins                 - Show GPIOs state",
         "sniff <pin>          - Track toggle states",
         "read <pin>           - Get pin state",
         "set <pin> <H/L/I/O>  - Set pin state",
