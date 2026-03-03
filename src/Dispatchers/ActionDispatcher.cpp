@@ -15,6 +15,7 @@ void ActionDispatcher::setup(TerminalTypeEnum terminalType, std::string terminal
     provider.getDeviceView().welcome(terminalType, terminalInfos);
 
     if (terminalType == TerminalTypeEnum::SerialPort) {
+        provider.getSystemService().setDebugOutput(false); // no serial debug logs
         provider.getTerminalView().initialize();
         provider.getTerminalView().waitPress();
         provider.getTerminalInput().waitPress();
