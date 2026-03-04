@@ -2,7 +2,7 @@ static const char* const autoCompleteWords[] = {
 
     // --- General ---
     "help","mode","man","system","logic","analogic","wizard", "hex", "profile",
-    "alias", "listen"
+    "alias", "listen", "sys", "delay", "delayms", "delayus",
 
     // --- 1WIRE ---
     "scan","ping","sniff","read","write","temp","ibutton","eeprom","config",
@@ -39,7 +39,7 @@ static const char* const autoCompleteWords[] = {
 
     // --- WIFI ---
     "connect","probe","deauth","disconnect","ap", "ap spam",
-    "ssh","telnet","nc","nmap","modbus", "repeater",
+    "ssh","telnet","nc","nmap","modbus", "repeater", "extender",
     "http","lookup","webui", "flood",
 
     // --- JTAG ---
