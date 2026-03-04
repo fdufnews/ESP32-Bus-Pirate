@@ -51,7 +51,8 @@ void UtilityController::handleCommand(const TerminalCommand& cmd) {
     else if (cmd.getRoot() == "hex" || cmd.getRoot() == "dec")                   handleHex(cmd);
     else if (cmd.getRoot() == "profile")                                         handleProfile();
     else if (cmd.getRoot() == "listen")                                          handleListen(cmd);
-    else if (cmd.getRoot() == "delay")                                           handleDelay(cmd);
+    else if (cmd.getRoot() == "delay" || cmd.getRoot() == "delayms")             handleDelay(cmd);
+    else if (cmd.getRoot() == "delayus")                                         handleDelay(cmd);
     else if (cmd.getRoot() == "alias")                                           handleAlias();
     else {
         // just display commands for the mode without prompting
@@ -632,28 +633,46 @@ void UtilityController::handleHex(const TerminalCommand& cmd) {
 Delay (cmd pipeline)
 */
 void UtilityController::handleDelay(const TerminalCommand& cmd) {
+
     std::string s = cmd.getSubcommand();
-
     if (s.empty() || !argTransformer.isValidNumber(s)) {
+        terminalView.println("Usage: delay <seconds>");
+        terminalView.println("       delayms <milliseconds>");
+        terminalView.println("       delayus <microseconds>");
         return;
     }
 
-    uint32_t us = argTransformer.parseHexOrDec32(s);
+    uint32_t value = argTransformer.parseHexOrDec32(s);
+    if (value == 0) return;
 
-    // small
-    if (us == 0) return;
-    if (us < 20000) {
-        delayMicroseconds((uint16_t)us);
+    std::string root = cmd.getRoot();
+
+    // Convert to microseconds
+    uint64_t us = value;
+    if (root == "delay") {
+        us = (uint64_t)value * 1000000ULL;
+    } else if (root == "delayms") {
+        us = (uint64_t)value * 1000ULL;
+    } // delayus -> already us
+
+    // Fast path
+    if (us < 20000ULL) {
+        delayMicroseconds((uint32_t)us);
         return;
     }
 
-    // long
-    uint32_t remaining = us;
+    // Long 
+    uint64_t remaining = us;
+    terminalView.println("\nDelaying for " + std::to_string(us / 1000) + " ms... Press [ENTER] to stop.\n");
     while (remaining > 0) {
-        uint32_t chunk = (remaining > 10000) ? 10000 : remaining;
-        delayMicroseconds((uint16_t)chunk);
+
+        // Stop on ENTER 
+        char c = terminalInput.readChar();
+        if (c == '\n' || c == '\r') break;
+
+        uint32_t chunk = (remaining > 10000ULL) ? 10000U : (uint32_t)remaining;
+        delayMicroseconds(chunk);
         remaining -= chunk;
-        delay(0); // yield to allow other tasks to run
     }
 }
 
