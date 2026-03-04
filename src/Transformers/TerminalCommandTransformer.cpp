@@ -119,7 +119,8 @@ bool TerminalCommandTransformer::isGlobalCommand(const TerminalCommand& cmd) con
             root == "logic" || root == "analogic" || root == "P" || root == "p" || 
             root == "system" || root == "sys" || root == "guide" || root == "man" || root == "wizard" ||
             root == "help" || root == "h" || root == "?" || root == "hex" || root == "dec" ||
-            root == "profile" || root == "delay" || root == "listen" || root == "alias";
+            root == "profile" || root == "delay" || root == "delayms" || root == "delayus" || 
+            root == "listen" || root == "alias";
 }
 
 bool TerminalCommandTransformer::isScreenCommand(const TerminalCommand& cmd) const {
@@ -172,10 +173,27 @@ void TerminalCommandTransformer::autoCorrectRoot(TerminalCommand& cmd) const {
     std::string root = cmd.getRoot();
     if (root.empty()) return;
 
+    auto modes = ModeEnumMapper::getProtocols();
+    auto modeNames = ModeEnumMapper::getProtocolNames(modes);
+
     // Avoid correcting very short root
     if (root.size() < 3) return;
 
-    // Exact match?
+    // exact match against mode names
+    for (const auto& s : modeNames) {
+        std::string nameLower = s;
+        for (char& c : nameLower) c = (char)std::tolower((unsigned char)c);
+        
+        // "uart" to "m uart"
+        if (root == nameLower) {
+            // Move typed mode into subcommand, turn root into "m"
+            cmd.setRoot("m");
+            cmd.setSubcommand(nameLower);
+            return;
+        }
+    }
+
+    // Exact match against autoCompleteWords
     for (int i = 0; autoCompleteWords[i] != nullptr; ++i) {
         const char* w = autoCompleteWords[i];
         if (std::strchr(w, ' ') != nullptr) continue; // skip "mode xxx"
