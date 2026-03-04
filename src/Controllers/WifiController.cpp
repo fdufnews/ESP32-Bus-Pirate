@@ -28,7 +28,7 @@ void WifiController::handleCommand(const TerminalCommand &cmd)
     else if (root == "lookup") handleLookup(cmd);
     else if (root == "discovery") handleDiscovery(cmd);
     else if (root == "flood") handleFlood(cmd);
-    else if (root == "repeater") handleRepeater(cmd);  
+    else if (root == "repeater" || root == "extender") handleRepeater(cmd);  
     else if (root == "reset") handleReset();
     else if (root == "deauth") handleDeauth(cmd);
     else handleHelp();
@@ -137,21 +137,8 @@ void WifiController::handleConnect(const TerminalCommand &cmd)
     wifiService.setModeApSta();
     wifiService.connect(ssid, password);
     if (wifiService.isConnected()) {
-        terminalView.println("");
-        terminalView.println("WiFi: Connected to Wi-Fi!");
-        terminalView.println("      Reset the device and choose WiFi Web,");
-        terminalView.println("      if you want to use the web based CLI");
-        terminalView.println("");
-        terminalView.println("[BAREBONE] To launch the WebUI without a screen:");
-        terminalView.println("  1. Reset the device (don’t hold the board button during boot)");
-        terminalView.println("  1. Once the device is powered, you have 3 seconds to press the board button");
-        terminalView.println("  3. The built-in LED shows the following status:");
-        terminalView.println("     • Blue  = No Wi-Fi credentials saved.");
-        terminalView.println("     • White = Connecting in progress");
-        terminalView.println("     • Green = Connected, open the WebUI in a browser");
-        terminalView.println("     • Red   = Connection failed, try connect again with serial");
-        terminalView.println("");
-        terminalView.println("WiFi Web UI: http://" + wifiService.getLocalIP() + " (reset and select WiFi terminal)");
+        terminalView.println("\nWiFi: ✅ Connected successfully.");
+        handleWebUi(cmd);
 
         // Save creds
         nvsService.open();
@@ -776,10 +763,10 @@ void WifiController::handleWebUi(const TerminalCommand &)
     {
         auto ip = wifiService.getLocalIP();
         terminalView.println("");
-        terminalView.println("[⚠️  WARNING] ");
-        terminalView.println("If you're connected via serial,");
-        terminalView.println("the web UI will not be active.");
-        terminalView.println("Reset the device and choose WiFi Web.");
+        terminalView.println(" [⚠️  WARNING] ");
+        terminalView.println(" If you're connected via serial,");
+        terminalView.println(" the web UI will not be active.");
+        terminalView.println(" Reset the device and choose WiFi Web.");
         terminalView.println("");
         terminalView.println("[BAREBONE] To launch the WebUI without a screen:");
         terminalView.println("  1. Reset the device (don’t hold the board button during boot)");
