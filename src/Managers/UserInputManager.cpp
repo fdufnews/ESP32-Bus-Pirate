@@ -24,7 +24,18 @@ std::string UserInputManager::getLine(bool onlyNumber /* = false */) {
         if ((c == '\b' || c == 127) && cursorIndex > 0) {
             cursorIndex--;
             result.erase(cursorIndex, 1);
-            terminalView.print("\b \b");
+
+            // move left one on screen
+            terminalView.print("\x1B[D");
+
+            // redraw tail + clear leftover
+            terminalView.print(result.substr(cursorIndex));
+            terminalView.print(" ");
+
+            // move cursor back
+            size_t moveLeft = (result.size() - cursorIndex) + 1;
+            for (size_t i = 0; i < moveLeft; i++) terminalView.print("\x1B[D");
+
             continue;
         }
 
@@ -65,8 +76,17 @@ std::string UserInputManager::getLine(bool onlyNumber /* = false */) {
         // Printable
         if (isprint(c)) {
             result.insert(cursorIndex, 1, c);
+
+            // new char printed, then reprint the rest
+            terminalView.print(result.substr(cursorIndex));
+
+            // move cursor back to correct position
+            size_t moveLeft = result.size() - cursorIndex - 1;
+            for (size_t i = 0; i < moveLeft; i++) {
+                terminalView.print("\x1B[D");
+            }
+
             cursorIndex++;
-            terminalView.print(std::string(1, c));
         }
     }
 
@@ -309,19 +329,16 @@ uint8_t UserInputManager::readModeNumber() {
             terminalView.print(std::string(1, CARDPUTER_SPECIAL_ARROW_UP));
             continue;
         }
-
         if (c == CARDPUTER_SPECIAL_ARROW_DOWN) {
             terminalView.print(std::string(1, CARDPUTER_SPECIAL_ARROW_DOWN));
             continue;
         }
 
-        // Enter
         if (c == '\r' || c == '\n') {
             terminalView.println("");
             break;
         }
 
-        // Backspace
         if ((c == '\b' || c == 127) && cursorIndex > 0) {
             cursorIndex--;
             inputDigit.erase(cursorIndex, 1);
@@ -329,8 +346,8 @@ uint8_t UserInputManager::readModeNumber() {
             continue;
         }
 
-        // Only number
-        if (std::isdigit(c)) {
+        // Only digits
+        if (std::isdigit((unsigned char)c)) {
             inputDigit.insert(cursorIndex, 1, c);
             cursorIndex++;
             terminalView.print(std::string(1, c));
@@ -338,10 +355,20 @@ uint8_t UserInputManager::readModeNumber() {
     }
 
     if (inputDigit.empty()) {
-        return -1;
+        return 0xFF; // invalid / none
     }
 
-    return std::stoi(inputDigit);
+    // Parse as uint8 safely 
+    const char* s = inputDigit.c_str();
+    char* end = nullptr;
+    errno = 0;
+    unsigned long v = strtoul(s, &end, 10);
+
+    if (end == s || *end != '\0') return 0xFF;
+    if (errno == ERANGE) return 0xFF;
+    if (v > 255UL) return 0xFF;
+
+    return (uint8_t)v;
 }
 
 uint8_t UserInputManager::readValidatedPinNumber(const std::string& label, uint8_t def, uint8_t min, uint8_t max, const std::vector<uint8_t>& forbiddenPins) {
@@ -503,15 +530,25 @@ uint16_t UserInputManager::readValidatedCanId(const std::string& label, uint16_t
         }
 
         // Convert
-        uint16_t id = std::stoul(input, nullptr, 16);
+        const char* s = input.c_str();
+        char* end = nullptr;
+        errno = 0;
+        unsigned long v = strtoul(s, &end, 16);
 
-        // Check max value
-        if (id > 0x7FF) {
+        if (end == s || *end != '\0') {
+            terminalView.println("❌ Invalid value.");
+            continue;
+        }
+        if (errno == ERANGE) {
+            terminalView.println("❌ Value too large.");
+            continue;
+        }
+        if (v > 0x7FFUL) {
             terminalView.println("❌ Value exceeds standard 11-bit CAN ID (max 0x7FF).");
             continue;
         }
 
-        return id;
+        return (uint16_t)v;
     }
 }
 
@@ -629,14 +666,23 @@ float UserInputManager::readValidatedFloat(const std::string& label,
         if (input.empty()) return def;
 
         // Remove spaces
-        input.erase(std::remove_if(input.begin(), input.end(), ::isspace), input.end());
+        input.erase(std::remove_if(input.begin(), input.end(),
+                    [](unsigned char c){ return std::isspace(c); }), input.end());
 
-        try {
-            float v = std::stof(input);
-            if (v >= min && v <= max) return v;
-        } catch (...) {
-            // fallthrough
+        const char* s = input.c_str();
+        char* end = nullptr;
+
+        errno = 0;
+        float v = strtof(s, &end);
+
+        // must fully consume + no overflow
+        if (end == s || *end != '\0' || errno == ERANGE) {
+            terminalView.println("Invalid input. Must be " + std::to_string(min) + " .. " + std::to_string(max));
+            continue;
         }
+
+        if (v >= min && v <= max) return v;
+
         terminalView.println("Invalid input. Must be " + std::to_string(min) + " .. " + std::to_string(max));
     }
 }

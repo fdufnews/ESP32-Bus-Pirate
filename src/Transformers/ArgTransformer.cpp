@@ -204,23 +204,28 @@ std::vector<std::string> ArgTransformer::splitArgs(const std::string& input) {
 }
 
 bool ArgTransformer::parseInt(const std::string& input, int& output) {
-    const char* str = input.c_str();
-    char* end = nullptr;
+    if (input.empty()) return false;
+
+    std::string s = input;
     int base = 10;
 
-    if (input.rfind("0x", 0) == 0 || input.rfind("0X", 0) == 0) {
+    if (s.rfind("0x", 0) == 0 || s.rfind("0X", 0) == 0) {
         base = 16;
-        str += 2;
-    } else if (!input.empty() && (input.back() == 'h' || input.back() == 'H')) {
+    } else if (!s.empty() && (s.back() == 'h' || s.back() == 'H')) {
         base = 16;
-        std::string trimmed = input.substr(0, input.size() - 1);
-        str = trimmed.c_str();
+        s.pop_back();
+        if (s.empty()) return false;
     }
 
-    long result = strtol(str, &end, base);
-    if (*end != '\0') return false; // invalid characters found
+    const char* p = s.c_str();
+    char* end = nullptr;
 
-    output = static_cast<int>(result);
+    errno = 0;
+    long v = strtol(p, &end, base);
+    if (end == p || *end != '\0') return false;
+    if (errno == ERANGE) return false;
+
+    output = (int)v;
     return true;
 }
 
@@ -283,18 +288,74 @@ bool ArgTransformer::isValidSignedNumber(const std::string& input) {
 }
 
 uint8_t ArgTransformer::toUint8(const std::string& input) {
-    return static_cast<uint8_t>(std::stoi(input));
+    if (input.empty()) return 0;
+
+    const char* s = input.c_str();
+    char* end = nullptr;
+
+    // refuse leading sign for uint8
+    if (*s == '-' || *s == '+') return 0;
+
+    int base = 10;
+    if (input.size() > 2 && s[0] == '0' && (s[1] == 'x' || s[1] == 'X')) {
+        base = 16;
+    }
+
+    errno = 0;
+    unsigned long v = strtoul(s, &end, base);
+    if (end == s || *end != '\0') return 0;     // non-numeric tail
+    if (errno == ERANGE) return 255;              // overflow
+    if (v > 255UL) return 255;                    // clamp policy: reject -> 0
+    return (uint8_t)v;
 }
 
 int8_t ArgTransformer::toClampedInt8(const std::string& input) {
-    int value = std::stoi(input);
-    if (value < -127) value = -127;
-    if (value > 127) value = 127;
-    return static_cast<int8_t>(value);
+    if (input.empty()) return 0;
+
+    const char* s = input.c_str();
+    char* end = nullptr;
+
+    int base = 10;
+    size_t start = 0;
+    if (s[0] == '+' || s[0] == '-') start = 1;
+
+    if (input.size() > start + 2 && input[start] == '0' && (input[start+1] == 'x' || input[start+1] == 'X')) {
+        base = 16;
+    }
+
+    errno = 0;
+    long v = strtol(s, &end, base);
+    if (end == s || *end != '\0') return 0;
+    if (errno == ERANGE) {
+        // out of range -> saturate
+        return (s[0] == '-') ? (int8_t)-127 : (int8_t)127;
+    }
+
+    if (v < -127L) v = -127L;
+    if (v > 127L)  v = 127L;
+    return (int8_t)v;
 }
 
 uint32_t ArgTransformer::toUint32(const std::string& input) {
-    return static_cast<uint32_t>(std::stoul(input));
+    if (input.empty()) return 0;
+
+    const char* s = input.c_str();
+    char* end = nullptr;
+
+    // refuse sign
+    if (*s == '-' || *s == '+') return 0;
+
+    int base = 10;
+    if (input.size() > 2 && s[0] == '0' && (s[1] == 'x' || s[1] == 'X')) base = 16;
+
+    errno = 0;
+    unsigned long v = strtoul(s, &end, base);
+    if (end == s || *end != '\0') return 0;
+    if (errno == ERANGE) return 0;
+
+    if (v > 0xFFFFFFFFUL) return 0;
+
+    return (uint32_t)v;
 }
 
 std::string ArgTransformer::toLower(const std::string& input) {
