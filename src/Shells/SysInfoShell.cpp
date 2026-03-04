@@ -201,12 +201,12 @@ void SysInfoShell::cmdFS() {
         terminalView.println("Used   : " + std::to_string(used  / 1024) + " KB");
         terminalView.println("Free   : " + std::to_string(freeB / 1024) + " KB");
         terminalView.println("Files  : " + std::to_string(fileCount));
-        terminalView.println("");
         
         if (fileCount == 0) {
             return;
         }
-
+        
+        terminalView.println("");
         auto confirm = userInputManager.readYesNo("Enter LittleFS manager?", false);
         if (confirm) {
             cmdFSShell();
@@ -301,6 +301,11 @@ void SysInfoShell::cmdReboot(bool hard) {
 
 void SysInfoShell::cmdDebugLogs() {
     terminalView.println("\n=== Debug Logs ===");
+    terminalView.println("This will enable debug output to serial,");
+    terminalView.println("allow you to see the ESP debug logs.\n");
+
+    auto confirm = userInputManager.readYesNo("Enable debug output to serial?", false);
+    if (!confirm) return;
     systemService.setDebugOutput(true);
     terminalView.println("Debug output enabled. Logs will now be printed to serial.");
 }
@@ -315,7 +320,7 @@ void SysInfoShell::fsListFiles() {
     }
 
     if (files.empty()) {
-        terminalView.println("No files in LittleFS.");
+        terminalView.println("\nNo files in LittleFS.");
         return;
     }
 
@@ -339,7 +344,7 @@ void SysInfoShell::fsDeleteFile() {
     }
 
     if (files.empty()) {
-        terminalView.println("No files to delete.");
+        terminalView.println("\nNo files to delete.");
         return;
     }
 
@@ -399,7 +404,7 @@ void SysInfoShell::fsDeleteAll() {
     }
 
     if (files.empty()) {
-        terminalView.println("No files to delete.");
+        terminalView.println("\nNo files to delete.");
         return;
     }
 
