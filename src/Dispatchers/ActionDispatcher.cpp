@@ -103,10 +103,6 @@ void ActionDispatcher::dispatchCommand(const TerminalCommand& cmd) {
     // Mode specific command
     switch (state.getCurrentMode()) {
         case ModeEnum::HIZ:
-            if (state.getTerminalMode() == TerminalTypeEnum::Standalone) {
-                provider.getTerminalView().println("Type 'mode' to select a mode.");
-                return;
-            }
             provider.getTerminalView().println("Type 'help' or 'mode'");
             break;
         case ModeEnum::OneWire:
@@ -517,15 +513,19 @@ bool ActionDispatcher::handleBackspace(char c, std::string& inputLine, size_t& c
 User Action: Printable
 */
 bool ActionDispatcher::handlePrintableChar(char c, std::string& inputLine, size_t& cursorIndex, const std::string& mode) {
-    if (!isprint(c)) return false;
+    if (!std::isprint((unsigned char)c)) return false;
+
+    if (inputLine.size() >= MAX_ALLOWED_COMMAND_LENGTH) {
+        return true; // ignore extra chars
+    }
 
     inputLine.insert(cursorIndex, 1, c);
     cursorIndex++;
 
     provider.getTerminalView().print("\r" + mode + "> " + inputLine + "\033[K");
 
-    int moveBack = inputLine.length() - cursorIndex;
-    for (int i = 0; i < moveBack; ++i) {
+    size_t moveBack = inputLine.length() - cursorIndex;
+    for (size_t i = 0; i < moveBack; ++i) {
         provider.getTerminalView().print("\x1B[D");
     }
 

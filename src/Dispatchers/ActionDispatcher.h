@@ -26,6 +26,7 @@ public:
     void dispatch(const std::string& raw);
 
 private:
+    size_t MAX_ALLOWED_COMMAND_LENGTH = 512;
     DependencyProvider& provider;
     GlobalState& state = GlobalState::getInstance();
 
