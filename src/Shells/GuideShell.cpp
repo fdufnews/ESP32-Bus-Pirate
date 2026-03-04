@@ -61,9 +61,10 @@ void GuideShell::cmdQuickStart() {
     terminalView.println("Pipeline commands:");
     terminalView.println("  Chain multiple commands with '||'.");
     terminalView.println("");
-    terminalView.println("  Example: (delay us)");
-    terminalView.println("    set 1 H || delay 1000 || set 1 L");
+    terminalView.println("  Example:");
+    terminalView.println("    set 1 H || delayms 1 || set 1 L");
     terminalView.println("    mode i2c || ping 0x63 || health 0x63");
+    terminalView.println("    keyboard \\t || delay 1 || keyboard \\n");
     terminalView.println("");
 
     terminalView.println("Alias:");
