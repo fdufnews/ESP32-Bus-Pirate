@@ -6,14 +6,14 @@ SpiFlashShell::SpiFlashShell(
     IInput& input,
     ArgTransformer& argTransformer,
     UserInputManager& userInputManager,
-    BinaryAnalyzeManager& binaryAnalyzeManager
+    BinaryAnalyzer& binaryAnalyzer
 )
     : spiService(spiService),
       terminalView(view),
       terminalInput(input),
       argTransformer(argTransformer),
       userInputManager(userInputManager),
-      binaryAnalyzeManager(binaryAnalyzeManager)
+      binaryAnalyzer(binaryAnalyzer)
 {
     // Nothing
 }
@@ -116,7 +116,7 @@ void SpiFlashShell::cmdAnalyze() {
     uint32_t flashSize = chip ? chip->capacityBytes : spiService.calculateFlashCapacity(id[2]);
 
     // Analyze
-    BinaryAnalyzeManager::AnalysisResult result = binaryAnalyzeManager.analyze(
+    BinaryAnalyzer::AnalysisResult result = binaryAnalyzer.analyze(
         0,
         flashSize,
         [&](uint32_t addr, uint8_t* buf, uint32_t len) {
@@ -125,7 +125,7 @@ void SpiFlashShell::cmdAnalyze() {
     );
 
     // Calculate Summary
-    auto summary = binaryAnalyzeManager.formatAnalysis(result);
+    auto summary = binaryAnalyzer.formatAnalysis(result);
     terminalView.println(summary);
 
     // Secrets

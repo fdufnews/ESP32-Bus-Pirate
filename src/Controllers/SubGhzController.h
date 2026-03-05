@@ -13,7 +13,7 @@
 #include "Transformers/ArgTransformer.h"
 #include "Transformers/SubGhzTransformer.h"
 #include "Managers/UserInputManager.h"
-#include "Managers/SubGhzAnalyzeManager.h"
+#include "Analyzers/SubGhzAnalyzer.h"
 #include "States/GlobalState.h"
 #include "Services/SubGhzService.h"
 #include "Services/PinService.h"
@@ -34,7 +34,7 @@ public:
                      ArgTransformer& argTransformer,
                      SubGhzTransformer& subGhzTransformer,
                      UserInputManager& userInputManager,
-                     SubGhzAnalyzeManager& subGhzAnalyzeManager,
+                     SubGhzAnalyzer& subGhzAnalyzer,
                      HelpShell& helpShell)
     : terminalView(terminalView),
       terminalInput(terminalInput),
@@ -46,7 +46,7 @@ public:
       argTransformer(argTransformer),
       subGhzTransformer(subGhzTransformer),
       userInputManager(userInputManager),
-      subGhzAnalyzeManager(subGhzAnalyzeManager),
+      subGhzAnalyzer(subGhzAnalyzer),
       helpShell(helpShell) {}
 
     // Entry point for subghz commands
@@ -124,7 +124,7 @@ private:
     ArgTransformer& argTransformer;
     SubGhzTransformer& subGhzTransformer;
     UserInputManager& userInputManager;
-    SubGhzAnalyzeManager& subGhzAnalyzeManager;
+    SubGhzAnalyzer& subGhzAnalyzer;
     HelpShell& helpShell;
     GlobalState& state = GlobalState::getInstance();
 

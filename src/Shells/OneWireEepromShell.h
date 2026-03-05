@@ -5,7 +5,7 @@
 #include "Interfaces/IInput.h"
 #include "Transformers/ArgTransformer.h"
 #include "Managers/UserInputManager.h"
-#include "Managers/BinaryAnalyzeManager.h"
+#include "Analyzers/BinaryAnalyzer.h"
 
 class OneWireEepromShell {
 public:
@@ -15,7 +15,7 @@ public:
         OneWireService& oneWireService,
         ArgTransformer& argTransformer,
         UserInputManager& userInputManager,
-        BinaryAnalyzeManager& binaryAnalyzeManager
+        BinaryAnalyzer& binaryAnalyzer
     );
 
     void run();
@@ -33,7 +33,7 @@ private:
     IInput& terminalInput;
     ArgTransformer& argTransformer;
     UserInputManager& userInputManager;
-    BinaryAnalyzeManager& binaryAnalyzeManager;
+    BinaryAnalyzer& binaryAnalyzer;
 
     inline static constexpr const char* actions[] = {
         " 🔍 Probe",

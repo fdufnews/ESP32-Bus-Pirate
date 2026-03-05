@@ -5,7 +5,7 @@
 #include "Interfaces/IInput.h"
 #include "Transformers/ArgTransformer.h"
 #include "Managers/UserInputManager.h"
-#include "Managers/BinaryAnalyzeManager.h"
+#include "Analyzers/BinaryAnalyzer.h"
 #include "States/GlobalState.h"
 
 class SpiEepromShell {
@@ -16,7 +16,7 @@ public:
         IInput& input,
         ArgTransformer& argTransformer,
         UserInputManager& userInputManager,
-        BinaryAnalyzeManager& binaryAnalyzeManager
+        BinaryAnalyzer& binaryAnalyzer
     );
 
     void run();
@@ -27,7 +27,7 @@ private:
     IInput& terminalInput;
     ArgTransformer& argTransformer;
     UserInputManager& userInputManager;
-    BinaryAnalyzeManager& binaryAnalyzeManager;
+    BinaryAnalyzer& binaryAnalyzer;
     GlobalState& state = GlobalState::getInstance();
     uint32_t eepromSize = 8192; // default
     uint16_t pageSize = 64; // default

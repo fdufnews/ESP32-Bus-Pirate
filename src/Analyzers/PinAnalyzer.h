@@ -7,7 +7,7 @@
 #include <functional>
 #include "Services/PinService.h"
 
-class PinAnalyzeManager {
+class PinAnalyzer {
 public:
     enum class SignalKind {
         Idle,
@@ -54,7 +54,7 @@ public:
     };
 
 public:
-    explicit PinAnalyzeManager(PinService& pinService);
+    explicit PinAnalyzer(PinService& pinService);
 
     void begin(uint8_t pin);
     void end();

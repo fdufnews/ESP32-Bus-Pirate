@@ -74,10 +74,10 @@ and injecting shared instances of core components
 #include "Transformers/AtTransformer.h"
 #include "Transformers/PinoutTransformer.h"
 #include "Managers/CommandHistoryManager.h"
-#include "Managers/BinaryAnalyzeManager.h"
+#include "Analyzers/BinaryAnalyzer.h"
 #include "Managers/UserInputManager.h"
-#include "Managers/PinAnalyzeManager.h"
-#include "Managers/SubGhzAnalyzeManager.h"
+#include "Analyzers/PinAnalyzer.h"
+#include "Analyzers/SubGhzAnalyzer.h"
 #include "Managers/AliasManager.h"
 #include "Shells/SdCardShell.h"
 #include "Shells/UniversalRemoteShell.h"
@@ -190,9 +190,9 @@ public:
     // Managers
     CommandHistoryManager &getCommandHistoryManager();
     UserInputManager &getUserInputManager();
-    BinaryAnalyzeManager &getBinaryAnalyzeManager();
-    SubGhzAnalyzeManager &getSubGhzAnalyzeManager();
-    PinAnalyzeManager &getPinAnalyzeManager();
+    BinaryAnalyzer &getBinaryAnalyzer();
+    SubGhzAnalyzer &getSubGhzAnalyzer();
+    PinAnalyzer &getPinAnalyzer();
     AliasManager &getAliasManager();
 
     // Shells
@@ -308,9 +308,9 @@ private:
     // Managers
     CommandHistoryManager commandHistoryManager;
     UserInputManager userInputManager;
-    BinaryAnalyzeManager binaryAnalyzeManager;
-    SubGhzAnalyzeManager subGhzAnalyzeManager;
-    PinAnalyzeManager pinAnalyzeManager;
+    BinaryAnalyzer binaryAnalyzer;
+    SubGhzAnalyzer subGhzAnalyzer;
+    PinAnalyzer pinAnalyzer;
     AliasManager aliasManager;
 
     // Shells

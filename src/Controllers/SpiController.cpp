@@ -5,7 +5,7 @@ Constructor
 */
 SpiController::SpiController(ITerminalView& terminalView, IInput& terminalInput, 
                              SpiService& spiService, SdService& sdService, ArgTransformer& argTransformer,
-                             UserInputManager& userInputManager, BinaryAnalyzeManager& binaryAnalyzeManager,
+                             UserInputManager& userInputManager, BinaryAnalyzer& binaryAnalyzer,
                              SdCardShell& sdCardShell, SpiFlashShell& spiFlashShell, SpiEepromShell& spiEepromShell,
                              HelpShell& helpShell)
     : terminalView(terminalView),
@@ -14,7 +14,7 @@ SpiController::SpiController(ITerminalView& terminalView, IInput& terminalInput,
       sdService(sdService),
       argTransformer(argTransformer),
       userInputManager(userInputManager),
-      binaryAnalyzeManager(binaryAnalyzeManager),
+      binaryAnalyzer(binaryAnalyzer),
       sdCardShell(sdCardShell),
       spiFlashShell(spiFlashShell),
       spiEepromShell(spiEepromShell),

@@ -53,25 +53,25 @@ DependencyProvider::DependencyProvider(ITerminalView &terminalView, IDeviceView 
 
       // Managers
       commandHistoryManager(),
-      binaryAnalyzeManager(terminalView, terminalInput),
+      binaryAnalyzer(terminalView, terminalInput),
       userInputManager(terminalView, terminalInput, argTransformer),
-      subGhzAnalyzeManager(),
-      pinAnalyzeManager(pinService),
+      subGhzAnalyzer(),
+      pinAnalyzer(pinService),
       aliasManager(),
 
       // Shells
       sdCardShell(sdService, terminalView, terminalInput, argTransformer, userInputManager),
-      spiFlashShell(spiService, terminalView, terminalInput, argTransformer, userInputManager, binaryAnalyzeManager),
-      spiEepromShell(spiService, terminalView, terminalInput, argTransformer, userInputManager, binaryAnalyzeManager),
+      spiFlashShell(spiService, terminalView, terminalInput, argTransformer, userInputManager, binaryAnalyzer),
+      spiEepromShell(spiService, terminalView, terminalInput, argTransformer, userInputManager, binaryAnalyzer),
       smartCardShell(twoWireService, terminalView, terminalInput, argTransformer, userInputManager),
       universalRemoteShell(terminalView, terminalInput, infraredService, argTransformer, userInputManager),
       ibuttonShell(terminalView, terminalInput, userInputManager, argTransformer, oneWireService),
-      i2cEepromShell(terminalView, terminalInput, i2cService, argTransformer, userInputManager, binaryAnalyzeManager),
+      i2cEepromShell(terminalView, terminalInput, i2cService, argTransformer, userInputManager, binaryAnalyzer),
       uartAtShell(terminalView, terminalInput, userInputManager, argTransformer, uartService),
       threeWireEepromShell(terminalView, terminalInput, userInputManager, threeWireService, argTransformer),
       sysInfoShell(terminalView, terminalInput, deviceView, userInputManager, argTransformer, systemService, littleFsService, wifiService),
       modbusShell(terminalView, terminalInput, argTransformer, userInputManager, modbusService),
-      oneWireEepromShell(terminalView, terminalInput, oneWireService, argTransformer, userInputManager, binaryAnalyzeManager),
+      oneWireEepromShell(terminalView, terminalInput, oneWireService, argTransformer, userInputManager, binaryAnalyzer),
       guideShell(terminalView, terminalInput, userInputManager),
       helpShell(terminalView, terminalInput, userInputManager),
       uartEmulationShell(terminalView, terminalInput, uartService, argTransformer, userInputManager),
@@ -91,9 +91,9 @@ DependencyProvider::DependencyProvider(ITerminalView &terminalView, IDeviceView 
       i2cController(terminalView, terminalInput, i2cService, argTransformer, userInputManager, i2cEepromShell, helpShell),
       oneWireController(terminalView, terminalInput, oneWireService, argTransformer, userInputManager, ibuttonShell, oneWireEepromShell, helpShell),
       infraredController(terminalView, terminalInput, deviceView, infraredService, littleFsService, i2cService, argTransformer, infraredTransformer, userInputManager, universalRemoteShell, helpShell),
-      utilityController(terminalView, deviceView, terminalInput, pinService, i2sService, userInputManager, pinAnalyzeManager, aliasManager, argTransformer, commandTransformer, sysInfoShell, guideShell, helpShell, profileShell),
+      utilityController(terminalView, deviceView, terminalInput, pinService, i2sService, userInputManager, pinAnalyzer, aliasManager, argTransformer, commandTransformer, sysInfoShell, guideShell, helpShell, profileShell),
       hdUartController(terminalView, terminalInput, deviceInput, hdUartService, uartService, argTransformer, userInputManager, helpShell),
-      spiController(terminalView, terminalInput, spiService, sdService, argTransformer, userInputManager, binaryAnalyzeManager, sdCardShell, spiFlashShell, spiEepromShell, helpShell),
+      spiController(terminalView, terminalInput, spiService, sdService, argTransformer, userInputManager, binaryAnalyzer, sdCardShell, spiFlashShell, spiEepromShell, helpShell),
       jtagController(terminalView, terminalInput, jtagService, userInputManager, helpShell),
       twoWireController(terminalView, terminalInput, userInputManager, twoWireService, smartCardShell, helpShell),
       threeWireController(terminalView, terminalInput, userInputManager, threeWireService, argTransformer, threeWireEepromShell, helpShell),
@@ -103,7 +103,7 @@ DependencyProvider::DependencyProvider(ITerminalView &terminalView, IDeviceView 
       i2sController(terminalView, terminalInput, i2sService, argTransformer, userInputManager, helpShell),
       wifiController(terminalView, deviceView, terminalInput, deviceInput, wifiService, wifiScannerService, ethernetService, sshService, netcatService, nmapService, icmpService, nvsService, httpService, telnetService, argTransformer, jsonTransformer, userInputManager, modbusShell, helpShell),
       canController(terminalView, terminalInput, userInputManager, canService, argTransformer, helpShell),
-      subGhzController(terminalView, terminalInput, deviceView, subGhzService, pinService, i2sService, littleFsService, argTransformer, subGhzTransformer, userInputManager, subGhzAnalyzeManager, helpShell),
+      subGhzController(terminalView, terminalInput, deviceView, subGhzService, pinService, i2sService, littleFsService, argTransformer, subGhzTransformer, userInputManager, subGhzAnalyzer, helpShell),
       rfidController(terminalView, terminalInput, rfidService, userInputManager, argTransformer, helpShell),
       rf24Controller(terminalView, terminalInput, deviceView, rf24Service, pinService, argTransformer, userInputManager, helpShell),
       ethernetController(terminalView, deviceView, terminalInput, deviceInput, wifiService, wifiScannerService, ethernetService, sshService, netcatService, nmapService, icmpService, nvsService, httpService, telnetService, argTransformer, jsonTransformer, userInputManager, modbusShell, helpShell),
@@ -189,9 +189,9 @@ PinoutTransformer &DependencyProvider::getPinoutTransformer() { return pinoutTra
 // Managers
 CommandHistoryManager &DependencyProvider::getCommandHistoryManager() { return commandHistoryManager; }
 UserInputManager &DependencyProvider::getUserInputManager() { return userInputManager; }
-BinaryAnalyzeManager &DependencyProvider::getBinaryAnalyzeManager() { return binaryAnalyzeManager; }
-SubGhzAnalyzeManager &DependencyProvider::getSubGhzAnalyzeManager() { return subGhzAnalyzeManager; }
-PinAnalyzeManager &DependencyProvider::getPinAnalyzeManager() { return pinAnalyzeManager; }
+BinaryAnalyzer &DependencyProvider::getBinaryAnalyzer() { return binaryAnalyzer; }
+SubGhzAnalyzer &DependencyProvider::getSubGhzAnalyzer() { return subGhzAnalyzer; }
+PinAnalyzer &DependencyProvider::getPinAnalyzer() { return pinAnalyzer; }
 AliasManager &DependencyProvider::getAliasManager() { return aliasManager; }
 
 // Shells

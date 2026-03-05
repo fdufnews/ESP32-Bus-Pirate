@@ -1,12 +1,12 @@
-#include "PinAnalyzeManager.h"
+#include "PinAnalyzer.h"
 #include <algorithm>
 #include <sstream>
 #include <cmath>
 
-PinAnalyzeManager::PinAnalyzeManager(PinService& pinService)
+PinAnalyzer::PinAnalyzer(PinService& pinService)
 : pinService(pinService) {}
 
-void PinAnalyzeManager::begin(uint8_t pin_) {
+void PinAnalyzer::begin(uint8_t pin_) {
     end(); // clean up if rebeginning
     pulseRing = new uint32_t[PULSE_RING];
     riseUs    = new uint32_t[RISE_RING];
@@ -41,7 +41,7 @@ void PinAnalyzeManager::begin(uint8_t pin_) {
     lastHighPulseUs = 0;
 }
 
-void PinAnalyzeManager::end() {
+void PinAnalyzer::end() {
     if (pulseRing) {
         delete[] pulseRing;
         pulseRing = nullptr;
@@ -53,17 +53,17 @@ void PinAnalyzeManager::end() {
     }
 }
 
-bool PinAnalyzeManager::shouldReport(unsigned long nowMs) const {
+bool PinAnalyzer::shouldReport(unsigned long nowMs) const {
     return (nowMs - windowStartMs) >= ANALYZE_DURATION_MS;
 }
 
-void PinAnalyzeManager::sample() {
+void PinAnalyzer::sample() {
     bool v = pinService.read(pin);
     if (v == lastLevel) return;
     onEdge(v, micros());
 }
 
-void PinAnalyzeManager::onEdge(bool newLevel, uint32_t nowUs) {
+void PinAnalyzer::onEdge(bool newLevel, uint32_t nowUs) {
     uint32_t dt = nowUs - lastChangeUs;
 
     // Accumulate time spent in last level
@@ -111,7 +111,7 @@ void PinAnalyzeManager::onEdge(bool newLevel, uint32_t nowUs) {
     lastChangeUs = nowUs;
 }
 
-void PinAnalyzeManager::closeTail(uint32_t nowUs) {
+void PinAnalyzer::closeTail(uint32_t nowUs) {
     uint32_t dt = nowUs - lastChangeUs;
     if (lastLevel) highUs += dt;
     else           lowUs  += dt;
@@ -120,7 +120,7 @@ void PinAnalyzeManager::closeTail(uint32_t nowUs) {
     lastChangeUs = nowUs;
 }
 
-void PinAnalyzeManager::resetWindow() {
+void PinAnalyzer::resetWindow() {
     // Start a fresh window from current state
     windowStartMs = millis();
     lastChangeUs = micros();
@@ -147,7 +147,7 @@ void PinAnalyzeManager::resetWindow() {
     lastHighPulseUs = 0;
 }
 
-void PinAnalyzeManager::collectPulses(std::vector<uint32_t>& out) const {
+void PinAnalyzer::collectPulses(std::vector<uint32_t>& out) const {
     out.clear();
     out.reserve(pulseCount);
 
@@ -161,7 +161,7 @@ void PinAnalyzeManager::collectPulses(std::vector<uint32_t>& out) const {
     }
 }
 
-void PinAnalyzeManager::collectRisePeriods(std::vector<uint32_t>& outPeriods) const {
+void PinAnalyzer::collectRisePeriods(std::vector<uint32_t>& outPeriods) const {
     outPeriods.clear();
     if (riseCount < 2) return;
 
@@ -178,14 +178,14 @@ void PinAnalyzeManager::collectRisePeriods(std::vector<uint32_t>& outPeriods) co
     }
 }
 
-void PinAnalyzeManager::collectHighPulses(std::vector<uint32_t>& outHighPulses) const {
+void PinAnalyzer::collectHighPulses(std::vector<uint32_t>& outHighPulses) const {
     // We don’t store a ring of highs here to keep it light;
     // Instead, we infer from pulse distribution + duty + min/max.
     // If you want, we can store high pulse widths on each falling edge.
     outHighPulses.clear();
 }
 
-uint32_t PinAnalyzeManager::medianOf(std::vector<uint32_t>& v) {
+uint32_t PinAnalyzer::medianOf(std::vector<uint32_t>& v) {
     if (v.empty()) return 0;
     std::sort(v.begin(), v.end());
     size_t n = v.size();
@@ -193,7 +193,7 @@ uint32_t PinAnalyzeManager::medianOf(std::vector<uint32_t>& v) {
     return (uint32_t)((v[n/2 - 1] + v[n/2]) / 2);
 }
 
-uint32_t PinAnalyzeManager::estimateBaseT(const std::vector<uint32_t>& pulses) {
+uint32_t PinAnalyzer::estimateBaseT(const std::vector<uint32_t>& pulses) {
     if (pulses.size() < 10) return 0;
 
     // Take short pulses as timing base candidate
@@ -204,7 +204,7 @@ uint32_t PinAnalyzeManager::estimateBaseT(const std::vector<uint32_t>& pulses) {
     return medianOf(v);
 }
 
-float PinAnalyzeManager::jitterScorePct(const std::vector<uint32_t>& pulses, uint32_t ref) {
+float PinAnalyzer::jitterScorePct(const std::vector<uint32_t>& pulses, uint32_t ref) {
     if (pulses.size() < 10 || ref == 0) return 100.f;
 
     // MAD around ref
@@ -221,13 +221,13 @@ float PinAnalyzeManager::jitterScorePct(const std::vector<uint32_t>& pulses, uin
     return pct;
 }
 
-int PinAnalyzeManager::clampInt(int v, int lo, int hi) {
+int PinAnalyzer::clampInt(int v, int lo, int hi) {
     if (v < lo) return lo;
     if (v > hi) return hi;
     return v;
 }
 
-const char* PinAnalyzeManager::kindToStr(SignalKind k) {
+const char* PinAnalyzer::kindToStr(SignalKind k) {
     switch (k) {
         case SignalKind::Idle: return "Idle";
         case SignalKind::NoiseOrFloating: return "Noise/Floating";
@@ -240,7 +240,7 @@ const char* PinAnalyzeManager::kindToStr(SignalKind k) {
     }
 }
 
-PinAnalyzeManager::Guess PinAnalyzeManager::detectIdle(float approxHz, float dutyPct, uint32_t edges_, bool startLvl) const {
+PinAnalyzer::Guess PinAnalyzer::detectIdle(float approxHz, float dutyPct, uint32_t edges_, bool startLvl) const {
     Guess g;
     if (edges_ == 0 || approxHz < 0.5f) {
         g.kind = SignalKind::Idle;
@@ -251,7 +251,7 @@ PinAnalyzeManager::Guess PinAnalyzeManager::detectIdle(float approxHz, float dut
     return g;
 }
 
-PinAnalyzeManager::Guess PinAnalyzeManager::detectNoiseOrFloating(const std::vector<uint32_t>& pulses, float jitterPct, uint32_t minP, uint32_t edges_) const {
+PinAnalyzer::Guess PinAnalyzer::detectNoiseOrFloating(const std::vector<uint32_t>& pulses, float jitterPct, uint32_t minP, uint32_t edges_) const {
     Guess g;
     if (edges_ < 5) return g;
 
@@ -279,7 +279,7 @@ PinAnalyzeManager::Guess PinAnalyzeManager::detectNoiseOrFloating(const std::vec
     return g;
 }
 
-PinAnalyzeManager::Guess PinAnalyzeManager::detectClockPwm(float approxHz,
+PinAnalyzer::Guess PinAnalyzer::detectClockPwm(float approxHz,
                                                           float dutyPct,
                                                           float /*jitterPct*/,
                                                           uint32_t edges_) const {
@@ -331,7 +331,7 @@ PinAnalyzeManager::Guess PinAnalyzeManager::detectClockPwm(float approxHz,
     return Guess{};
 }
 
-PinAnalyzeManager::Guess PinAnalyzeManager::detectServo(const std::vector<uint32_t>& risePeriods, const std::vector<uint32_t>& /*highPulses*/) const {
+PinAnalyzer::Guess PinAnalyzer::detectServo(const std::vector<uint32_t>& risePeriods, const std::vector<uint32_t>& /*highPulses*/) const {
     Guess g;
     if (risePeriods.size() < 6) return g;
 
@@ -350,7 +350,7 @@ PinAnalyzeManager::Guess PinAnalyzeManager::detectServo(const std::vector<uint32
     return g;
 }
 
-PinAnalyzeManager::Guess PinAnalyzeManager::detectDataLike(const std::vector<uint32_t>& pulses, uint32_t baseT) const {
+PinAnalyzer::Guess PinAnalyzer::detectDataLike(const std::vector<uint32_t>& pulses, uint32_t baseT) const {
     Guess g;
     if (pulses.size() < 30 || baseT < 2 || baseT > 2000) return g;
 
@@ -393,7 +393,7 @@ PinAnalyzeManager::Guess PinAnalyzeManager::detectDataLike(const std::vector<uin
     return g;
 }
 
-PinAnalyzeManager::Guess PinAnalyzeManager::detectBurstData(int bursts_, uint32_t edges_, float approxHz, float jitterPct) const {
+PinAnalyzer::Guess PinAnalyzer::detectBurstData(int bursts_, uint32_t edges_, float approxHz, float jitterPct) const {
     Guess g;
     if (edges_ < 10) return g;
 
@@ -410,7 +410,7 @@ PinAnalyzeManager::Guess PinAnalyzeManager::detectBurstData(int bursts_, uint32_
     return g;
 }
 
-std::string PinAnalyzeManager::runPullTest() {
+std::string PinAnalyzer::runPullTest() {
     // Very short tests: 40ms each, purely observational.
     auto measureStability = [&](int ms) -> uint32_t {
         uint32_t e = 0;
@@ -456,7 +456,7 @@ std::string PinAnalyzeManager::runPullTest() {
     return "";
 }
 
-PinAnalyzeManager::Report PinAnalyzeManager::buildReport(bool doPullTest) {
+PinAnalyzer::Report PinAnalyzer::buildReport(bool doPullTest) {
     Report r;
 
     // Close tail to include the last stable segment time in high/low
@@ -550,7 +550,7 @@ PinAnalyzeManager::Report PinAnalyzeManager::buildReport(bool doPullTest) {
     return r;
 }
 
-std::string PinAnalyzeManager::formatWizardReport(uint8_t pin, const Report& r) const {
+std::string PinAnalyzer::formatWizardReport(uint8_t pin, const Report& r) const {
     std::ostringstream oss;
 
     oss << "[Wizard report on pin " << (int)pin << "]\r\n";

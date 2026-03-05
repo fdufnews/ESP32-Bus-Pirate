@@ -5,7 +5,7 @@
 #include "Managers/UserInputManager.h"
 #include "Transformers/ArgTransformer.h"
 #include "Services/I2cService.h"
-#include "Managers/BinaryAnalyzeManager.h"
+#include "Analyzers/BinaryAnalyzer.h"
 
 class I2cEepromShell {
 public:
@@ -15,7 +15,7 @@ public:
         I2cService& i2cService,
         ArgTransformer& argTransformer,
         UserInputManager& userInputManager,
-        BinaryAnalyzeManager & binaryAnalyzeManager
+        BinaryAnalyzer & binaryAnalyzer
     );
 
     void run(uint8_t addr = 0x50);
@@ -63,7 +63,7 @@ private:
     I2cService& i2cService;
     ArgTransformer& argTransformer;
     UserInputManager& userInputManager;
-    BinaryAnalyzeManager& binaryAnalyzeManager;
+    BinaryAnalyzer& binaryAnalyzer;
     std::string selectedModel = "Unknown";
     uint32_t selectedLength = 0;
     bool initialized = false;

@@ -14,7 +14,7 @@
 #include "Services/PinService.h"
 #include "Services/I2sService.h"
 #include "Managers/UserInputManager.h"
-#include "Managers/PinAnalyzeManager.h"
+#include "Analyzers/PinAnalyzer.h"
 #include "Managers/AliasManager.h"
 #include "Transformers/ArgTransformer.h"
 #include "Transformers/TerminalCommandTransformer.h"
@@ -33,7 +33,7 @@ public:
         PinService& pinService,
         I2sService& i2sService,
         UserInputManager& userInputManager,
-        PinAnalyzeManager& pinAnalyzeManager,
+        PinAnalyzer& pinAnalyzer,
         AliasManager& aliasManager,
         ArgTransformer& argTransformer,
         TerminalCommandTransformer& terminalCommandTransformer,
@@ -98,7 +98,7 @@ private:
     PinService& pinService;
     I2sService& i2sService;
     UserInputManager& userInputManager;
-    PinAnalyzeManager& pinAnalyzeManager;
+    PinAnalyzer& pinAnalyzer;
     AliasManager& aliasManager;
     ArgTransformer& argTransformer;
     TerminalCommandTransformer& commandTransformer;

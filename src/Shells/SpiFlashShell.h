@@ -5,7 +5,7 @@
 #include "Managers/UserInputManager.h"
 #include "Transformers/ArgTransformer.h"
 #include "Services/SpiService.h"
-#include "Managers/BinaryAnalyzeManager.h"
+#include "Analyzers/BinaryAnalyzer.h"
 #include "Models/TerminalCommand.h"
 #include "States/GlobalState.h"
 
@@ -17,7 +17,7 @@ public:
         IInput& input,
         ArgTransformer& argTransformer,
         UserInputManager& userInputManager,
-        BinaryAnalyzeManager& binaryAnalyzeManager
+        BinaryAnalyzer& binaryAnalyzer
     );
 
     void run();
@@ -42,7 +42,7 @@ private:
     IInput& terminalInput;
     ArgTransformer& argTransformer;
     UserInputManager& userInputManager;
-    BinaryAnalyzeManager& binaryAnalyzeManager;
+    BinaryAnalyzer& binaryAnalyzer;
     GlobalState& state = GlobalState::getInstance();
 
     void cmdProbe();

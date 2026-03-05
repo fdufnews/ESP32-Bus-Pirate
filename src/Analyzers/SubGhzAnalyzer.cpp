@@ -1,9 +1,9 @@
-#include "SubGhzAnalyzeManager.h"
+#include "SubGhzAnalyzer.h"
 #include <cmath>
 #include <sstream>
 #include <unordered_set>
 
-std::string SubGhzAnalyzeManager::analyzeFrame(const std::vector<rmt_symbol_word_t>& items, float tickPerUs) {
+std::string SubGhzAnalyzer::analyzeFrame(const std::vector<rmt_symbol_word_t>& items, float tickPerUs) {
     SubGhzDetectResult r;
     if (items.empty()) { r.notes = "Empty frame"; return formatFrame(r); }
 
@@ -109,7 +109,7 @@ std::string SubGhzAnalyzeManager::analyzeFrame(const std::vector<rmt_symbol_word
     return formatFrame(r);
 }
 
-std::string SubGhzAnalyzeManager::analyzeFrequencyActivity(
+std::string SubGhzAnalyzer::analyzeFrequencyActivity(
     int dwellMs,
     int windowMs,
     int thresholdDbm,
@@ -193,7 +193,7 @@ std::string SubGhzAnalyzeManager::analyzeFrequencyActivity(
     return formatted;
 }
 
-std::string SubGhzAnalyzeManager::formatFrequency(
+std::string SubGhzAnalyzer::formatFrequency(
     int peakDbm,
     int hits,
     int windows,
@@ -215,7 +215,7 @@ std::string SubGhzAnalyzeManager::formatFrequency(
 }
 
 
-std::string SubGhzAnalyzeManager::formatFrame(const SubGhzDetectResult& r) const {
+std::string SubGhzAnalyzer::formatFrame(const SubGhzDetectResult& r) const {
     auto encToStr = [](RfEncoding e){
         switch (e) {
             case RfEncoding::PulseLength: return "PulseLength";
@@ -239,7 +239,7 @@ std::string SubGhzAnalyzeManager::formatFrame(const SubGhzDetectResult& r) const
     return oss.str();
 }
 
-void SubGhzAnalyzeManager::collectDurations(const std::vector<rmt_symbol_word_t>& items, float tickPerUs,
+void SubGhzAnalyzer::collectDurations(const std::vector<rmt_symbol_word_t>& items, float tickPerUs,
                                             std::vector<uint32_t>& highs, std::vector<uint32_t>& lows) {
     highs.clear(); lows.clear();
     highs.reserve(items.size());
@@ -254,14 +254,14 @@ void SubGhzAnalyzeManager::collectDurations(const std::vector<rmt_symbol_word_t>
     }
 }
 
-float SubGhzAnalyzeManager::median(std::vector<uint32_t> v) {
+float SubGhzAnalyzer::median(std::vector<uint32_t> v) {
     if (v.empty()) return 0.f;
     std::sort(v.begin(), v.end());
     size_t n = v.size();
     return (n & 1) ? (float)v[n/2] : 0.5f * (v[n/2 - 1] + v[n/2]);
 }
 
-float SubGhzAnalyzeManager::estimateBaseT(const std::vector<uint32_t>& highs, const std::vector<uint32_t>& lows) {
+float SubGhzAnalyzer::estimateBaseT(const std::vector<uint32_t>& highs, const std::vector<uint32_t>& lows) {
     // Take short durations as approximation
     std::vector<uint32_t> pool;
     pool.reserve(highs.size() + lows.size());
@@ -275,7 +275,7 @@ float SubGhzAnalyzeManager::estimateBaseT(const std::vector<uint32_t>& highs, co
     return median(q);
 }
 
-bool SubGhzAnalyzeManager::looksManchester(float T, const std::vector<uint32_t>& highs, const std::vector<uint32_t>& lows) {
+bool SubGhzAnalyzer::looksManchester(float T, const std::vector<uint32_t>& highs, const std::vector<uint32_t>& lows) {
     if (T <= 0.f || highs.size() < 8) return false;
     int ok = 0, total = 0;
     float tol = T * 0.40f; // tolerance
@@ -286,7 +286,7 @@ bool SubGhzAnalyzeManager::looksManchester(float T, const std::vector<uint32_t>&
     return total >= 8 && (float)ok / total > 0.6f;
 }
 
-bool SubGhzAnalyzeManager::looksPulseLength(float T,
+bool SubGhzAnalyzer::looksPulseLength(float T,
                                             const std::vector<uint32_t>& highs,
                                             const std::vector<uint32_t>& lows,
                                             float& ratioOut)
@@ -340,7 +340,7 @@ bool SubGhzAnalyzeManager::looksPulseLength(float T,
     return coverage >= 0.70f;
 }
 
-bool SubGhzAnalyzeManager::looksPWM(float T, const std::vector<uint32_t>& highs, const std::vector<uint32_t>& lows) {
+bool SubGhzAnalyzer::looksPWM(float T, const std::vector<uint32_t>& highs, const std::vector<uint32_t>& lows) {
     if (T <= 0.f || highs.size() < 8) return false;
 
     auto medH = median(highs);
@@ -354,7 +354,7 @@ bool SubGhzAnalyzeManager::looksPWM(float T, const std::vector<uint32_t>& highs,
     return (varH < 0.25f * varL) || (varL < 0.25f * varH);
 }
 
-bool SubGhzAnalyzeManager::decodePT2262Like(float /*T*/,
+bool SubGhzAnalyzer::decodePT2262Like(float /*T*/,
                                             const std::vector<rmt_symbol_word_t>& items,
                                             float tickPerUs,
                                             std::string& hexOut,
@@ -487,15 +487,15 @@ bool SubGhzAnalyzeManager::decodePT2262Like(float /*T*/,
     }
 }
 
-bool SubGhzAnalyzeManager::nearf(float a, float b, float tol) { return std::fabs(a - b) <= tol; }
+bool SubGhzAnalyzer::nearf(float a, float b, float tol) { return std::fabs(a - b) <= tol; }
 
-float SubGhzAnalyzeManager::clamp01(float v) {
+float SubGhzAnalyzer::clamp01(float v) {
     if (v < 0.f) return 0.f;
     if (v > 1.f) return 1.f;
     return v;
 }
 
-std::string SubGhzAnalyzeManager::bitsToHex(const std::string& bits) {
+std::string SubGhzAnalyzer::bitsToHex(const std::string& bits) {
     static const char* HEX = "0123456789ABCDEF";
     std::string out;
     out.reserve(bits.size()/4);
@@ -506,8 +506,8 @@ std::string SubGhzAnalyzeManager::bitsToHex(const std::string& bits) {
     return out;
 }
 
-std::pair<SubGhzAnalyzeManager::ModGuess, float>
-SubGhzAnalyzeManager::decodeModulationRSSI(const std::vector<int>& samples) {
+std::pair<SubGhzAnalyzer::ModGuess, float>
+SubGhzAnalyzer::decodeModulationRSSI(const std::vector<int>& samples) {
     if (samples.size() < 8) return {ModGuess::Unknown, 0.f};
 
     // k means

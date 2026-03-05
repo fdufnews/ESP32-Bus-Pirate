@@ -466,7 +466,7 @@ void SubGhzController::handleDecode(const TerminalCommand&) {
         // Read and analyze frame
         frame = subGhzService.readRawFrame();
         if (!frame.empty() && frame.size() >= 5) {
-            auto result = subGhzAnalyzeManager.analyzeFrame(frame, subGhzService.getRxTickPerUs());
+            auto result = subGhzAnalyzer.analyzeFrame(frame, subGhzService.getRxTickPerUs());
             terminalView.println(result);
         }
     }
@@ -673,7 +673,7 @@ void SubGhzController::handleSweep() {
             subGhzService.tune(f);
 
             // Analyze
-            auto line = subGhzAnalyzeManager.analyzeFrequencyActivity(dwellMs, windowMs, thrDbm,
+            auto line = subGhzAnalyzer.analyzeFrequencyActivity(dwellMs, windowMs, thrDbm,
                 // measure(windowMs)
                 [&](int winMs){ return subGhzService.measurePeakRssi(winMs); },
                 // shouldAbort()

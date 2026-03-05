@@ -20,7 +20,7 @@ struct FileSignature {
     size_t length;
 };
 
-class BinaryAnalyzeManager {
+class BinaryAnalyzer {
 public:
     struct AnalysisResult {
         float avgEntropy;
@@ -33,7 +33,7 @@ public:
         std::vector<std::string> foundSecrets;
     };
 
-    BinaryAnalyzeManager(ITerminalView& view, IInput& input);
+    BinaryAnalyzer(ITerminalView& view, IInput& input);
 
     AnalysisResult analyze(
         uint32_t start,

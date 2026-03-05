@@ -6,13 +6,13 @@ I2cEepromShell::I2cEepromShell(
     I2cService& i2cService,
     ArgTransformer& argTransformer,
     UserInputManager& userInputManager,
-    BinaryAnalyzeManager& binaryAnalyzeManager
+    BinaryAnalyzer& binaryAnalyzer
 ) : terminalView(view),
     terminalInput(input),
     i2cService(i2cService),
     argTransformer(argTransformer),
     userInputManager(userInputManager),
-    binaryAnalyzeManager(binaryAnalyzeManager) {}
+    binaryAnalyzer(binaryAnalyzer) {}
 
 void I2cEepromShell::run(uint8_t addr) {
 
@@ -78,7 +78,7 @@ void I2cEepromShell::cmdAnalyze() {
     terminalView.println("\n🔍 Analyzing EEPROM content...\n");
 
     // Analyze the EEPROM content in chuncks
-    BinaryAnalyzeManager::AnalysisResult result = binaryAnalyzeManager.analyze(
+    BinaryAnalyzer::AnalysisResult result = binaryAnalyzer.analyze(
         start,
         eepromSize,
         [&](uint32_t addr, uint8_t* buf, uint32_t len) {
@@ -88,7 +88,7 @@ void I2cEepromShell::cmdAnalyze() {
     );
 
     // Format and print the analysis result
-    auto summary = binaryAnalyzeManager.formatAnalysis(result);
+    auto summary = binaryAnalyzer.formatAnalysis(result);
     terminalView.println(summary);
 
     // Files

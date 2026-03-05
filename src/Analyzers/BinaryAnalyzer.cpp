@@ -1,13 +1,13 @@
-#include "BinaryAnalyzeManager.h"
+#include "BinaryAnalyzer.h"
 #include <cmath>
 #include <cstring>
 #include <sstream>
 #include <iomanip>
 
-BinaryAnalyzeManager::BinaryAnalyzeManager(ITerminalView& view, IInput& input)
+BinaryAnalyzer::BinaryAnalyzer(ITerminalView& view, IInput& input)
     : terminalView(view), terminalInput(input) {}
 
-const char* BinaryAnalyzeManager::detectSensitivePattern(const uint8_t* buf, size_t size) {
+const char* BinaryAnalyzer::detectSensitivePattern(const uint8_t* buf, size_t size) {
     static const char* patterns[] = {
         "-----BEGIN RSA PRIVATE KEY-----", "-----BEGIN PRIVATE KEY-----", "-----BEGIN CERTIFICATE-----",
         "ssh-rsa", "ssh-ed25519", "password=", "pwd=", "pass:", "login:", "user:", "admin",
@@ -39,7 +39,7 @@ const char* BinaryAnalyzeManager::detectSensitivePattern(const uint8_t* buf, siz
     return nullptr;
 }
 
-const char* BinaryAnalyzeManager::detectFileSignature(const uint8_t* buf, size_t size) {
+const char* BinaryAnalyzer::detectFileSignature(const uint8_t* buf, size_t size) {
     for (size_t sig = 0; sig < knownSignaturesCount; ++sig) {
         const auto& s = knownSignatures[sig];
         if (size < s.length) continue;
@@ -51,7 +51,7 @@ const char* BinaryAnalyzeManager::detectFileSignature(const uint8_t* buf, size_t
     return nullptr;
 }
 
-BinaryBlockStats BinaryAnalyzeManager::analyzeBlock(const uint8_t* buffer, size_t size) {
+BinaryBlockStats BinaryAnalyzer::analyzeBlock(const uint8_t* buffer, size_t size) {
     uint32_t printable = 0, nulls = 0, ff = 0, counts[256] = {0};
     float entropy = 0;
     for (size_t i = 0; i < size; ++i) {
@@ -70,7 +70,7 @@ BinaryBlockStats BinaryAnalyzeManager::analyzeBlock(const uint8_t* buffer, size_
     return {entropy, printable, nulls, ff, detectFileSignature(buffer, size)};
 }
 
-BinaryAnalyzeManager::AnalysisResult BinaryAnalyzeManager::analyze(
+BinaryAnalyzer::AnalysisResult BinaryAnalyzer::analyze(
     uint32_t start,
     uint32_t totalSize,
     std::function<void(uint32_t address, uint8_t* buffer, uint32_t size)> fetch,
@@ -131,7 +131,7 @@ BinaryAnalyzeManager::AnalysisResult BinaryAnalyzeManager::analyze(
     return {avgEntropy, blocks * blockSize, blocks, printableTotal, nullsTotal, ffTotal, foundFiles, foundSecrets};
 }
 
-std::string BinaryAnalyzeManager::formatAnalysis(const AnalysisResult& result) {
+std::string BinaryAnalyzer::formatAnalysis(const AnalysisResult& result) {
     if (result.totalBytes == 0) return "❌ No data analyzed.\n";
 
     float printablePct = 100.0f * result.printableTotal / result.totalBytes;
@@ -188,7 +188,7 @@ std::string BinaryAnalyzeManager::formatAnalysis(const AnalysisResult& result) {
     return std::string(line);
 }
 
-std::vector<std::string> BinaryAnalyzeManager::extractPrintableStrings(const uint8_t* buf, size_t size, size_t minLen) {
+std::vector<std::string> BinaryAnalyzer::extractPrintableStrings(const uint8_t* buf, size_t size, size_t minLen) {
     std::vector<std::string> strings;
     std::string current;
     for (size_t i = 0; i < size; ++i) {
@@ -206,7 +206,7 @@ std::vector<std::string> BinaryAnalyzeManager::extractPrintableStrings(const uin
     return strings;
 }
 
-const FileSignature BinaryAnalyzeManager::knownSignatures[] = {
+const FileSignature BinaryAnalyzer::knownSignatures[] = {
     // Executables / Boot
     { "ELF Executable",          (const uint8_t*)"\x7F""ELF", 4 },
     { "U-Boot uImage",           (const uint8_t*)"\x27\x05\x19\x56", 4 },
@@ -246,4 +246,4 @@ const FileSignature BinaryAnalyzeManager::knownSignatures[] = {
     { "TAR Archive (ustar)",     (const uint8_t*)"ustar", 5 },
     { "RAFFS",                   (const uint8_t*)"\x52\x41\x46\x46\x53", 5 },
 };
-const size_t BinaryAnalyzeManager::knownSignaturesCount = sizeof(BinaryAnalyzeManager::knownSignatures) / sizeof(FileSignature);
+const size_t BinaryAnalyzer::knownSignaturesCount = sizeof(BinaryAnalyzer::knownSignatures) / sizeof(FileSignature);

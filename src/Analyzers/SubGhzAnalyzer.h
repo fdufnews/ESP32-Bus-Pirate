@@ -47,7 +47,7 @@ struct FrequencyActivity {
     std::string reason;
 };
 
-class SubGhzAnalyzeManager {
+class SubGhzAnalyzer {
 public:
     enum class ModGuess { ASK_OOK, FSK_GFSK, NFM_FM, Unknown };
 

@@ -10,7 +10,7 @@ UtilityController::UtilityController(
     PinService& pinService,
     I2sService& i2sService,
     UserInputManager& userInputManager,
-    PinAnalyzeManager& pinAnalyzeManager,
+    PinAnalyzer& pinAnalyzer,
     AliasManager& aliasManager,
     ArgTransformer& argTransformer,
     TerminalCommandTransformer& commandTransformer,
@@ -25,7 +25,7 @@ UtilityController::UtilityController(
       pinService(pinService),
       i2sService(i2sService),
       userInputManager(userInputManager),
-      pinAnalyzeManager(pinAnalyzeManager),
+      pinAnalyzer(pinAnalyzer),
       aliasManager(aliasManager),
       commandTransformer(commandTransformer),
       argTransformer(argTransformer),
@@ -455,7 +455,7 @@ void UtilityController::handleWizard(const TerminalCommand& cmd) {
     }
 
     terminalView.println("\nWizard: Please wait, analyzing pin " + std::to_string(pin) + "... Press [ENTER] to stop.\n");
-    pinAnalyzeManager.begin(pin);
+    pinAnalyzer.begin(pin);
     const bool doPullTest = false; // TODO: add argument to enable pull test if needed
 
     while (true) {
@@ -468,20 +468,20 @@ void UtilityController::handleWizard(const TerminalCommand& cmd) {
 
         // Sample pin
         for (int i = 0; i < 2048; i++) {
-            pinAnalyzeManager.sample();
+            pinAnalyzer.sample();
         }
 
         // Check if it's time to report and report activity
-        if (pinAnalyzeManager.shouldReport(millis())) {
-            auto report = pinAnalyzeManager.buildReport(doPullTest);
-            terminalView.print(pinAnalyzeManager.formatWizardReport(pin, report));
-            pinAnalyzeManager.resetWindow();
+        if (pinAnalyzer.shouldReport(millis())) {
+            auto report = pinAnalyzer.buildReport(doPullTest);
+            terminalView.print(pinAnalyzer.formatWizardReport(pin, report));
+            pinAnalyzer.resetWindow();
             terminalView.println("Wizard: Analyzing pin " + std::to_string(pin) + "... Press [ENTER] to stop.\n");
         }
     }
 
     // Cleanup buffers
-    pinAnalyzeManager.end();
+    pinAnalyzer.end();
 }
 
 /*

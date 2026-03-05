@@ -25,7 +25,7 @@ public:
         spiService, SdService& sdService, 
         ArgTransformer& argTransformer, 
         UserInputManager& userInputManager, 
-        BinaryAnalyzeManager& binaryAnalyzeManager, 
+        BinaryAnalyzer& binaryAnalyzer, 
         SdCardShell& sdCardShell,
         SpiFlashShell& spiFlashShell,
         SpiEepromShell& spiEepromShell,
@@ -48,7 +48,7 @@ private:
     SdService& sdService;
     ArgTransformer& argTransformer;
     UserInputManager& userInputManager;
-    BinaryAnalyzeManager& binaryAnalyzeManager;
+    BinaryAnalyzer& binaryAnalyzer;
     SdCardShell& sdCardShell;
     SpiFlashShell& spiFlashShell;
     SpiEepromShell& spiEepromShell;

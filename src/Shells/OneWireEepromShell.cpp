@@ -6,14 +6,14 @@ OneWireEepromShell::OneWireEepromShell(
     OneWireService& oneWireService,
     ArgTransformer& argTransformer,
     UserInputManager& userInputManager,
-    BinaryAnalyzeManager& binaryAnalyzeManager
+    BinaryAnalyzer& binaryAnalyzer
 ) :
     terminalView(view),
     terminalInput(input),
     oneWireService(oneWireService),
     argTransformer(argTransformer),
     userInputManager(userInputManager),
-    binaryAnalyzeManager(binaryAnalyzeManager)
+    binaryAnalyzer(binaryAnalyzer)
 {
 }
 
@@ -178,7 +178,7 @@ void OneWireEepromShell::cmdAnalyze() {
     terminalView.println("\n📊 Analyze 1-Wire EEPROM...");
 
     // Analyze chunked
-    auto result = binaryAnalyzeManager.analyze(
+    auto result = binaryAnalyzer.analyze(
         0, // Start address
         eepromSize,
         // Fetch function
@@ -190,7 +190,7 @@ void OneWireEepromShell::cmdAnalyze() {
     );
 
     // Format summary and display results
-    auto summary = binaryAnalyzeManager.formatAnalysis(result);
+    auto summary = binaryAnalyzer.formatAnalysis(result);
     terminalView.println(summary);
 
     if (!result.foundSecrets.empty()) {

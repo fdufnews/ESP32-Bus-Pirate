@@ -6,14 +6,14 @@ SpiEepromShell::SpiEepromShell(
     IInput& input,
     ArgTransformer& argTransformer,
     UserInputManager& userInputManager,
-    BinaryAnalyzeManager& binaryAnalyzeManager
+    BinaryAnalyzer& binaryAnalyzer
 ) :
     spiService(spiService),
     terminalView(view),
     terminalInput(input),
     argTransformer(argTransformer),
     userInputManager(userInputManager),
-    binaryAnalyzeManager(binaryAnalyzeManager)
+    binaryAnalyzer(binaryAnalyzer)
 {
 }
 
@@ -231,7 +231,7 @@ void SpiEepromShell::cmdAnalyze() {
     }
 
     // Analyze EEPROM in chunks
-    auto result = binaryAnalyzeManager.analyze(
+    auto result = binaryAnalyzer.analyze(
         0,
         eepromSize,
         [&](uint32_t addr, uint8_t* buf, uint32_t len) {
@@ -242,7 +242,7 @@ void SpiEepromShell::cmdAnalyze() {
     );
 
     // Summary
-    auto summary = binaryAnalyzeManager.formatAnalysis(result);
+    auto summary = binaryAnalyzer.formatAnalysis(result);
     terminalView.println(summary);
 
     // Secrets
