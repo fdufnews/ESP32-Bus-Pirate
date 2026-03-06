@@ -67,19 +67,16 @@ void CellController::handleConfig()
 
     const auto& forbidden = state.getProtectedPins();
 
-    uint8_t rx = userInputManager.readValidatedPinNumber("MODEM RX", state.getUartRxPin(), forbidden);
+    uint8_t rx = userInputManager.readValidatedPinNumber("MODEM TX", state.getUartRxPin(), forbidden);
     state.setUartRxPin(rx);
 
-    uint8_t tx = userInputManager.readValidatedPinNumber("MODEM TX", state.getUartTxPin(), forbidden);
+    uint8_t tx = userInputManager.readValidatedPinNumber("MODEM RX", state.getUartTxPin(), forbidden);
     state.setUartTxPin(tx);
 
     uint32_t baud = userInputManager.readValidatedUint32("Baudrate", 115200);
     state.setUartBaudRate(baud);
 
-    // Swap RX/TX we ask for RX/TX but since it is UART
-    // we should connect RX to TX and TX to RX, so swap
-    // to match modem header mentioning RX/TX pins
-    cellService.init(tx, rx, baud);
+    cellService.init(rx, tx, baud);
 
     terminalView.println("\nDetecting modem...");
     if (!cellService.detect()) {
