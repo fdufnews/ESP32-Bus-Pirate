@@ -340,7 +340,7 @@ void HelpShell::cmdWifi() {
         "ap <ssid> <password> - Set access point",
         "ap spam              - Spam random beacons",
         "flood [channel]      - Flood channel with packets",
-        "ssh <h> <u> <p> [p]  - Open SSH session",
+        "ssh [h] [u] [pw] [p] - Open SSH session",
         "telnet <host> [port] - Open telnet session",
         "nc <host> <port>     - Open netcat session",
         "nmap <h> [-p ports]  - Scan host ports",

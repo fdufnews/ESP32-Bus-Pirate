@@ -325,33 +325,85 @@ void ANetworkController::handleSsh(const TerminalCommand &cmd)
         return;
     }
 
-    // Check args
-    auto args = argTransformer.splitArgs(cmd.getArgs());
-    if (cmd.getSubcommand().empty() || args.size() < 2)
-    {
-        terminalView.println("Usage: ssh <host> <user> <password> [port]");
-        return;
-    }
-
-    // Check port
+    std::string host = cmd.getSubcommand();
+    std::string user;
+    std::string pass;
     int port = 22;
-    if (args.size() == 3)
+
+    auto args = argTransformer.splitArgs(cmd.getArgs());
+
+    // Parse args if provided
+    if (args.size() >= 1)
+        user = args[0];
+
+    if (args.size() >= 2)
+        pass = args[1];
+
+    if (args.size() >= 3)
     {
-        if (argTransformer.isValidNumber(args[2]))
+        if (!argTransformer.isValidNumber(args[2]))
         {
-            port = argTransformer.parseHexOrDec16(args[2]);
+            terminalView.println("SSH: Invalid port.");
+            return;
+        }
+
+        port = argTransformer.parseHexOrDec16(args[2]);
+        if (port <= 0)
+        {
+            terminalView.println("SSH: Invalid port.");
+            return;
         }
     }
 
-    std::string host = cmd.getSubcommand();
-    std::string user = args[0];
-    std::string pass = args[1];
+    // Prompt missing host
+    if (host.empty())
+    {
+        host = userInputManager.readString("SSH host", "192.168.1.10");
+        if (host.empty())
+        {
+            terminalView.println("SSH: Missing host. Aborted.");
+            return;
+        }
+    }
+
+    // Prompt missing user
+    if (user.empty())
+    {
+        user = userInputManager.readString("SSH user", "root");
+        if (user.empty())
+        {
+            terminalView.println("SSH: Missing user. Aborted.");
+            return;
+        }
+    }
+
+    // Prompt missing password
+    if (pass.empty())
+    {
+        pass = userInputManager.readString("SSH password", "");
+        if (pass.empty())
+        {
+            terminalView.println("SSH: Missing password. Aborted.");
+            return;
+        }
+    }
+
+    //  prompt missing port
+    if (args.size() < 3)
+    {
+        port = (int)userInputManager.readValidatedUint32("SSH port", (uint32_t)port);
+        if (port <= 0 || port > 65535)
+        {
+            terminalView.println("SSH: Invalid port.");
+            return;
+        }
+    }
 
     // Connect, start the ssh task
     terminalView.println("SSH: Connecting to " + host + " as " + user + " with port " + std::to_string(port) + "...");
     sshService.startTask(host, user, pass, false, port);
 
-    // Wait 5sec for connection success
+    // Wait 5 sec for connection success
     unsigned long start = millis();
     while (!sshService.isConnected() && millis() - start < 5000)
     {
