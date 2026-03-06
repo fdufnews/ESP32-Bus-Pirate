@@ -110,6 +110,7 @@ void HelpShell::cmdGeneral() {
         "analogic <pin>       - Analogic plotter",
         "wizard <pin>         - Pin activity analyzer",
         "listen <pin>         - Pin activity to audio",
+        "repeat <count> <cmd> - Repeat command",
         "P                    - Enable pull-up",
         "p                    - Disable pull-up",
         "",

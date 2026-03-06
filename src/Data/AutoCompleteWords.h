@@ -2,14 +2,14 @@ static const char* const autoCompleteWords[] = {
 
     // --- General ---
     "help","mode","man","system","logic","analogic","wizard", "hex", "profile",
-    "alias", "listen", "sys", "delay", "delayms", "delayus",
+    "alias", "listen", "sys", "delay", "delayms", "delayus", "repeat",
 
     // --- 1WIRE ---
     "scan","ping","sniff","read","write","temp","ibutton","eeprom","config",
 
     // --- UART / HDUART ---
     "autobaud","bridge","at","spam","glitch","xmodem","swap", "emulator",
-    "trigger",
+    "trigger", "raw",
 
     // --- I2C ---
     "discovery","identify","slave","dump","flood","health","monitor",
