@@ -63,12 +63,15 @@ void ActionDispatcher::dispatch(const std::string& raw) {
         return;
     }
 
+    // Repeated command
+    if (provider.getCommandTransformer().isRepeatCommand(finalRaw)) {
+        dispatchRepeatCommands(finalRaw);
+        return;
+    }
+
     // Pipeline terminal commands
     if (provider.getCommandTransformer().isPipelineCommand(finalRaw)) {
-        auto cmds = provider.getCommandTransformer().transformMany(finalRaw);
-        for (auto& cmd : cmds) {
-            dispatchCommand(cmd);
-        }
+        dispatchPipelineCommands(finalRaw);
         return;
     }
 
@@ -179,6 +182,40 @@ void ActionDispatcher::dispatchCommand(const TerminalCommand& cmd) {
    if (provider.getCommandTransformer().isScreenCommand(cmd)) {
        setCurrentMode(state.getCurrentMode());
    }
+}
+
+/*
+Dispatch command from repeat
+*/
+void ActionDispatcher::dispatchRepeatCommands(const std::string& raw) {
+    auto cmds = provider.getCommandTransformer().transformRepeatCommand(raw);
+
+    if (cmds.empty()) {
+        provider.getTerminalView().println("\nUsage: repeat <count> <cmd>");
+        provider.getTerminalView().println("       repeat <count> <cmd> || <cmd> ...");
+        provider.getTerminalView().println("Max allowed is 100 repetitions.\n");
+        return;
+    }
+
+    for (const auto& cmd : cmds) {
+        dispatchCommand(cmd);
+    }
+}
+
+/*
+Dispatch command from pipeline
+*/
+void ActionDispatcher::dispatchPipelineCommands(const std::string& raw) {
+    auto cmds = provider.getCommandTransformer().transformMany(raw);
+
+    if (cmds.empty()) {
+        provider.getTerminalView().println("Usage: <cmd> || <cmd> || <cmd>");
+        return;
+    }
+
+    for (const auto& cmd : cmds) {
+        dispatchCommand(cmd);
+    }
 }
 
 /*

@@ -33,6 +33,12 @@ private:
     // Handle a command
     void dispatchCommand(const TerminalCommand& cmd);
 
+    // dipatch repeat command
+    void dispatchRepeatCommands(const std::string& raw);
+
+    // dispatch a sequence of commands (pipeline)
+    void dispatchPipelineCommands(const std::string& raw);
+
     // Handle a sequence of bytecode instructions
     void dispatchInstructions(const std::vector<Instruction>& instructions);
 
