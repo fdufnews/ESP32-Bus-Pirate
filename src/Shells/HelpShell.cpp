@@ -395,7 +395,7 @@ void HelpShell::cmdEthernet() {
         "status               - Show ETH status",
         "ping <host>          - Ping a remote host",
         "discovery            - Discover network devices",
-        "ssh <h> <u> <p> [p]  - Open SSH session",
+        "ssh [h] [u] [pw] [p] - Open SSH session",
         "telnet <host> [port] - Open telnet session",
         "nc <host> <port>     - Open netcat session",
         "nmap <h> [-p ports]  - Scan host ports",
