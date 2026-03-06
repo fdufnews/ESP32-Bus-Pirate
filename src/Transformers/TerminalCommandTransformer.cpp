@@ -29,6 +29,7 @@ TerminalCommand TerminalCommandTransformer::transform(const std::string& raw) co
 
 std::vector<TerminalCommand> TerminalCommandTransformer::transformMany(const std::string& raw) const {
     std::vector<TerminalCommand> result;
+    constexpr size_t MAX_PIPELINE_COMMANDS = 64;
 
     // Trim 
     size_t start = raw.find_first_not_of(" \t\r\n");
@@ -48,6 +49,11 @@ std::vector<TerminalCommand> TerminalCommandTransformer::transformMany(const std
     // many, split ||
     size_t pos = 0;
     while (pos < line.size()) {
+        // limit
+        if (result.size() >= MAX_PIPELINE_COMMANDS) {
+            break;
+        }
+
         size_t next = line.find("||", pos);
 
         std::string segment;
@@ -72,6 +78,63 @@ std::vector<TerminalCommand> TerminalCommandTransformer::transformMany(const std
         if (!cmd.getRoot().empty()) {
             result.push_back(cmd);
         }
+    }
+
+    return result;
+}
+
+std::vector<TerminalCommand> TerminalCommandTransformer::transformRepeatCommand(const std::string& raw) const {
+    std::vector<TerminalCommand> result;
+
+    if (!isRepeatCommand(raw)) {
+        return result;
+    }
+
+    TerminalCommand repeatCmd = transform(raw);
+
+    if (repeatCmd.getSubcommand().empty() || repeatCmd.getArgs().empty()) {
+        return result;
+    }
+
+    char* end = nullptr;
+    long value = strtol(repeatCmd.getSubcommand().c_str(), &end, 10);
+
+    // parse error or extra chars after number
+    if (end == repeatCmd.getSubcommand().c_str() || *end != '\0') {
+        return result;
+    }
+
+    constexpr int MAX_REPEAT = 100;
+    if (value <= 0 || value > MAX_REPEAT) {
+        return result;
+    }
+
+    int count = static_cast<int>(value);
+    const std::string& nestedRaw = repeatCmd.getArgs();
+
+    std::vector<TerminalCommand> nestedCmds;
+
+    if (isPipelineCommand(nestedRaw)) {
+        nestedCmds = transformMany(nestedRaw);
+    } else {
+        TerminalCommand nestedCmd = transform(nestedRaw);
+
+        // no nested repeat
+        if (nestedCmd.getRoot() == "repeat") {
+            return result;
+        }
+
+        nestedCmds.push_back(nestedCmd);
+    }
+
+    if (nestedCmds.empty()) {
+        return result;
+    }
+
+    result.reserve(nestedCmds.size() * count);
+
+    for (int i = 0; i < count; ++i) {
+        result.insert(result.end(), nestedCmds.begin(), nestedCmds.end());
     }
 
     return result;
@@ -112,6 +175,21 @@ bool TerminalCommandTransformer::isBuiltinCommand(const std::string& raw) const 
     return false;
 }
 
+bool TerminalCommandTransformer::isRepeatCommand(const std::string& raw) const {
+    std::string normalized = normalizeRaw(raw);
+    if (normalized.size() < 6) return false;
+
+    if (normalized.compare(0, 6, "repeat") != 0)
+        return false;
+
+    // "repeat" only
+    if (normalized.size() == 6)
+        return true;
+
+    // "repeat <args>"
+    return normalized[6] == ' ';
+}
+
 bool TerminalCommandTransformer::isGlobalCommand(const TerminalCommand& cmd) const {
     std::string root = cmd.getRoot();
 
@@ -120,7 +198,7 @@ bool TerminalCommandTransformer::isGlobalCommand(const TerminalCommand& cmd) con
             root == "system" || root == "sys" || root == "guide" || root == "man" || root == "wizard" ||
             root == "help" || root == "h" || root == "?" || root == "hex" || root == "dec" ||
             root == "profile" || root == "delay" || root == "delayms" || root == "delayus" || 
-            root == "listen" || root == "alias";
+            root == "listen" || root == "alias" || root == "repeat";
 }
 
 bool TerminalCommandTransformer::isScreenCommand(const TerminalCommand& cmd) const {
