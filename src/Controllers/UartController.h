@@ -47,14 +47,17 @@ private:
     // Start bidirectional UART bridge
     void handleBridge();
     
-    // Perform a simple read
-    void handleRead();
+    // Perform ascii read
+    void handleRead(const TerminalCommand& cmd);
+
+    // Perform hex read
+    void handleRaw();
     
     // Send probes to get a response
     void handlePing();
     
     // Write data to UART
-    void handleWrite(TerminalCommand cmd);
+    void handleWrite(const TerminalCommand& cmd);
 
     // Handle AT commands
     void handleAtCommand(const TerminalCommand& cmd);

@@ -40,7 +40,10 @@ void UartController::handleCommand(const TerminalCommand& cmd) {
     if (cmd.getRoot() == "autobaud") handleAutoBaud();
     else if (cmd.getRoot() == "scan") handleScan();
     else if (cmd.getRoot() == "ping") handlePing();
-    else if (cmd.getRoot() == "read") handleRead();
+    else if (cmd.getRoot() == "read") handleRead(cmd);
+    else if (cmd.getRoot() == "raw") handleRaw();
+    else if (cmd.getRoot() == "readraw") handleRaw();
+    else if (cmd.getRoot() == "readhex") handleRaw();
     else if (cmd.getRoot() == "write") handleWrite(cmd);
     else if (cmd.getRoot() == "bridge") handleBridge();
     else if (cmd.getRoot() == "at") handleAtCommand(cmd);
@@ -102,7 +105,12 @@ void UartController::handleBridge() {
 /*
 Read
 */
-void UartController::handleRead() {
+void UartController::handleRead(const TerminalCommand& cmd) {
+    if (cmd.getSubcommand() == "raw" || cmd.getSubcommand() == "hex") {
+        handleRaw();
+        return;
+    }
+
     terminalView.println("UART Read: Streaming until [ENTER] is pressed...");
     uartService.flush();
 
@@ -124,6 +132,72 @@ void UartController::handleRead() {
 }
 
 /*
+Raw Read (Hexdump)
+*/
+void UartController::handleRaw() {
+    terminalView.println("UART Read (raw): Streaming HEX until [ENTER] is pressed...\n");
+    uartService.flush();
+
+    const size_t BYTES_PER_ROW = 16;
+    const uint32_t FLUSH_INTERVAL_MS = 20;
+
+    std::vector<uint8_t> row;
+    row.reserve(BYTES_PER_ROW);
+
+    uint32_t lastByteTime = millis();
+
+    while (true) {
+        // Stop if ENTER pressed
+        char key = terminalInput.readChar();
+        if (key == '\r' || key == '\n') {
+
+            if (!row.empty()) {
+                std::string dump = argTransformer.formatHexAscii(
+                    row.data(), row.size(),
+                    true,
+                    BYTES_PER_ROW
+                );
+                terminalView.println(dump);
+                row.clear();
+            }
+
+            terminalView.println("");
+            terminalView.println("UART Read (raw): Stopped by user.");
+            break;
+        }
+
+        // Read UART bytes
+        while (uartService.available() > 0) {
+            uint8_t b = (uint8_t)uartService.read();
+            row.push_back(b);
+            lastByteTime = millis();
+
+            // Full row
+            if (row.size() == BYTES_PER_ROW) {
+                std::string dump = argTransformer.formatHexAscii(
+                    row.data(), row.size(),
+                    true,
+                    BYTES_PER_ROW
+                );
+                terminalView.println(dump);
+                row.clear();
+            }
+        }
+
+        // Partial flush the line if timeout reached
+        if (!row.empty() && (millis() - lastByteTime) >= FLUSH_INTERVAL_MS) {
+            std::string dump = argTransformer.formatHexAscii(
+                row.data(), row.size(),
+                true,
+                BYTES_PER_ROW
+            );
+            terminalView.println(dump);
+            row.clear();
+        }
+    }
+}
+
+/*
 AT Command shell
 */
 void UartController::handleAtCommand(const TerminalCommand& cmd) {
@@ -133,11 +207,76 @@ void UartController::handleAtCommand(const TerminalCommand& cmd) {
 /*
 Write
 */
-void UartController::handleWrite(TerminalCommand cmd) {
-    std::string raw = cmd.getSubcommand() + cmd.getArgs();
-    std::string decoded = argTransformer.decodeEscapes(raw);
-    uartService.print(decoded);
-    terminalView.println("UART Write: Text sent at baud " + std::to_string(state.getUartBaudRate()));
+void UartController::handleWrite(const TerminalCommand& cmd) {
+    ensureConfigured();
+
+    // Rebuild raw payload from command parts
+    std::string payloadRaw = cmd.getSubcommand();
+    if (!cmd.getArgs().empty()) {
+        if (!payloadRaw.empty()) payloadRaw += " ";
+        payloadRaw += cmd.getArgs();
+    }
+
+    // If missing payload -> prompt
+    if (payloadRaw.empty()) {
+        terminalView.println("\n[Payload format]");
+        terminalView.println(" Text: hello world");
+        terminalView.println(" Hex : hex{ AA BB CC 10 }");
+        terminalView.println("");
+
+        payloadRaw = userInputManager.readString("Payload", "hello world");
+        if (payloadRaw.empty()) {
+            terminalView.println("UART Write: empty payload. Aborted.\n");
+            return;
+        }
+    }
+
+    // Build payload using parsePattern (text or hex{...})
+    std::string textPattern;
+    std::vector<uint8_t> hexPattern;
+    std::vector<uint8_t> hexMask;
+    bool isHex = false;
+
+    if (!argTransformer.parsePattern(payloadRaw, textPattern, hexPattern, hexMask, isHex)) {
+        terminalView.println("UART Write: invalid payload. Use text or hex{AA BB ...}.\n");
+        return;
+    }
+
+    std::vector<uint8_t> payload;
+
+    if (!isHex) {
+        // Decode escapes then push bytes
+        std::string decoded = argTransformer.decodeEscapes(textPattern);
+        if (decoded.empty()) {
+            terminalView.println("UART Write: empty text after decoding. Aborted.\n");
+            return;
+        }
+        payload.assign(decoded.begin(), decoded.end());
+    } else {
+        // Reject wildcards (mask=0)
+        for (size_t i = 0; i < hexMask.size(); ++i) {
+            if (hexMask[i] == 0) {
+                terminalView.println("UART Write: wildcards (??) are not allowed in write payload.\n");
+                return;
+            }
+        }
+        payload = hexPattern;
+        if (payload.empty()) {
+            terminalView.println("UART Write: empty hex payload. Aborted.\n");
+            return;
+        }
+    }
+
+    // Send bytes
+    for (uint8_t b : payload) {
+        uartService.write((char)b);
+    }
+
+    terminalView.println(
+        "\nUART Write: sent " + std::to_string(payload.size()) +
+        " bytes at baud " + std::to_string(state.getUartBaudRate())
+    );
+    terminalView.println("");
 }
 
 /*
@@ -352,35 +491,109 @@ void UartController::handleAutoBaud() {
 Spam
 */
 void UartController::handleSpam(const TerminalCommand& cmd) {
-    if (cmd.getSubcommand().empty() || cmd.getArgs().empty()) {
-        terminalView.println("Usage: spam <text> <ms>");
-        return;
+    ensureConfigured();
+
+    // Rebuild full command tail
+    std::string full = cmd.getSubcommand();
+    if (!cmd.getArgs().empty()) {
+        if (!full.empty()) full += " ";
+        full += cmd.getArgs();
     }
 
-    // Find the last space to separate SSID and password
-    std::string full = cmd.getSubcommand() + " " + cmd.getArgs();
-    size_t pos = full.find_last_of(' ');
-    if (pos == std::string::npos || pos == full.size() - 1) {
-        terminalView.println("Usage: spam <text> <ms>");
-        return;
+    std::string payloadRaw;
+    std::string msRaw;
+    uint32_t delayMs = 500;
+
+    // Try CLI parse: last token = delay, rest = payload
+    if (!full.empty()) {
+        size_t pos = full.find_last_of(' ');
+        if (pos != std::string::npos && pos < full.size() - 1) {
+            std::string maybePayload = full.substr(0, pos);
+            std::string maybeMs = full.substr(pos + 1);
+
+            if (argTransformer.isValidNumber(maybeMs)) {
+                payloadRaw = maybePayload;
+                msRaw = maybeMs;
+            } else {
+                // whole string is payload, ms missing
+                payloadRaw = full;
+            }
+        } else {
+            // only one token/group provided => payload only
+            payloadRaw = full;
+        }
     }
-    auto textRaw = full.substr(0, pos);
-    auto msRaw = full.substr(pos + 1);
 
-    std::string text = argTransformer.decodeEscapes(textRaw);
+    // If payload missing , prompt it
+    if (payloadRaw.empty()) {
+        terminalView.println("");
+        terminalView.println("[Payload format]");
+        terminalView.println(" Text: hello world");
+        terminalView.println(" Hex : hex{ AA BB CC 10 }");
+        terminalView.println("");
 
-    if (!argTransformer.isValidNumber(msRaw)) {
-        terminalView.println("Usage: spam <text> <ms>");
-        return;
+        payloadRaw = userInputManager.readString("Payload", "hello world");
+        if (payloadRaw.empty()) {
+            terminalView.println("UART Spam: empty payload. Aborted.\n");
+            return;
+        }
     }
 
-    uint32_t delayMs = argTransformer.toUint32(msRaw);
+    // If delay missing, prompt it
+    if (msRaw.empty()) {
+        delayMs = userInputManager.readValidatedUint32("Delay between sends (ms)", delayMs);
+        if (delayMs == 0) {
+            terminalView.println("UART Spam: delay must be > 0. Aborted.\n");
+            return;
+        }
+    } else {
+        delayMs = argTransformer.toUint32(msRaw);
+        if (delayMs == 0) {
+            terminalView.println("UART Spam: delay must be > 0. Aborted.\n");
+            return;
+        }
+    }
+
+    // Build payload text or hex{...}
+    std::string textPattern;
+    std::vector<uint8_t> hexPattern;
+    std::vector<uint8_t> hexMask;
+    bool isHex = false;
     unsigned long lastSend = 0;
 
+    if (!argTransformer.parsePattern(payloadRaw, textPattern, hexPattern, hexMask, isHex)) {
+        terminalView.println("UART Spam: invalid payload. Use text or hex{AA BB ...}.\n");
+        return;
+    }
+
+    std::vector<uint8_t> payload;
+
+    if (!isHex) {
+        // parsePattern already decodes escapes for text
+        if (textPattern.empty()) {
+            terminalView.println("UART Spam: empty text payload. Aborted.\n");
+            return;
+        }
+        payload.assign(textPattern.begin(), textPattern.end());
+    } else {
+        // Reject wildcards
+        for (size_t i = 0; i < hexMask.size(); ++i) {
+            if (hexMask[i] == 0) {
+                terminalView.println("UART Spam: wildcards (??) are not allowed in spam payload.\n");
+                return;
+            }
+        }
+
+        payload = hexPattern;
+        if (payload.empty()) {
+            terminalView.println("UART Spam: empty hex payload. Aborted.\n");
+            return;
+        }
+    }
+
     terminalView.println(
-        "UART Spam: Sending \"" + text + 
-        "\" every " + std::to_string(delayMs) + 
-        " ms at baud " + std::to_string(state.getUartBaudRate()) + 
+        "\nUART Spam: Sending " + std::to_string(payload.size()) + " bytes every " +
+        std::to_string(delayMs) + " ms at baud " + std::to_string(state.getUartBaudRate()) +
         "... Press [ENTER] to stop."
     );
 
@@ -395,7 +608,9 @@ void UartController::handleSpam(const TerminalCommand& cmd) {
         // Send if delay elapsed
         unsigned long now = millis();
         if (now - lastSend >= delayMs) {
-            uartService.print(text);
+            for (uint8_t b : payload) {
+                uartService.write((char)b);
+            }
             lastSend = now;
         }
 
