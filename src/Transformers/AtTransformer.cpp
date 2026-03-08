@@ -28,7 +28,7 @@ std::string AtTransformer::clean(const std::string& raw) const
     for (auto& l : ls) {
         if (l == "OK" || l == "ERROR") continue;
         if (startsWith(l, "AT")) continue; // crude echo filter
-        if (!out.empty()) out += "\n";
+        if (!out.empty()) out += "\n\r";
         out += l;
     }
 
@@ -247,13 +247,20 @@ std::string AtTransformer::formatSpn(const std::string& raw) const
 std::string AtTransformer::formatSimRetries(const std::string& raw) const
 {
     std::string l = firstValueLine(raw);
-    if (l.empty()) return "PIN retries: no response";
+    if (l.empty()) return "SIM retries: no response";
 
     if (l.find("ERROR") != std::string::npos || l.find("+CME ERROR") != std::string::npos) {
-        return "PIN retries: not supported";
+        return "SIM retries: not supported";
     }
 
-    return "PIN retries: " + l;
+    int pin1, puk1, pin2, puk2;
+    if (sscanf(l.c_str(), "+SPIC: %d,%d,%d,%d", &pin1, &puk1, &pin2, &puk2) == 4) {
+        char buf[64];
+        snprintf(buf, sizeof(buf), "Retries: PIN(%d) PUK(%d) PIN2(%d) PUK2(%d)", pin1, puk1, pin2, puk2);
+        return std::string(buf);
+    }
+
+    return "SIM retries: " + l;
 }
 
 std::string AtTransformer::formatPhonebookStorage(const std::string& raw) const
@@ -707,8 +714,8 @@ std::string AtTransformer::formatSmsList(const std::string& cmglRaw) const
         out += l;
     }
 
-    if (out.empty()) return "SMS list: empty / no response";
-    return "SMS list:\n\r" + out;
+    if (out.empty()) return "[SMS list] empty / no response";
+    return "[SMS list]\n\r" + out;
 }
 
 std::string AtTransformer::formatSmsRead(const std::string& cmgrRaw) const
@@ -720,8 +727,55 @@ std::string AtTransformer::formatSmsRead(const std::string& cmgrRaw) const
         if (l == "OK" || l == "ERROR") continue;
         if (startsWith(l, "AT")) continue;
 
+        std::string lineOut = l;
+
+        if (!startsWith(l, "+CMGR:")) {
+            bool looksHex = !l.empty() && ((l.size() % 2) == 0);
+
+            if (looksHex) {
+                for (char c : l) {
+                    bool isHex =
+                        (c >= '0' && c <= '9') ||
+                        (c >= 'a' && c <= 'f') ||
+                        (c >= 'A' && c <= 'F');
+
+                    if (!isHex) {
+                        looksHex = false;
+                        break;
+                    }
+                }
+            }
+
+            if (looksHex) {
+                std::string decoded;
+                decoded.reserve(l.size() / 2);
+
+                for (size_t i = 0; i + 1 < l.size(); i += 2) {
+                    auto hexVal = [](char c) -> uint8_t {
+                        if (c >= '0' && c <= '9') return (uint8_t)(c - '0');
+                        if (c >= 'a' && c <= 'f') return (uint8_t)(10 + c - 'a');
+                        if (c >= 'A' && c <= 'F') return (uint8_t)(10 + c - 'A');
+                        return 0;
+                    };
+
+                    uint8_t b = (uint8_t)((hexVal(l[i]) << 4) | hexVal(l[i + 1]));
+
+                    if (b >= 32 && b <= 126) {
+                        decoded.push_back((char)b);
+                    } else if (b == '\r' || b == '\n' || b == '\t') {
+                        decoded.push_back((char)b);
+                    } else {
+                        decoded.push_back('.');
+                    }
+                }
+
+                lineOut += "\n\r  -> ";
+                lineOut += decoded;
+            }
+        }
+
         if (!out.empty()) out += "\n\r";
-        out += l;
+        out += lineOut;
     }
 
     if (out.empty()) return "SMS read: no response";
@@ -762,11 +816,11 @@ std::string AtTransformer::formatCallList(const std::string& clccRaw) const
 
     if (out.empty()) {
         std::string c = clean(clccRaw);
-        if (c.empty()) return "\nCalls: none / no response";
-        return "\nCalls:\n" + c;
+        if (c.empty()) return "\n[Calls] none / no response";
+        return "\n[Calls]\n" + c;
     }
 
-    return "\nCalls:\n\r" + out;
+    return "\n[Calls]\n\r" + out;
 }
 
 // -------------- Misc -------------------
