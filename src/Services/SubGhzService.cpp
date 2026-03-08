@@ -801,24 +801,11 @@ void SubGhzService::initTembed() {
     // TFT
     const int BOARD_TFT_CS   = 41;
 
-    // --------- SPI bus ---------
-    const int BOARD_SPI_SCK  = 11;
-    const int BOARD_SPI_MOSI = 9;
-    const int BOARD_SPI_MISO = 10;
-
     // TF card
     const int BOARD_SD_CS    = 13;
-    const int BOARD_SD_SCK   = BOARD_SPI_SCK;
-    const int BOARD_SD_MOSI  = BOARD_SPI_MOSI;
-    const int BOARD_SD_MISO  = BOARD_SPI_MISO;
 
     // LoRa / CC1101 front-end
     const int BOARD_LORA_CS  = 12;
-    const int BOARD_LORA_SCK = BOARD_SPI_SCK;
-    const int BOARD_LORA_MOSI= BOARD_SPI_MOSI;
-    const int BOARD_LORA_MISO= BOARD_SPI_MISO;
-    const int BOARD_LORA_IO2 = 38;
-    const int BOARD_LORA_IO0 = 3;
 
     // Disable others spi devices
     pinMode(41, OUTPUT);
@@ -836,7 +823,10 @@ void SubGhzService::initTembed() {
 
     // Power the CC1101
     pinMode(BOARD_PWR_EN, OUTPUT);
+    digitalWrite(BOARD_PWR_EN, LOW);
+    delay(50);
     digitalWrite(BOARD_PWR_EN, HIGH);
+    delay(50);
 }
 
 void SubGhzService::selectRfPathFor(float mhz) {

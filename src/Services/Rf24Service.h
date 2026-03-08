@@ -74,6 +74,7 @@ public:
     bool testRpd();
 
 private:
+    void initTembedPlus();
     RF24* radio_ = nullptr;
     bool isInitialized = false;
     uint8_t cePin_ = 0;

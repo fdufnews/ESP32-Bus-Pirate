@@ -16,6 +16,10 @@ bool Rf24Service::configure(
     mosiPin_ = mosiPin;
     spiSpeed_ = spiSpeed;
 
+    #ifdef DEVICE_TEMBEDS3CC1101PLUS
+        initTembedPlus();
+    #endif
+
     if (radio_) delete radio_;
     spi.end();
     delay(10);
@@ -278,4 +282,33 @@ void Rf24Service::flushRx() {
 void Rf24Service::flushTx() {
     if (!isInitialized) return;
     radio_->flush_tx();
+}
+
+void Rf24Service::initTembedPlus() {
+    // POWER
+    const int BOARD_PWR_EN   = 15;
+
+    // TFT
+    const int BOARD_TFT_CS   = 41;
+
+    // TF card
+    const int BOARD_SD_CS    = 13;
+
+    // LoRa / CC1101 front-end
+    const int BOARD_LORA_CS  = 12;
+
+    // Disable others spi devices
+    pinMode(41, OUTPUT);
+    digitalWrite(41, HIGH);
+    pinMode(BOARD_SD_CS, OUTPUT);
+    digitalWrite(BOARD_SD_CS, HIGH);
+    pinMode(BOARD_LORA_CS, OUTPUT);
+    digitalWrite(BOARD_LORA_CS, HIGH);
+
+    // Power cycle of external rail
+    pinMode(BOARD_PWR_EN, OUTPUT);
+    digitalWrite(BOARD_PWR_EN, LOW);
+    delay(50);
+    digitalWrite(BOARD_PWR_EN, HIGH);
+    delay(50);
 }
