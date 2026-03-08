@@ -7,6 +7,9 @@ void RfidService::configure(uint8_t sda, uint8_t scl) {
   _scl = scl;
   _configured = true;
 
+  Wire.end();
+  Wire.begin(_sda, _scl); 
+
   if (!_rfid) {
     _rfid = new PN532(PN532::CONNECTION_TYPE::I2C);
   }
