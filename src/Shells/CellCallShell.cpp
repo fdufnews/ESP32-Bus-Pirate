@@ -1,4 +1,5 @@
 #include "CellCallShell.h"
+#include <Arduino.h>
 
 CellCallShell::CellCallShell(ITerminalView& terminalView,
                              IInput& terminalInput,
@@ -40,7 +41,7 @@ void CellCallShell::run()
 
 void CellCallShell::cmdDial()
 {
-    std::string number = userInputManager.readString("Enter number to dial (ex: +33601020304)", "");
+    std::string number = userInputManager.readValidatedPhoneNumber("Phone number (ex: +33601020304)");
     if (number.empty()) {
         terminalView.println("❌ Empty number.");
         return;
@@ -48,19 +49,33 @@ void CellCallShell::cmdDial()
 
     terminalView.println("Dialing " + number + " ...");
     bool ok = cellService.dial(number);
-    terminalView.println(ok ? "✅ Dial: OK" : "❌ Dial: ERROR");
+    terminalView.println(ok ? "\n✅ Dial: OK" : "\n❌ Dial: ERROR");
+
+    if (!ok) return;
+
+    terminalView.println("\nCall in progress... Press [ENTER] to hang up.\n");
+    while (true) {
+        int c = terminalInput.readChar();
+        if (c == '\n' || c == '\r') {
+            terminalView.println("⏹ Hanging up...");
+            cellService.hangupCall();
+            break;
+        }
+        
+        delay(20);
+    }
 }
 
 void CellCallShell::cmdAnswer()
 {
     bool ok = cellService.answerCall();
-    terminalView.println(ok ? "✅ Answer: OK" : "❌ Answer: ERROR");
+    terminalView.println(ok ? "\n✅ Answer: OK" : "\n❌ Answer: ERROR");
 }
 
 void CellCallShell::cmdHangup()
 {
     bool ok = cellService.hangupCall();
-    terminalView.println(ok ? "✅ Hangup: OK" : "❌ Hangup: ERROR");
+    terminalView.println(ok ? "\n✅ Hangup: OK" : "\n❌ Hangup: ERROR");
 }
 
 void CellCallShell::cmdList()
