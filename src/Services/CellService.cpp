@@ -106,7 +106,7 @@ bool CellService::sendExpectOk(const std::string& cmd, uint32_t timeoutMs)
 std::string CellService::getClock()
 {
     if (_profile.getClock && _profile.getClock[0]) {
-        return sendCommand(_profile.getClock, 1500);
+        return sendCommand(_profile.getClock,500);
     }
     return "";
 }
@@ -116,31 +116,31 @@ std::string CellService::getClock()
 std::string CellService::getModuleInfo()
 {
     if (!_profile.ati || !_profile.ati[0]) return "";
-    return sendCommand(_profile.ati, 1500);
+    return sendCommand(_profile.ati,500);
 }
 
 std::string CellService::getManufacturer()
 {
     if (!_profile.getManufacturer || !_profile.getManufacturer[0]) return "";
-    return sendCommand(_profile.getManufacturer, 1200);
+    return sendCommand(_profile.getManufacturer, 500);
 }
 
 std::string CellService::getModel()
 {
     if (!_profile.getModel || !_profile.getModel[0]) return "";
-    return sendCommand(_profile.getModel, 1200);
+    return sendCommand(_profile.getModel, 500);
 }
 
 std::string CellService::getRevision()
 {
     if (!_profile.getRevision || !_profile.getRevision[0]) return "";
-    return sendCommand(_profile.getRevision, 1200);
+    return sendCommand(_profile.getRevision, 500);
 }
 
 std::string CellService::getImei()
 {
     if (!_profile.getImei || !_profile.getImei[0]) return "";
-    return sendCommand(_profile.getImei, 1200);
+    return sendCommand(_profile.getImei, 500);
 }
 
 // -------------------- SIM --------------------
@@ -151,7 +151,7 @@ bool CellService::isSimReady()
         return false;
     }
 
-    std::string resp = sendCommand(_profile.getSimState, 1500);
+    std::string resp = sendCommand(_profile.getSimState,500);
 
     if (resp.empty()) return false;
 
@@ -167,7 +167,7 @@ bool CellService::isSimReady()
 std::string CellService::getSimState()
 {
     if (!_profile.getSimState || !_profile.getSimState[0]) return "";
-    return sendCommand(_profile.getSimState, 1500);
+    return sendCommand(_profile.getSimState,500);
 }
 
 bool CellService::enterPin(const std::string& pin)
@@ -180,28 +180,46 @@ bool CellService::enterPin(const std::string& pin)
     return sendExpectOk(cmd, 5000);
 }
 
+bool CellService::enterPuk(const std::string& puk, const std::string& newPin)
+{
+    if (!_profile.enterPukFmt || !_profile.enterPukFmt[0]) return false;
+
+    char buf[96];
+    snprintf(buf, sizeof(buf), _profile.enterPukFmt, puk.c_str(), newPin.c_str());
+
+    return sendExpectOk(std::string(buf), 8000);
+}
+
+bool CellService::isSimPukRequired()
+{
+    if (!_profile.getSimState || !_profile.getSimState[0]) return false;
+
+    std::string resp = sendCommand(_profile.getSimState, 500);
+    return resp.find("PUK") != std::string::npos;
+}
+
 std::string CellService::getIccid()
 {
     if (!_profile.getIccid || !_profile.getIccid[0]) return "";
-    return sendCommand(_profile.getIccid, 2000);
+    return sendCommand(_profile.getIccid, 500);
 }
 
 std::string CellService::getImsi()
 {
     if (!_profile.getImsi || !_profile.getImsi[0]) return "";
-    return sendCommand(_profile.getImsi, 2000);
+    return sendCommand(_profile.getImsi, 500);
 }
 
 std::string CellService::getMsisdn()
 {
     if (!_profile.getMsisdn || !_profile.getMsisdn[0]) return "";
-    return sendCommand(_profile.getMsisdn, 2000); // AT+CNUM
+    return sendCommand(_profile.getMsisdn, 500); // AT+CNUM
 }
 
 std::string CellService::getPinLockStatus()
 {
     if (!_profile.getPinLockStatus || !_profile.getPinLockStatus[0]) return "";
-    return sendCommand(_profile.getPinLockStatus, 2000); // AT+CLCK="SC",2
+    return sendCommand(_profile.getPinLockStatus, 500); // AT+CLCK="SC",2
 }
 
 std::string CellService::scanOperators(uint32_t timeoutMs)
@@ -236,31 +254,31 @@ std::string CellService::scanOperators(uint32_t timeoutMs)
 std::string CellService::getSimRetries()
 {
     if (!_profile.getSimRetries || !_profile.getSimRetries[0]) return "";
-    return sendCommand(_profile.getSimRetries, 1500);
+    return sendCommand(_profile.getSimRetries,500);
 }
 
 std::string CellService::getServiceProviderName()
 {
     if (!_profile.getSpn || !_profile.getSpn[0]) return "";
-    return sendCommand(_profile.getSpn, 1500);
+    return sendCommand(_profile.getSpn,500);
 }
 
 std::string CellService::getPhonebookStorage()
 {
     if (!_profile.getPhonebookStorage || !_profile.getPhonebookStorage[0]) return "";
-    return sendCommand(_profile.getPhonebookStorage, 1500);
+    return sendCommand(_profile.getPhonebookStorage,500);
 }
 
 std::string CellService::getPhonebookCaps()
 {
     if (!_profile.getPhonebookCaps || !_profile.getPhonebookCaps[0]) return "";
-    return sendCommand(_profile.getPhonebookCaps, 2000);
+    return sendCommand(_profile.getPhonebookCaps, 500);
 }
 
 std::string CellService::getSmsStorage()
 {
     if (!_profile.getSmsStorage || !_profile.getSmsStorage[0]) return "";
-    return sendCommand(_profile.getSmsStorage, 2000);
+    return sendCommand(_profile.getSmsStorage, 500);
 }
 
 // -------------------- Network --------------------
@@ -268,7 +286,7 @@ std::string CellService::getSmsStorage()
 std::string CellService::getSignal()
 {
     if (!_profile.getSignal || !_profile.getSignal[0]) return "";
-    return sendCommand(_profile.getSignal, 1500);
+    return sendCommand(_profile.getSignal,500);
 }
 
 std::string CellService::getOperator()
@@ -297,13 +315,13 @@ bool CellService::setOperatorAuto()
 std::string CellService::getRegistrationCS()
 {
     if (!_profile.getRegCS || !_profile.getRegCS[0]) return "";
-    return sendCommand(_profile.getRegCS, 1500);
+    return sendCommand(_profile.getRegCS,500);
 }
 
 std::string CellService::getRegistrationPS()
 {
     if (!_profile.getRegPS || !_profile.getRegPS[0]) return "";
-    return sendCommand(_profile.getRegPS, 1500);
+    return sendCommand(_profile.getRegPS,500);
 }
 
 bool CellService::setFunctionality(uint8_t fun)
@@ -319,7 +337,7 @@ bool CellService::setFunctionality(uint8_t fun)
 std::string CellService::getFunctionality()
 {
     if (!_profile.getFun || !_profile.getFun[0]) return "";
-    return sendCommand(_profile.getFun, 1500);
+    return sendCommand(_profile.getFun,500);
 }
 
 bool CellService::reboot()
@@ -353,7 +371,7 @@ std::string CellService::phonebookReadRange(uint16_t start, uint16_t end)
 std::string CellService::getAttach()
 {
     if (!_profile.getAttach || !_profile.getAttach[0]) return "";
-    return sendCommand(_profile.getAttach, 2000);
+    return sendCommand(_profile.getAttach, 500);
 }
 
 bool CellService::setAttach(bool attached)
@@ -507,7 +525,7 @@ bool CellService::smsBeginSend(const std::string& number)
 
 bool CellService::smsSendText(const std::string& text)
 {
-    return sendTextAndCtrlZExpectOk(text, 60000);
+    return sendTextAndCtrlZExpectOk(text, 20000);
 }
 
 // -------------------- USSD --------------------
@@ -519,7 +537,7 @@ bool CellService::ussdRequest(const std::string& code, uint8_t dcs)
     char buf[160];
     snprintf(buf, sizeof(buf), _profile.ussdFmt, code.c_str(), (unsigned)dcs);
 
-    return sendExpectOk(std::string(buf), 12000);
+    return sendExpectOk(std::string(buf), 5000);
 }
 
 bool CellService::ussdCancel()
@@ -537,20 +555,20 @@ bool CellService::dial(const std::string& number)
     std::string cmd = format1(_profile.dialFmt, number);
     if (cmd.empty()) return false;
 
-    auto r = sendCommand(cmd, 12000);
+    auto r = sendCommand(cmd, 5000);
     return !containsFinalError(r);
 }
 
 bool CellService::answerCall()
 {
     if (!_profile.answer || !_profile.answer[0]) return false;
-    return sendExpectOk(_profile.answer, 8000);
+    return sendExpectOk(_profile.answer, 5000);
 }
 
 bool CellService::hangupCall()
 {
     if (!_profile.hangup || !_profile.hangup[0]) return false;
-    return sendExpectOk(_profile.hangup, 8000);
+    return sendExpectOk(_profile.hangup, 5000);
 }
 
 std::string CellService::listCalls()
@@ -604,5 +622,5 @@ std::string CellService::format5u(const char* fmt, uint32_t a, uint32_t b, uint3
 std::string CellService::getGsmLocation()
 {
     if (!_profile.getGsmLocation || !_profile.getGsmLocation[0]) return "";
-    return sendCommand(_profile.getGsmLocation, 12000);
+    return sendCommand(_profile.getGsmLocation, 5000);
 }

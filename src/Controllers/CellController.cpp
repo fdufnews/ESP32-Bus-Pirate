@@ -67,26 +67,26 @@ void CellController::handleConfig()
 
     const auto& forbidden = state.getProtectedPins();
 
-    uint8_t rx = userInputManager.readValidatedPinNumber("MODEM TX", state.getUartRxPin(), forbidden);
+    uint8_t rx = userInputManager.readValidatedPinNumber("MODEM RX", state.getUartRxPin(), forbidden);
     state.setUartRxPin(rx);
 
-    uint8_t tx = userInputManager.readValidatedPinNumber("MODEM RX", state.getUartTxPin(), forbidden);
+    uint8_t tx = userInputManager.readValidatedPinNumber("MODEM TX", state.getUartTxPin(), forbidden);
     state.setUartTxPin(tx);
 
-    uint32_t baud = userInputManager.readValidatedUint32("Baudrate", 115200);
+    const uint32_t defaultModemBaud = 115200; // common default baudrate for modems
+    uint32_t baud = userInputManager.readValidatedUint32("Baudrate", defaultModemBaud);
     state.setUartBaudRate(baud);
 
     cellService.init(rx, tx, baud);
+    configured = true; // consider configured to not loop back to config 
 
     terminalView.println("\nDetecting modem...");
     if (!cellService.detect()) {
         terminalView.println("❌ No modem detected.");
-        terminalView.println("It may take up 30 sec to start.\n");
-        configured = false;
+        terminalView.println("It may take up 30 sec to start.");
+        terminalView.println("Try to swap RX and TX pins.\n");
         return;
     }
-
-    configured = true;
 
     terminalView.println("✅ Modem detected");
     terminalView.println(atTransformer.formatModuleInfo(cellService.getModuleInfo()));
@@ -99,7 +99,6 @@ Modem
 void CellController::handleModem()
 {
     terminalView.println("\n[MODEM INFO]");
-    terminalView.println("  " + atTransformer.formatModuleInfo(cellService.getModuleInfo()));
     terminalView.println("  " + atTransformer.formatManufacturer(cellService.getManufacturer()));
     terminalView.println("  Model: " + atTransformer.clean(cellService.getModel()));
     terminalView.println("  " + atTransformer.clean(cellService.getRevision()));
@@ -118,14 +117,14 @@ void CellController::handleSim()
     terminalView.println("\n[SIM CARD]");
 
     terminalView.println("  " + atTransformer.formatSimState(cellService.getSimState()));
-    terminalView.println("  " + atTransformer.formatSimRetries(cellService.getSimRetries()));
     terminalView.println("  " + atTransformer.formatSpn(cellService.getServiceProviderName()));
-
+    
     terminalView.println("  " + atTransformer.formatIccid(cellService.getIccid()));
     terminalView.println("  " + atTransformer.formatImsi(cellService.getImsi()));
     terminalView.println("  " + atTransformer.formatMsisdn(cellService.getMsisdn()));
-
+    
     terminalView.println("  " + atTransformer.formatPinLock(cellService.getPinLockStatus())); 
+    terminalView.println("  " + atTransformer.formatSimRetries(cellService.getSimRetries()));
 
     terminalView.println("  " + atTransformer.formatPhonebookStorage(cellService.getPhonebookStorage()));
     terminalView.println("  " + atTransformer.formatSmsStorage(cellService.getSmsStorage()));
@@ -181,10 +180,56 @@ void CellController::handleOperator()
 }
 
 /*
-Unlock SIM (enter PIN)
+Unlock SIM (enter PIN or PUK if required)
 */
 void CellController::handleUnlock(const TerminalCommand& command)
 {
+    // PUK
+    if (cellService.isSimPukRequired()) {
+        terminalView.println("\n [⚠️  Warning]");
+        terminalView.println(" This SIM is locked and can't be unlocked with PIN.");
+        terminalView.println(" A valid PUK code is now required to unblock it.");
+        terminalView.println(" You must also choose a new PIN after entering the PUK.\n");
+
+        auto proceed = userInputManager.readYesNo("Continue with PUK unlock?", false);
+        if (!proceed) {
+            terminalView.println("SIM unlock cancelled.\n");
+            return;
+        }
+
+        std::string puk = userInputManager.readValidatedNumericCode("Enter PUK", "", 8, 8);
+        std::string newPin = userInputManager.readValidatedNumericCode("Enter new PIN", "", 4, 8);
+
+        if (puk.empty() || newPin.empty()) {
+            terminalView.println("PUK and new PIN are required for unlock. Canceled.\n");
+            return;
+        }
+
+        auto confirm = userInputManager.readYesNo("Unlock SIM with entered PUK and new PIN?", false);
+        if (!confirm) {
+            terminalView.println("SIM unlock cancelled.\n");
+            return;
+        }
+
+        bool ok = cellService.enterPuk(puk, newPin);
+        terminalView.println(ok ? "PUK accepted (OK)." : "PUK failed (ERROR).");
+        delay(100);
+        terminalView.println(atTransformer.formatSimState(cellService.getSimState()) + "\n");
+        return;
+    }
+
+    // Already ready
+    if (cellService.isSimReady()) {
+        terminalView.println("\n [⚠️  Warning]");
+        terminalView.println(" SIM is already ready. No need to unlock.\n");
+        auto confirm = userInputManager.readYesNo("Do you want to re-enter PIN anyway?", false);
+        if (!confirm) {
+            terminalView.println("SIM unlock cancelled.\n");
+            return; 
+        }
+    }
+
+    // Enter PIN
     std::string pin = command.getSubcommand();
     if (pin.empty()) pin = command.getArgs();
 
@@ -192,8 +237,20 @@ void CellController::handleUnlock(const TerminalCommand& command)
         pin = userInputManager.readValidatedNumericCode("Enter SIM PIN", "", 4, 8);
     }
 
+    if (!argTransformer.isValidNumericCode(pin, 4, 8)) {
+        terminalView.println("Invalid PIN format. Must be 4-8 digits.");
+        return;
+    }
+
+    auto confirm = userInputManager.readYesNo("Unlock with entered PIN?", false);
+    if (!confirm) {
+        terminalView.println("SIM unlock cancelled.\n");
+        return;
+    }
+
     bool ok = cellService.enterPin(pin);
     terminalView.println(ok ? "PIN accepted (OK)." : "PIN failed (ERROR).");
+    delay(200);
     terminalView.println(atTransformer.formatSimState(cellService.getSimState()) + "\n");
 }
 
@@ -249,6 +306,7 @@ void CellController::handleUssd(const TerminalCommand& command)
         terminalView.println("\n[USSD REQUEST]");
 
         code = userInputManager.readString("Enter USSD code", "*123#");
+
         const std::vector<std::string> dcsChoices = {
             "15 (Default GSM 7-bit)",
             "72 (UCS2 / Unicode)",
@@ -267,6 +325,16 @@ void CellController::handleUssd(const TerminalCommand& command)
         bool ok = cellService.ussdRequest(code, dcs);
         terminalView.println(ok ? "USSD request: OK (response may arrive later)"
                                : "USSD request: ERROR");
+        return;
+    }
+
+    bool valid = !code.empty() &&
+                std::all_of(code.begin(), code.end(), [](char c) {
+                    return (c >= '0' && c <= '9') || c == '*' || c == '#' || c == '+';
+                });
+
+    if (!valid) {
+        terminalView.println("Invalid USSD code. Allowed: digits, '*', '#', '+'.");
         return;
     }
 

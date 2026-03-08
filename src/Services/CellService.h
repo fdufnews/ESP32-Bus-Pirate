@@ -21,6 +21,8 @@ public:
     bool isSimReady();
     std::string getSimState();
     bool enterPin(const std::string& pin);
+    bool isSimPukRequired();
+    bool enterPuk(const std::string& puk, const std::string& newPin);
     std::string getIccid();
     std::string getImsi();
     std::string getMsisdn();
