@@ -606,20 +606,20 @@ public:
         #ifdef I2C_SDA_PIN
             rfidSdaPin = I2C_SDA_PIN;
         #endif
-        #ifdef SUBGHZ_CS_PIN
-            rf24CsnPin = SUBGHZ_CS_PIN;
+        #ifdef RF24_CSN_PIN
+            rf24CsnPin = RF24_CSN_PIN;
         #endif
-        #ifdef SUBGHZ_GDO_PIN
-            rf24CePin = SUBGHZ_GDO_PIN;
+        #ifdef RF24_CE_PIN
+            rf24CePin = RF24_CE_PIN;
         #endif
-        #ifdef SUBGHZ_SCK_PIN
-            rf24SckPin = SUBGHZ_SCK_PIN;
+        #ifdef RF24_SCK_PIN
+            rf24SckPin = RF24_SCK_PIN;
         #endif
-        #ifdef SUBGHZ_SO_PIN
-            rf24MisoPin = SUBGHZ_SO_PIN;
+        #ifdef RF24_MISO_PIN
+            rf24MisoPin = RF24_MISO_PIN;
         #endif
-        #ifdef SUBGHZ_SI_PIN
-            rf24MosiPin = SUBGHZ_SI_PIN;
+        #ifdef RF24_MOSI_PIN
+            rf24MosiPin = RF24_MOSI_PIN;
         #endif
         #ifdef SDCARD_CS_PIN
             hasInternalSdCard = true;
