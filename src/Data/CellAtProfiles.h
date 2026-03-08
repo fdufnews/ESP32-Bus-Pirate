@@ -23,13 +23,14 @@ struct CellAtProfile {
     const char* getImsi;           // AT+CIMI
     const char* getMsisdn;         // AT+CNUM 
     const char* getPinLockStatus;  // AT+CLCK="SC",2 
-    const char* getSimRetries;      // AT+CPINR?
+    const char* getSimRetries;      // AT+SPIC
     const char* getSpn;             // AT+CSPN?
     const char* getPhonebookCaps;   // AT+CPBR=?
     const char* getPhonebookStorage;// AT+CPBS?
     const char* getSmsStorage;      // AT+CPMS?
     const char* pbReadIndexFmt;   // "AT+CPBR=%u"
     const char* pbReadRangeFmt;   // "AT+CPBR=%u,%u"
+    const char* enterPukFmt;      // AT+CPIN="12345678","5678"  (PUK,  new pin)
 
     // ---------------- Network / registration
     const char* getSignal;         // AT+CSQ
@@ -98,13 +99,14 @@ inline constexpr CellAtProfile GENERIC_CELL_PROFILE = {
     "AT+CIMI",
     "AT+CNUM",
     "AT+CLCK=\"SC\",2",
-    "AT+CPINR?",
+    "AT+SPIC",
     "AT+CSPN?",
     "AT+CPBR=?",
     "AT+CPBS?",
     "AT+CPMS?",
     "AT+CPBR=%u",
     "AT+CPBR=%u,%u",
+    "AT+CPIN=\"%s\",\"%s\"",
 
     // Network
     "AT+CSQ",
@@ -145,8 +147,8 @@ inline constexpr CellAtProfile GENERIC_CELL_PROFILE = {
     // Calls
     "ATD%s;",
     "ATA",
-    "ATH",
-    "AT+CLCC"
+    "AT+CHUP",
+    "AT+CLCC",
 
     // Location
     "AT+CIPGSMLOC=1,1"
