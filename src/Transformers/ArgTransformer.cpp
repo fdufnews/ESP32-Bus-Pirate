@@ -256,6 +256,19 @@ bool ArgTransformer::isValidFloat(const std::string& input) {
     return iss.eof() && !iss.fail();
 }
 
+bool ArgTransformer::isValidNumericCode(const std::string& val,
+                                          size_t minLen,
+                                          size_t maxLen)
+{
+    if (minLen > maxLen) std::swap(minLen, maxLen);
+
+    if (val.size() < minLen || val.size() > maxLen)
+        return false;
+
+    return std::all_of(val.begin(), val.end(),
+                       [](char c){ return c >= '0' && c <= '9'; });
+}
+
 bool ArgTransformer::isValidSignedNumber(const std::string& input) {
     if (input.empty()) return false;
 
