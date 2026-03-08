@@ -17,6 +17,7 @@ public:
     std::string getLine(bool onlyNumber = false);
     std::string readSanitizedString(const std::string& label, const std::string& def, bool onlyLetter = false);    
     std::string readString(const std::string& label, const std::string& def);
+    std::string readValidatedPhoneNumber(const std::string& label, size_t minDigits = 6, size_t maxDigits = 15);
     uint8_t readValidatedUint8(const std::string& label, uint8_t def, uint8_t min, uint8_t max);
     uint8_t readValidatedUint8(const std::string& label, uint8_t defaultVal);
     uint16_t readValidatedUint16(const std::string& label, uint16_t def, bool hex=false);

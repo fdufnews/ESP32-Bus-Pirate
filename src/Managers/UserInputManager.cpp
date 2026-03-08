@@ -163,6 +163,50 @@ std::string UserInputManager::readString(const std::string& label,
     return input;
 }
 
+std::string UserInputManager::readValidatedPhoneNumber(const std::string& label,
+                                                       size_t minDigits,
+                                                       size_t maxDigits)
+{
+    if (minDigits > maxDigits) {
+        std::swap(minDigits, maxDigits);
+    }
+
+    while (true) {
+        terminalView.print(label + ": ");
+        std::string input = getLine();
+
+        // Allow empty input
+        if (input.empty()) {
+            return "";
+        }
+
+        // Must start with +
+        if (input[0] != '+') {
+            terminalView.println("Phone number must start with '+'. Example: +33601020304");
+            continue;
+        }
+
+        std::string digits = input.substr(1);
+
+        bool valid = std::all_of(digits.begin(), digits.end(),
+                                 [](char c){ return c >= '0' && c <= '9'; });
+
+        if (!valid) {
+            terminalView.println("Invalid format. Only digits allowed after '+'.");
+            continue;
+        }
+
+        if (digits.size() < minDigits || digits.size() > maxDigits) {
+            terminalView.println("Invalid length. Expected " +
+                                 std::to_string(minDigits) + " to " +
+                                 std::to_string(maxDigits) + " digits.");
+            continue;
+        }
+
+        return input;
+    }
+}
+
 uint8_t UserInputManager::readValidatedUint8(const std::string& label, uint8_t def, uint8_t min, uint8_t max) {
     while (true) {
         terminalView.print(label + " [" + std::to_string(def) + "]: ");
