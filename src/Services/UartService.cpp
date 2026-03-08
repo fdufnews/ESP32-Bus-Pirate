@@ -345,8 +345,8 @@ UartService::PinActivity UartService::measureUartActivity(uint8_t pin, uint32_t 
     lastEdgeTimeUs = 0;
     intervalCount = 0;
     
-    // already installed by the kb for the adv
-    #ifndef DEVICE_CARDPUTERADV
+    // already installed for those devices
+    #if !defined(DEVICE_CARDPUTERADV) && !defined(DEVICE_TEMBEDS3CC1101PLUS)
         if (!isrInstalled) {
             gpio_install_isr_service(0);
             isrInstalled = true;
