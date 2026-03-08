@@ -54,11 +54,11 @@ private:
     inline static constexpr size_t LIST_FILTER_COUNT = sizeof(LIST_FILTERS) / sizeof(LIST_FILTERS[0]);
 
     inline static constexpr const char* DELETE_FLAGS[] = {
-        "0 - Delete one message at index",
-        "1 - Delete all read messages",
-        "2 - Delete all read+sent messages",
-        "3 - Delete all read+sent+unsent messages",
-        "4 - Delete all messages",
+        "Delete one message at index",
+        "Delete all read messages",
+        "Delete all read+sent messages",
+        "Delete all read+sent+unsent messages",
+        "Delete all messages",
         "Exit"
     };
     inline static constexpr size_t DELETE_FLAG_COUNT = sizeof(DELETE_FLAGS) / sizeof(DELETE_FLAGS[0]);
