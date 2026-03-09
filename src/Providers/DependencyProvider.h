@@ -64,6 +64,7 @@ and injecting shared instances of core components
 #include "Controllers/UsbS3Controller.h"
 #include "Controllers/CellController.h"
 #include "Controllers/FmController.h"
+#include "Controllers/C5Controller.h"
 #include "Transformers/TerminalCommandTransformer.h"
 #include "Transformers/InstructionTransformer.h"
 #include "Transformers/ArgTransformer.h"
@@ -174,6 +175,7 @@ public:
     Rf24Controller &getRf24Controller();
     CellController &getCellController();
     FmController &getFmController();
+    C5Controller &getC5Controller();
 
     // Transformers
     TerminalCommandTransformer &getCommandTransformer();
@@ -292,6 +294,7 @@ private:
     UsbS3Controller usbController;
     CellController cellController;
     FmController fmController;
+    C5Controller c5Controller;
 
     // Transformers
     TerminalCommandTransformer commandTransformer;

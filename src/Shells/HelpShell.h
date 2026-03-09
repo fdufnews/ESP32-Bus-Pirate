@@ -41,6 +41,7 @@ private:
     void cmdRf24();
     void cmdFm();
     void cmdCell();
+    void cmdC5();
     void cmdAll();
 
     // helpers

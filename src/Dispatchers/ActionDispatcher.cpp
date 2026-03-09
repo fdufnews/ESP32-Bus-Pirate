@@ -176,6 +176,9 @@ void ActionDispatcher::dispatchCommand(const TerminalCommand& cmd) {
         case ModeEnum::CELL:
             provider.getCellController().handleCommand(cmd);
             break;
+        case ModeEnum::C5:
+            provider.getC5Controller().handleCommand(cmd);
+            break;
     }
 
    // Handled in specific mode, we need to rerender the pinout view
@@ -346,6 +349,11 @@ void ActionDispatcher::setCurrentMode(ModeEnum newMode) {
             break;
         case ModeEnum::CELL:
             provider.getCellController().ensureConfigured();
+            break;
+        case ModeEnum::C5:
+             // This will bridge to a UART session with the C5
+            provider.getC5Controller().ensureConfigured();
+            newMode = ModeEnum::HIZ; // return to hiz after uart bridge
             break;
         default:
             break;
