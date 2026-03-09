@@ -69,7 +69,7 @@ void HelpShell::run(ModeEnum currentMode, bool select) {
         case 20: cmdRf24();      break;
         case 21: cmdFm();        break;
         case 22: cmdCell();      break;
-        case 23: cmdC5(); break;
+        case 23: cmdExpander(); break;
         default:
             break;
     }
@@ -489,12 +489,12 @@ void HelpShell::cmdCell() {
     printLines(lines, (int)(sizeof(lines) / sizeof(lines[0])));
 }
 
-void HelpShell::cmdC5() {
-    printHeader("C5");
+void HelpShell::cmdExpander() {
+    printHeader("EXPANDER");
 
     static const char* const lines[] = {
-        "This mode bridges to a C5 slave over UART.",
-        "The C5 acts as a radio expansion module.",
+        "This mode bridges to a expander over UART.",
+        "The expander acts as a radio expansion module.",
         "https://github.com/geo-tp/ESP32-Bus-Expander",
     };
 
@@ -524,5 +524,5 @@ void HelpShell::cmdAll() {
     cmdRf24();
     cmdFm();
     cmdCell();
-    cmdC5();
+    cmdExpander();
 }

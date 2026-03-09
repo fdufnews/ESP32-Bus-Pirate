@@ -40,6 +40,8 @@ private:
         {"rf",        "rf24"},
         {"nrf",      "rf24"},
         {"nfc",       "rfid"},
+        {"c5",        "expander"},
+        {"exp",       "expander"},
 
         {nullptr, nullptr}
     };

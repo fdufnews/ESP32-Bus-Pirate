@@ -30,7 +30,7 @@ enum class ModeEnum {
     RF24_,
     FM,
     CELL,
-    C5,
+    EXPANDER,
     COUNT
 };
 
@@ -61,7 +61,7 @@ public:
         {ModeEnum::RF24_,      "RF24"},
         {ModeEnum::FM,         "FM"},
         {ModeEnum::CELL,       "CELL"},
-        {ModeEnum::C5,         "C5"},
+        {ModeEnum::EXPANDER,   "EXPANDER"},
     };
 
     static std::string toString(ModeEnum proto) {

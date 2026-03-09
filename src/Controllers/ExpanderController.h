@@ -10,27 +10,27 @@
 #include "Shells/HelpShell.h"
 #include "States/GlobalState.h"
 
-class C5Controller {
+class ExpanderController {
 public:
     // Constructor
-    C5Controller(ITerminalView& terminalView,
+    ExpanderController(ITerminalView& terminalView,
                  IInput& terminalInput,
                  UartService& uartService,
                  ArgTransformer& argTransformer,
                  UserInputManager& userInputManager,
                  HelpShell& helpShell);
     
-    // Entry point for C5 cmds
+    // Entry point for Expander cmds
     void handleCommand(const TerminalCommand& cmd);
 
-    // Ensure C5 configured before use
+    // Ensure Expander configured before use
     void ensureConfigured();
 
 private:
-    // Configure the C5
+    // Configure the Expander
     void handleConfig();
 
-    // Handle the UART bridge with the C5
+    // Handle the UART bridge with the Expander
     void handleBridge();
 
     ITerminalView& terminalView;
@@ -41,7 +41,7 @@ private:
     HelpShell& helpShell;
     GlobalState& state = GlobalState::getInstance();
 
-    // Fixed UART settings for the C5
+    // Fixed UART settings for the Expander
     const uint32_t baud = 115200;
     const uint8_t dataBits = 8;
     const char parityChar = 'N';

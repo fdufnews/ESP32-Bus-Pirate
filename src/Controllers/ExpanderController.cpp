@@ -1,9 +1,9 @@
-#include "Controllers/C5Controller.h"
+#include "Controllers/ExpanderController.h"
 
 /*
 Constructor
 */
-C5Controller::C5Controller(ITerminalView& terminalView,
+ExpanderController::ExpanderController(ITerminalView& terminalView,
                            IInput& terminalInput,
                            UartService& uartService,
                            ArgTransformer& argTransformer,
@@ -18,9 +18,9 @@ C5Controller::C5Controller(ITerminalView& terminalView,
 }
 
 /*
-Entry point for C5 command
+Entry point for Expander command
 */
-void C5Controller::handleCommand(const TerminalCommand& cmd) {
+void ExpanderController::handleCommand(const TerminalCommand& cmd) {
     if (!configured) {
         handleConfig();
     } else {
@@ -31,7 +31,7 @@ void C5Controller::handleCommand(const TerminalCommand& cmd) {
 /*
 Ensure configured
 */
-void C5Controller::ensureConfigured() {
+void ExpanderController::ensureConfigured() {
     if (!configured) {
         handleConfig();
     } else {
@@ -44,8 +44,8 @@ void C5Controller::ensureConfigured() {
 /*
 Bridge
 */
-void C5Controller::handleBridge() {
-    terminalView.println("C5 Connected: Starting... Type 'exit' to stop.");
+void ExpanderController::handleBridge() {
+    terminalView.println("Expander Connected: Starting... Type 'exit' to stop.");
 
     std::string txLine;
 
@@ -85,7 +85,7 @@ void C5Controller::handleBridge() {
 
             if (c == '\r' || c == '\n') {
                 if (txLine == "exit") {
-                    terminalView.println("\n\rC5 session closed.\n");
+                    terminalView.println("\n\rExpander session closed.\n");
                     uartService.flush();
                     configured = false;
                     return;
@@ -107,8 +107,8 @@ void C5Controller::handleBridge() {
 /*
 Config
 */
-void C5Controller::handleConfig() {
-    terminalView.println("C5 UART Configuration:");
+void ExpanderController::handleConfig() {
+    terminalView.println("Expander UART Configuration:");
 
     const auto& forbidden = state.getProtectedPins();
 
@@ -129,7 +129,7 @@ void C5Controller::handleConfig() {
     uint32_t config = uartService.buildUartConfig(dataBits, parityChar, stopBits);
     uartService.configure(baud, config, rxPin, txPin, inverted);
 
-    terminalView.println("C5 UART configured (115200 8N1).");
+    terminalView.println("Expander UART configured (115200 8N1).");
     terminalView.println("Sending handshake...");
 
     // Flush RX
@@ -139,7 +139,7 @@ void C5Controller::handleConfig() {
 
     delay(100);
 
-    // Send a few ENTERs to bring the slave back to its main prompt
+    // Send a few ENTER to bring the slave back to its main prompt
     for (int i = 0; i < 8; ++i) {
         uartService.write('\r');
         uartService.write('\n');
@@ -181,19 +181,19 @@ void C5Controller::handleConfig() {
     }
 
     if (!handshakeOk) {
-        terminalView.println("C5 handshake failed.");
+        terminalView.println("Expander handshake failed.");
         terminalView.println("Try to swap RX/TX pins.");
-        terminalView.println("Ensure the C5 is powered.\n");
+        terminalView.println("Ensure the Expander is powered.\n");
         configured = false;
         state.setCurrentMode(ModeEnum::HIZ);
         return;
     }
 
-    terminalView.println("C5 handshake OK.");
+    terminalView.println("Expander handshake OK.");
     terminalView.println("");
     terminalView.println(" [ℹ️  INFORMATION] ");
-    terminalView.println(" You are now connected to the C5 slave.");
-    terminalView.println(" All commands are sent directly to the C5.\n");
+    terminalView.println(" You are now connected to the Expander.");
+    terminalView.println(" All commands are sent directly to it.\n");
 
     configured = true;
     handleBridge();

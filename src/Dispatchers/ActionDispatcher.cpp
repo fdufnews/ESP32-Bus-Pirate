@@ -176,8 +176,8 @@ void ActionDispatcher::dispatchCommand(const TerminalCommand& cmd) {
         case ModeEnum::CELL:
             provider.getCellController().handleCommand(cmd);
             break;
-        case ModeEnum::C5:
-            provider.getC5Controller().handleCommand(cmd);
+        case ModeEnum::EXPANDER:
+            provider.getExpanderController().handleCommand(cmd);
             break;
     }
 
@@ -350,10 +350,11 @@ void ActionDispatcher::setCurrentMode(ModeEnum newMode) {
         case ModeEnum::CELL:
             provider.getCellController().ensureConfigured();
             break;
-        case ModeEnum::C5:
-             // This will bridge to a UART session with the C5
-            provider.getC5Controller().ensureConfigured();
-            newMode = ModeEnum::HIZ; // return to hiz after uart bridge
+        case ModeEnum::EXPANDER:
+             // This will bridge to a UART session with the expander
+            provider.getExpanderController().ensureConfigured();
+            state.setCurrentMode(ModeEnum::HIZ); // return to HIZ after the uart bridge
+            newMode = ModeEnum::HIZ; // to display hiz just after
             break;
         default:
             break;

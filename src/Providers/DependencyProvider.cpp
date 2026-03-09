@@ -110,7 +110,7 @@ DependencyProvider::DependencyProvider(ITerminalView &terminalView, IDeviceView 
       usbController(terminalView, terminalInput, deviceInput, usbService, argTransformer, userInputManager, helpShell),
       cellController(terminalView, terminalInput, cellService, argTransformer, atTransformer, userInputManager, helpShell, cellCallShell, cellSmsShell),
       fmController(terminalView, terminalInput, deviceView, fmService, argTransformer, userInputManager, helpShell, fmBroadcastShell),
-      c5Controller(terminalView, terminalInput, uartService, argTransformer, userInputManager, helpShell)
+      expanderController(terminalView, terminalInput, uartService, argTransformer, userInputManager, helpShell)
 {
 }
 
@@ -177,7 +177,7 @@ RfidController &DependencyProvider::getRfidController() { return rfidController;
 Rf24Controller &DependencyProvider::getRf24Controller() { return rf24Controller; }
 CellController &DependencyProvider::getCellController() { return cellController; }
 FmController &DependencyProvider::getFmController() { return fmController; }
-C5Controller &DependencyProvider::getC5Controller() { return c5Controller; }
+ExpanderController &DependencyProvider::getExpanderController() { return expanderController; }
 
 // Transformers
 TerminalCommandTransformer &DependencyProvider::getCommandTransformer() { return commandTransformer; }
