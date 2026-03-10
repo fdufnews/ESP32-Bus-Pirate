@@ -85,7 +85,8 @@ void ExpanderController::handleBridge() {
 
             if (c == '\r' || c == '\n') {
                 if (txLine == "exit") {
-                    terminalView.println("\n\rExpander session closed.\n");
+                    terminalView.println("\n\n\rExpander session closed.");
+                    terminalView.println("Returning to ESP32 Bus Pirate...\n");
                     uartService.flush();
                     configured = false;
                     return;
