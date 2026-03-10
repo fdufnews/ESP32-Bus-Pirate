@@ -101,10 +101,10 @@ void SysInfoShell::cmdHardwareInfo() {
     terminalView.println("Flash chip ID     : " + systemService.getFlashJedecIdHex());
 
     // Sketch
-    const size_t sku = systemService.getSketchUsedBytes();
-    const size_t skt = systemService.getSketchFreeBytes(); // it returns the total space
-    const size_t skl = skt - sku; // space left
-    const int    pctInt = skt ? static_cast<int>((sku * 100.0f / skt) + 0.5f) : 0;
+    const size_t sku = systemService.getSketchUsedBytes();   // used
+    const size_t skl = systemService.getSketchFreeBytes();   // free
+    const size_t skt = sku + skl;                            // total
+    const int pctInt = skt ? static_cast<int>((sku * 100.0f / skt) + 0.5f) : 0;
 
     terminalView.println("Sketch total      : " + std::to_string(skt / 1024) + " KB");
     terminalView.println("Sketch free       : " + std::to_string(skl / 1024) + " KB");

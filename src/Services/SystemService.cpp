@@ -10,6 +10,7 @@
 #include <esp_ota_ops.h>
 #include <nvs.h>
 #include <esp_mac.h>
+#include "esp_image_format.h"
 
 namespace {
     inline void appendLine(std::string& s, const std::string& line) {
@@ -202,12 +203,44 @@ std::string SystemService::getFlashJedecIdHex() const
 
 size_t SystemService::getSketchUsedBytes() const
 {
-    return ESP.getSketchSize();
+    const esp_partition_t* running = esp_ota_get_running_partition();
+    if (!running) {
+        return 0;
+    }
+
+    esp_partition_pos_t pos = {
+        .offset = running->address,
+        .size   = running->size
+    };
+
+    esp_image_metadata_t meta = {};
+    meta.start_addr = pos.offset;
+
+    esp_err_t err = esp_image_verify(ESP_IMAGE_VERIFY, &pos, &meta);
+    if (err != ESP_OK) {
+        return 0;
+    }
+
+    if (meta.image_len > running->size) {
+        return 0;
+    }
+
+    return meta.image_len;
 }
 
 size_t SystemService::getSketchFreeBytes() const
 {
-    return ESP.getFreeSketchSpace();
+    const esp_partition_t* running = esp_ota_get_running_partition();
+    if (!running) {
+        return 0;
+    }
+
+    size_t used = getSketchUsedBytes();
+    if (used > running->size) {
+        return 0;
+    }
+
+    return running->size - used;
 }
 
 std::string SystemService::getSketchMD5() const
