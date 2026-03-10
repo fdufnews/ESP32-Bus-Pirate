@@ -12,6 +12,7 @@ void WifiController::handleCommand(const TerminalCommand &cmd)
     else if (root == "disconnect") handleDisconnect(cmd);
     else if (root == "status") handleStatus(cmd);
     else if (root == "ap") handleAp(cmd);
+    else if (root == "spam") handleApSpam();
     else if (root == "spoof") handleSpoof(cmd);
     else if (root == "scan") handleScan(cmd);
     else if (root == "waterfall") handleWaterfall();

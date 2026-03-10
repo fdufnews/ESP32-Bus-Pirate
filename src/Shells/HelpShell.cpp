@@ -339,7 +339,7 @@ void HelpShell::cmdWifi() {
         "deauth [ssid]        - Deauthenticate hosts",
         "disconnect           - Disconnect from Wi-Fi",
         "ap <ssid> <password> - Set access point",
-        "ap spam              - Spam random beacons",
+        "spam                 - Spam random beacons",
         "flood [channel]      - Flood channel with packets",
         "ssh [h] [u] [pw] [p] - Open SSH session",
         "telnet <host> [port] - Open telnet session",
