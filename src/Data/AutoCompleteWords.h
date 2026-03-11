@@ -13,7 +13,7 @@ static const char* const autoCompleteWords[] = {
 
     // --- I2C ---
     "discovery","identify","slave","dump","flood","health","monitor",
-    "recover","jam",
+    "recover","jam", "regs",
 
     // --- SPI ---
     "sdcard","flash",
