@@ -103,7 +103,7 @@ void ANetworkController::handlePing(const TerminalCommand &cmd)
 }
 
 /*
-Discovery  
+Discovery
 */
 void ANetworkController::handleDiscovery(const TerminalCommand &cmd)
 {
@@ -113,7 +113,7 @@ void ANetworkController::handleDiscovery(const TerminalCommand &cmd)
 
     // Which interface to scan
     auto mode = globalState.getCurrentMode();
-    if (wifiConnected && mode == ModeEnum::WiFi){
+    if (wifiConnected && mode == ModeEnum::WiFi) {
         phy_interface = phy_interface_t::phy_wifi;
     }
     else if (ethConnected && mode == ModeEnum::ETHERNET) {
@@ -124,8 +124,34 @@ void ANetworkController::handleDiscovery(const TerminalCommand &cmd)
         return;
     }
 
-    const std::string deviceIP = phy_interface == phy_interface_t::phy_wifi ? wifiService.getLocalIP() : ethernetService.getLocalIP();
-    icmpService.startDiscoveryTask(deviceIP);
+    // Optional timeout argument
+    int timeoutMs = 250;
+    std::string timeoutStr = cmd.getSubcommand();
+
+    if (!timeoutStr.empty()) {
+        if (!argTransformer.isValidNumber(timeoutStr)) {
+            terminalView.println("Usage: discovery [timeout_ms]");
+            terminalView.println("Timeout must be a number between 5 and 5000 ms.");
+            return;
+        }
+
+        timeoutMs = argTransformer.parseHexOrDec(timeoutStr);
+
+        if (timeoutMs < 5) {
+            timeoutMs = 5;
+        }
+        else if (timeoutMs > 5000) {
+            timeoutMs = 5000;
+        }
+    }
+
+    const std::string deviceIP =
+        (phy_interface == phy_interface_t::phy_wifi)
+            ? wifiService.getLocalIP()
+            : ethernetService.getLocalIP();
+
+    // Start discovery task
+    icmpService.startDiscoveryTask(deviceIP, timeoutMs);
 
     while (!icmpService.isDiscoveryReady()) {
         // Display logs
@@ -140,6 +166,7 @@ void ANetworkController::handleDiscovery(const TerminalCommand &cmd)
             icmpService.stopICMPService();
             break;
         }
+
         char deviceKey = deviceInput.readChar();
         if (deviceKey == KEY_OK) {
             icmpService.stopICMPService();
@@ -150,6 +177,7 @@ void ANetworkController::handleDiscovery(const TerminalCommand &cmd)
     }
 
     delay(500);
+
     // Flush final logs
     for (auto& line : icmpService.fetchICMPLog()) {
         terminalView.println(line);
@@ -157,7 +185,6 @@ void ANetworkController::handleDiscovery(const TerminalCommand &cmd)
 
     ICMPService::clearICMPLogging();
     icmpService.clearDiscoveryFlag();
-    //terminalView.println(icmpService.getReport());
 }
 
 /*
