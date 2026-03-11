@@ -52,6 +52,35 @@ and then launches the main loop through the ActionDispatcher.
 
 - DependencyProvider: constructs and wires together the correct Views,
   Inputs, Services, and Controllers based on the current configuration.
+
+  A typical command follows this path:
+
+    User types a command
+            |
+            v
+    TerminalInput
+    (read characters)
+            |
+            v
+    ActionDispatcher
+    (route command/instruction)
+            |
+            v
+    Controller
+    (Parse and validate actions)
+            |
+            v
+    Service
+    (access hardware / protocol)
+            |
+            v
+    Controller
+    (Process response)
+            |
+            v
+    TerminalView
+    (display output)
+
 */
 
 void setup() {    
