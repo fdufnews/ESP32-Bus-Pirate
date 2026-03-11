@@ -59,6 +59,7 @@ Use the [ESP32 Bus Pirate Web Flasher](https://geo-tp.github.io/ESP32-Bus-Pirate
 | **M5 Stick S3** | ![Photo of the M5 Stick S3](/images/m5sticks3_s.jpg)      | 13 GPIO (Grove, Header), screen, mic, speaker, IR TX, IR RX, IMU, 3 buttons, battery                 |
 | **M5 StampS3**        | ![Photo of the M5 StampS3](/images/stamps3_s.jpg)             | 9 GPIO (exposed pins), 1 button                       |
 | **M5 AtomS3 Lite**    | ![Photo of the M5 Atom S3 Lite](/images/atom_s.jpg)            | 8 GPIO (Grove, Header), IR TX, 1 buttton                  |
+| **LILYGO T-Display** | ![Photo of the T-Display-S3](/images/t_displays3_s.jpg) | 13 GPIO (1 Qwicc), screen, 2 buttons |
 | **LILYGO T-Embed**    | ![Photo of the LILYGO T-Embed](/images/tembed_s.jpg)          | 9 GPIO (Grove, Header), screen, encoder, speaker, mic, SD card                                         |
 | **LILYGO T-Embed CC1101** | ![Photo of the LILYGO T-Embed CC1101](/images/tembedcc1101_s.jpg) | 4 GPIO (2x Qwiic), screen, encoder, speaker, mic, SD Card, CC1101, PN532, IR TX, IR RX , battery                                 |
 | **Seeed Studio Xiao S3** | ![Photo of the Seeed Studio Xiao ESP32-S3](/images/xiaos3_s.jpg)        | 9 GPIO (exposed pins), 1 button        
