@@ -135,7 +135,7 @@ void ANetworkController::handleDiscovery(const TerminalCommand &cmd)
             return;
         }
 
-        timeoutMs = argTransformer.parseHexOrDec(timeoutStr);
+        timeoutMs = argTransformer.parseHexOrDec32(timeoutStr);
 
         if (timeoutMs < 5) {
             timeoutMs = 5;
