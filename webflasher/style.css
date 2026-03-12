@@ -8,6 +8,11 @@ html, body {
 }
 .wrap { max-width: 980px; margin: 0 auto; padding: 20px 16px; }
 
+h3 {
+  margin-top: 24px;
+  margin-bottom: 10px;
+}
+
 /* Title */
 .ascii-title {
   font-family: Menlo, 'Courier New', Courier, 'Liberation Mono', monospace;
@@ -37,8 +42,8 @@ html, body {
 
 /* Boards grid */
 .boards-grid {
-  display:grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, max-content));
   gap: 10px 12px;
   margin: 10px 0 6px;
 }
@@ -122,3 +127,4 @@ html, body {
 .wiki-cta a:hover{
 transform: translateY(-1px); box-shadow:0 8px 22px rgba(0,255,153,0.18);
 }
+
